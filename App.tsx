@@ -973,21 +973,20 @@ export default function App() {
 
       <main className="flex flex-1 flex-col overflow-hidden relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0a1e16] via-background to-background">
 
-        {currentView !== 'upload' && (
-          <Header
-            onMenuClick={() => setSidebarOpen(true)}
-            title={currentView === 'vault' ? 'Document Vault' : 'Dashboard'}
-            subtitle={currentView === 'vault' ? 'Secure storage and analysis' : "Welcome back, here's what's happening today."}
-          />
-        )}
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
+          title={
+            currentView === 'vault' ? 'Document Vault' :
+              currentView === 'upload' ? 'Upload Analysis' :
+                'Dashboard'
+          }
+          subtitle={
+            currentView === 'vault' ? 'Secure storage and analysis' :
+              currentView === 'upload' ? 'Add new documents to the vault' :
+                "Welcome back, here's what's happening today."
+          }
+        />
 
-        {currentView === 'upload' && (
-          <div className="lg:hidden absolute top-4 left-4 z-50">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-full bg-surface/50 text-white backdrop-blur-md border border-white/10">
-              <Menu size={20} />
-            </button>
-          </div>
-        )}
 
         {currentView === 'dashboard' && <DashboardView />}
         {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs} />}
