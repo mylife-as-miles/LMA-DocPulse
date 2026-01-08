@@ -78,16 +78,7 @@ export const LoanReviewView = () => {
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto relative scroll-smooth pb-20 custom-scrollbar bg-background bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]">
-                {/* Breadcrumbs */}
-                <div className="px-10 pt-8 pb-4">
-                    <div className="flex items-center gap-2 text-xs font-mono text-text-muted uppercase tracking-wide">
-                        <span className="hover:text-primary transition-colors cursor-pointer">Dashboard</span>
-                        <span className="text-slate-700">/</span>
-                        <span className="hover:text-primary transition-colors cursor-pointer">Loan Reviews</span>
-                        <span className="text-slate-700">/</span>
-                        <span className="text-primary font-bold">Ref #10294</span>
-                    </div>
-                </div>
+
 
                 {/* Header */}
                 <div className="px-10 py-2 flex flex-wrap justify-between items-end gap-6 mb-8">

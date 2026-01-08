@@ -134,14 +134,7 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
             <div className="flex flex-col items-center py-10 px-4 md:px-10 lg:px-20 min-h-full">
                 <div className="max-w-[1100px] w-full flex flex-col gap-10">
 
-                    {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                        <button onClick={() => setView('dashboard')} className="hover:text-brand-green transition-colors">Home</button>
-                        <span>/</span>
-                        <button onClick={() => setView('vault')} className="hover:text-brand-green transition-colors">Documents</button>
-                        <span>/</span>
-                        <span className="text-brand-green">New Analysis</span>
-                    </nav>
+
 
                     {/* Header */}
                     <div className="space-y-3">

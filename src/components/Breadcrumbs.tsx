@@ -29,7 +29,7 @@ export const Breadcrumbs = ({ currentView, setView }: BreadcrumbsProps) => {
     if (path.length === 0) return null;
 
     return (
-        <nav className="flex items-center gap-2 px-6 lg:px-8 py-2 text-sm text-text-muted animate-fade-in">
+        <nav className="flex items-center gap-2 text-sm text-text-muted animate-fade-in">
             <button
                 onClick={() => setView('dashboard')}
                 className="hover:text-primary transition-colors flex items-center gap-1"
@@ -45,8 +45,8 @@ export const Breadcrumbs = ({ currentView, setView }: BreadcrumbsProps) => {
                         onClick={() => item.id && setView(item.id as ViewState)}
                         disabled={index === path.length - 1} // Disable last item
                         className={`transition-colors ${index === path.length - 1
-                                ? 'text-primary font-medium cursor-default pointer-events-none'
-                                : 'hover:text-primary'
+                            ? 'text-primary font-medium cursor-default pointer-events-none'
+                            : 'hover:text-primary'
                             }`}
                     >
                         {item.label}

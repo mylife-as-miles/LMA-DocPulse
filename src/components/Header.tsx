@@ -1,14 +1,16 @@
 import React from 'react';
 import { Menu, Search, Bell, MessageSquare } from 'lucide-react';
+import { ViewState } from '../types';
+import { Breadcrumbs } from './Breadcrumbs';
 
 interface HeaderProps {
     onMenuClick: () => void;
     onNotificationClick?: () => void;
-    title?: string;
-    subtitle?: string;
+    currentView: ViewState;
+    setView: (view: ViewState) => void;
 }
 
-export const Header = ({ onMenuClick, onNotificationClick, title = "Dashboard", subtitle = "Welcome back, here's what's happening today." }: HeaderProps) => {
+export const Header = ({ onMenuClick, onNotificationClick, currentView, setView }: HeaderProps) => {
     return (
         <header className="flex h-20 items-center justify-between px-6 lg:px-8 z-20 border-b border-border/30 lg:border-none shrink-0">
             <div className="flex items-center gap-4 lg:hidden">
@@ -18,9 +20,8 @@ export const Header = ({ onMenuClick, onNotificationClick, title = "Dashboard", 
                 <span className="text-lg font-bold font-display tracking-tight">LMA DocPulse</span>
             </div>
 
-            <div className="hidden lg:flex flex-col justify-center">
-                <h2 className="text-2xl font-bold font-display text-white tracking-tight">{title}</h2>
-                <p className="text-xs text-text-muted">{subtitle}</p>
+            <div className="hidden lg:flex items-center">
+                <Breadcrumbs currentView={currentView} setView={setView} />
             </div>
 
             <div className="flex items-center gap-6">
