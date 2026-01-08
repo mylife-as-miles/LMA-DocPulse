@@ -13,28 +13,60 @@ import {
 
 export const LoanReviewView = () => {
     const [activeSection, setActiveSection] = useState('summary');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     return (
         <div className="flex flex-1 overflow-hidden relative h-full">
             {/* Sidebar */}
-            <aside className="w-72 flex-none flex flex-col justify-between border-r border-border bg-background transition-all duration-300 overflow-y-auto z-10 shrink-0">
-                <div className="flex flex-col p-4 gap-8 mt-2">
+            <aside
+                className={`
+                    flex-none flex flex-col justify-between border-r border-border bg-background transition-all duration-300 overflow-y-auto z-10 shrink-0
+                    ${isSidebarOpen ? 'w-72' : 'w-16 items-center'}
+                `}
+            >
+                <div className="flex flex-col p-4 gap-8 mt-2 w-full">
                     <div>
-                        <h3 className="text-text-muted text-[10px] font-bold uppercase tracking-[0.15em] px-3 mb-4 font-display">Document Sections</h3>
-                        <div className="flex flex-col gap-1 relative">
-                            <div className="absolute left-[29px] top-4 bottom-4 w-px bg-border z-0"></div>
+                        <div className="flex items-center justify-between px-3 mb-4">
+                            {isSidebarOpen && (
+                                <h3 className="text-text-muted text-[10px] font-bold uppercase tracking-[0.15em] font-display animate-fade-in whitespace-nowrap">
+                                    Document Sections
+                                </h3>
+                            )}
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="text-text-muted hover:text-white transition-colors p-1"
+                                title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                            >
+                                {isSidebarOpen ? <ChevronDown className="rotate-90" size={16} /> : <ChevronDown className="-rotate-90" size={16} />}
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-1 relative w-full">
+                            {isSidebarOpen && <div className="absolute left-[29px] top-4 bottom-4 w-px bg-border z-0"></div>}
 
                             {['Summary', 'Borrower Details', 'Financial Covenants', 'Events of Default', 'Signatures'].map((section, idx) => {
                                 const isActive = section === 'Financial Covenants';
-                                const id = section.toLowerCase().replace(/ /g, '-');
 
                                 return (
-                                    <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer group z-10 relative ${isActive ? 'bg-surface-highlight border border-border' : 'hover:bg-surface-highlight'}`}>
+                                    <div
+                                        key={idx}
+                                        className={`
+                                            flex items-center justify-between rounded-lg cursor-pointer group z-10 relative
+                                            ${isSidebarOpen ? 'px-3 py-2' : 'p-2 justify-center'}
+                                            ${isActive ? 'bg-surface-highlight border border-border' : 'hover:bg-surface-highlight'}
+                                        `}
+                                        title={!isSidebarOpen ? section : ''}
+                                        onClick={() => setActiveSection(section.toLowerCase())}
+                                    >
                                         <div className="flex items-center gap-3">
-                                            <span className={`flex items-center justify-center w-5 h-5 bg-background border rounded-full transition-colors ${isActive ? 'border-accent-orange' : 'border-border group-hover:border-primary'}`}>
+                                            <span className={`flex items-center justify-center w-5 h-5 bg-background border rounded-full transition-colors shrink-0 ${isActive ? 'border-accent-orange' : 'border-border group-hover:border-primary'}`}>
                                                 <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-accent-orange shadow-[0_0_6px_#f59e0b]' : 'bg-primary shadow-[0_0_6px_#00ff9d]'}`}></span>
                                             </span>
-                                            <span className={`text-sm font-medium transition-colors ${isActive ? 'text-white' : 'text-text-muted group-hover:text-white'}`}>{section}</span>
+                                            {isSidebarOpen && (
+                                                <span className={`text-sm font-medium transition-colors whitespace-nowrap overflow-hidden text-ellipsis ${isActive ? 'text-white' : 'text-text-muted group-hover:text-white'}`}>
+                                                    {section}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 );

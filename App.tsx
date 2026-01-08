@@ -11,6 +11,7 @@ import { NotificationsView } from './src/views/NotificationsView';
 import { SettingsView } from './src/views/SettingsView';
 import { LoanReviewView } from './src/views/LoanReviewView';
 import { ProfileView } from './src/views/ProfileView';
+import { Breadcrumbs } from './src/components/Breadcrumbs';
 import { ViewState, Doc } from './src/types';
 import { INITIAL_VAULT_DOCS } from './src/data/mockData';
 
@@ -34,6 +35,8 @@ export default function App() {
       case 'compliance': return { title: 'Compliance & Risk', subtitle: 'Regulatory adherence and risk monitoring' };
       case 'notifications': return { title: 'Notifications', subtitle: 'System alerts and updates' };
       case 'settings': return { title: 'Settings', subtitle: 'Manage your preferences' };
+      case 'loan_review': return { title: 'Loan Review', subtitle: 'Detailed contract analysis' };
+      case 'profile': return { title: 'Profile', subtitle: 'User details and stats' };
       default: return { title: 'LMA DocPulse', subtitle: '' };
     }
   };
@@ -57,6 +60,8 @@ export default function App() {
           title={headerInfo.title}
           subtitle={headerInfo.subtitle}
         />
+
+        <Breadcrumbs currentView={currentView} setView={setCurrentView} />
 
         {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
         {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs} />}

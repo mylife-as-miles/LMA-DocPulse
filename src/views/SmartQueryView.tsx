@@ -19,6 +19,7 @@ interface SmartQueryViewProps {
 
 export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [query, setQuery] = useState('');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const suggestions = [
         { icon: Zap, text: "Compare leverage ratios against market standards" },
@@ -29,47 +30,78 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     return (
         <div className="flex flex-1 overflow-hidden relative h-full bg-background bg-[radial-gradient(circle_at_50%_0%,#1a2e26,transparent_70%)]">
             {/* Sidebar */}
-            <aside className="hidden md:flex w-80 flex-col border-r border-border bg-background/50 backdrop-blur-xl overflow-y-auto shrink-0 z-10">
-                <div className="p-6">
-                    <button className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl border border-white/10 transition-all group font-medium text-sm">
+            <aside
+                className={`
+                    hidden md:flex flex-col border-r border-border bg-background/50 backdrop-blur-xl overflow-y-auto shrink-0 z-10 transition-all duration-300
+                    ${isSidebarOpen ? 'w-80' : 'w-20 items-center'}
+                `}
+            >
+                <div className={`p-6 ${!isSidebarOpen && 'px-4'}`}>
+                    <div className="flex justify-between items-center mb-4">
+                        {isSidebarOpen && <span className="text-xs font-bold text-text-muted uppercase tracking-wider">History</span>}
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="text-text-muted hover:text-white transition-colors p-1"
+                        >
+                            {isSidebarOpen ? <ChevronDown className="rotate-90" size={16} /> : <ChevronDown className="-rotate-90" size={16} />}
+                        </button>
+                    </div>
+
+                    <button
+                        className={`
+                            flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl border border-white/10 transition-all group font-medium text-sm
+                            ${isSidebarOpen ? 'w-full' : 'w-10 h-10 p-0'}
+                        `}
+                        title={!isSidebarOpen ? "New Chat" : ""}
+                    >
                         <span className="bg-primary/20 text-primary p-1 rounded-lg group-hover:scale-110 transition-transform"><Bot size={16} /></span>
-                        New Chat
+                        {isSidebarOpen && "New Chat"}
                     </button>
                 </div>
 
-                <div className="flex-1 px-4 space-y-6">
-                    <div>
-                        <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider px-2 mb-3">Today</h3>
-                        <div className="space-y-1">
-                            {['Portfolio Risk Assessment', 'Covenant Analysis #10294'].map((item, i) => (
-                                <button key={i} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-surface-highlight hover:text-white transition-colors truncate">
-                                    {item}
-                                </button>
-                            ))}
+                {isSidebarOpen && (
+                    <div className="flex-1 px-4 space-y-6 animate-fade-in">
+                        <div>
+                            <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider px-2 mb-3">Today</h3>
+                            <div className="space-y-1">
+                                {['Portfolio Risk Assessment', 'Covenant Analysis #10294'].map((item, i) => (
+                                    <button key={i} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-surface-highlight hover:text-white transition-colors truncate">
+                                        {item}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider px-2 mb-3">Previous 7 Days</h3>
+                            <div className="space-y-1">
+                                {['Libor Transition Clause', 'Market Trends report'].map((item, i) => (
+                                    <button key={i} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-surface-highlight hover:text-white transition-colors truncate">
+                                        {item}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider px-2 mb-3">Previous 7 Days</h3>
-                        <div className="space-y-1">
-                            {['Libor Transition Clause', 'Market Trends report'].map((item, i) => (
-                                <button key={i} className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-surface-highlight hover:text-white transition-colors truncate">
-                                    {item}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                )}
 
-                <div className="p-4 border-t border-border/50">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-surface hover:bg-surface-highlight cursor-pointer transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent-blue p-[1.5px]">
-                            <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-[10px] font-bold text-primary">Pro</div>
+                <div className="p-4 border-t border-border/50 mt-auto">
+                    {isSidebarOpen ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface hover:bg-surface-highlight cursor-pointer transition-colors">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent-blue p-[1.5px]">
+                                <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-[10px] font-bold text-primary">Pro</div>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white">Upgrade Plan</h4>
+                                <p className="text-[10px] text-text-muted">Get advanced models</p>
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <h4 className="text-sm font-bold text-white">Upgrade Plan</h4>
-                            <p className="text-[10px] text-text-muted">Get advanced models</p>
+                    ) : (
+                        <div className="flex justify-center">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent-blue p-[1.5px] cursor-pointer hover:scale-110 transition-transform">
+                                <div className="w-full h-full rounded-full bg-black flex items-center justify-center text-[10px] font-bold text-primary">Pro</div>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </aside>
 

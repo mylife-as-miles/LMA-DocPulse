@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { User, Shield, BellRing, Database, Smartphone, Palette, Globe, Key, Lock, Monitor, Laptop } from 'lucide-react';
+import { User, Shield, BellRing, Database, Smartphone, Palette, Globe, Key, Lock, Monitor, Laptop, ChevronDown } from 'lucide-react';
 
 export const SettingsView = () => {
     const [activeTab, setActiveTab] = useState('General');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const tabs = [
         { id: 'General', icon: Monitor },
@@ -12,35 +13,53 @@ export const SettingsView = () => {
     ];
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern">
-            <div className="mx-auto max-w-5xl flex flex-col gap-8 pb-20">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern h-full">
+            <div className="mx-auto max-w-6xl flex flex-col gap-8 pb-20 h-full">
                 <div className="flex flex-col gap-2 relative">
                     <div className="absolute -top-10 -left-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
                     <h2 className="text-3xl font-display font-bold text-white relative z-10">System Preferences</h2>
                     <p className="text-text-muted relative z-10">Configure your workspace and account settings.</p>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-8 relative z-10">
+                <div className="flex flex-col lg:flex-row gap-8 relative z-10 flex-1">
                     {/* Settings Sidebar */}
-                    <nav className="w-full lg:w-64 flex flex-col gap-2 shrink-0">
+                    <nav className={`flex flex-col gap-2 shrink-0 transition-all duration-300 ${isSidebarOpen ? 'w-full lg:w-64' : 'w-full lg:w-16 items-center lg:items-start'}`}>
+                        <div className="flex justify-between items-center px-2 mb-2 w-full">
+                            {isSidebarOpen && <span className="text-xs font-bold text-text-muted uppercase tracking-wider hidden lg:block">Menu</span>}
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="text-text-muted hover:text-white transition-colors p-1 hidden lg:block"
+                                title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                            >
+                                <ChevronDown className={isSidebarOpen ? "rotate-90" : "-rotate-90"} size={16} />
+                            </button>
+                        </div>
+
                         {tabs.map((tab, i) => (
                             <button
                                 key={i}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`text-left px-5 py-4 rounded-xl text-sm font-bold transition-all flex items-center gap-3 group
+                                className={`
+                                    rounded-xl font-bold transition-all flex items-center gap-3 group relative overflow-hidden
+                                    ${isSidebarOpen
+                                        ? 'text-left px-5 py-4 text-sm w-full'
+                                        : 'justify-center p-3 w-12 h-12'
+                                    }
                                     ${activeTab === tab.id
                                         ? 'bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20 shadow-glow-sm'
                                         : 'text-text-muted hover:bg-surface-highlight hover:text-white border border-transparent'
-                                    }`}
+                                    }
+                                `}
+                                title={!isSidebarOpen ? tab.id : ''}
                             >
-                                <tab.icon size={18} className={`${activeTab === tab.id ? 'text-primary' : 'text-slate-500 group-hover:text-white transition-colors'}`} />
-                                {tab.id}
+                                <tab.icon size={18} className={`shrink-0 ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 group-hover:text-white transition-colors'}`} />
+                                {isSidebarOpen && <span>{tab.id}</span>}
                             </button>
                         ))}
                     </nav>
 
                     {/* Main Settings Content */}
-                    <div className="flex-1 space-y-8">
+                    <div className="flex-1 space-y-8 min-w-0">
                         {/* Interactive Profile Section */}
                         <div className="glass-panel p-8 rounded-2xl space-y-8 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-96 h-96 bg-accent-blue/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
