@@ -6,7 +6,8 @@ import {
     ShieldCheck,
     Gavel,
     Settings,
-    X
+    X,
+    Sparkles
 } from 'lucide-react';
 import { ViewState } from '../types';
 
@@ -23,7 +24,8 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
         { id: 'analytics', icon: <PieChart size={20} />, label: 'Portfolio Analytics' },
         { id: 'vault', icon: <Files size={20} />, label: 'Document Vault' },
         { id: 'compliance', icon: <ShieldCheck size={20} />, label: 'Compliance' },
-        { id: 'regulations', icon: <Gavel size={20} />, label: 'Regulations' },
+        { id: 'compliance', icon: <ShieldCheck size={20} />, label: 'Compliance' },
+        { id: 'smart_query', icon: <Sparkles size={20} />, label: 'Smart Query' },
     ];
 
     return (
@@ -60,7 +62,8 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                             <p className="mb-3 px-4 text-[11px] font-bold uppercase tracking-widest text-text-muted">Overview</p>
                             {navItems.map((item, idx) => {
                                 const isActive = (item.id === 'dashboard' && currentView === 'dashboard') ||
-                                    (item.id === 'vault' && (currentView === 'vault' || currentView === 'upload'));
+                                    (item.id === 'vault' && (currentView === 'vault' || currentView === 'upload')) ||
+                                    (item.id === 'smart_query' && currentView === 'smart_query');
 
                                 return (
                                     <button
@@ -68,6 +71,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                                         onClick={() => {
                                             if (item.id === 'dashboard') setView('dashboard');
                                             if (item.id === 'vault') setView('vault');
+                                            if (item.id === 'smart_query') setView('smart_query');
                                         }}
                                         className={`flex w-full items-center gap-3 rounded-r-lg px-4 py-3 text-sm font-medium transition-all duration-200 border-l-[3px]
                       ${isActive

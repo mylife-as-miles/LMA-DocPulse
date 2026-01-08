@@ -4,6 +4,7 @@ import { Header } from './src/components/Header';
 import { DashboardView } from './src/views/DashboardView';
 import { DocumentVaultView } from './src/views/DocumentVaultView';
 import { UploadView } from './src/views/UploadView';
+import { SmartQueryView } from './src/views/SmartQueryView';
 import { ViewState, Doc } from './src/types';
 import { INITIAL_VAULT_DOCS } from './src/data/mockData';
 
@@ -33,18 +34,22 @@ export default function App() {
           title={
             currentView === 'vault' ? 'Document Vault' :
               currentView === 'upload' ? 'Upload Analysis' :
-                'Dashboard'
+                currentView === 'smart_query' ? 'Smart Query' :
+                  'Dashboard'
           }
           subtitle={
             currentView === 'vault' ? 'Secure storage and analysis' :
               currentView === 'upload' ? 'Add new documents to the vault' :
-                "Welcome back, here's what's happening today."
+                currentView === 'smart_query' ? 'Natural language portfolio analysis' :
+                  "Welcome back, here's what's happening today."
           }
         />
 
         {currentView === 'dashboard' && <DashboardView />}
         {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs} />}
+
         {currentView === 'upload' && <UploadView setView={setCurrentView} onUploadComplete={handleUploadComplete} />}
+        {currentView === 'smart_query' && <SmartQueryView />}
 
       </main>
     </div>

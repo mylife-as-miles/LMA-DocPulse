@@ -1,4 +1,5 @@
-export type ViewState = 'dashboard' | 'vault' | 'upload';
+import React from 'react';
+export type ViewState = 'dashboard' | 'vault' | 'upload' | 'smart_query';
 
 export interface Doc {
     name: string;
