@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Search, Bell, MessageSquare, Sparkles } from 'lucide-react';
+import { Menu, Search, Bell, Sparkles } from 'lucide-react';
 import { ViewState } from '../types';
 import { Breadcrumbs } from './Breadcrumbs';
 
@@ -56,9 +56,6 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView 
                     >
                         <Bell size={20} />
                         <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-primary shadow-glow-sm"></span>
-                    </button>
-                    <button className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/50 text-text-muted hover:text-primary hover:border-primary hover:bg-primary-dim transition-all">
-                        <MessageSquare size={20} />
                     </button>
                 </div>
             </div>

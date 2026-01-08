@@ -21,7 +21,9 @@ import {
     ArrowRight,
     Filter,
     MoreVertical,
-    ChevronDown
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 
 interface SmartQueryViewProps {
@@ -29,59 +31,76 @@ interface SmartQueryViewProps {
 }
 
 export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
     return (
         <div className="flex flex-1 overflow-hidden relative h-full bg-background">
             {/* Sidebar */}
-            <aside className="hidden md:flex w-72 flex-col border-r border-border bg-background/50 backdrop-blur overflow-y-auto shrink-0 z-10">
-                <div className="flex flex-col gap-6 p-6">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-white text-sm font-display font-bold uppercase tracking-widest text-primary">History</h1>
-                        <p className="text-text-muted text-xs font-normal">Your recent investigations</p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-highlight border border-border text-white cursor-pointer group">
-                            <History className="text-primary group-hover:scale-110 transition-transform" size={18} />
-                            <p className="text-sm font-medium">Recent Queries</p>
-                        </div>
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-highlight/50 text-text-muted hover:text-white transition-all cursor-pointer group">
-                            <Bookmark className="group-hover:text-primary transition-colors" size={18} />
-                            <p className="text-sm font-medium">Saved Queries</p>
-                        </div>
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-highlight/50 text-text-muted hover:text-white transition-all cursor-pointer group">
-                            <FileText className="group-hover:text-primary transition-colors" size={18} />
-                            <p className="text-sm font-medium">Templates</p>
-                        </div>
-                    </div>
-                    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full"></div>
-                    <div className="flex flex-col gap-4">
-                        <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Today</p>
-                        <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                            <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors" size={18} />
-                            <div className="flex flex-col gap-1">
-                                <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Show all loans with floating rates"</p>
-                                <span className="text-[10px] text-text-muted font-mono">10:42 AM</span>
+            <aside
+                className={`hidden md:flex flex-col border-r border-border bg-background/50 backdrop-blur overflow-y-auto shrink-0 z-10 transition-all duration-300 ${isSidebarOpen ? 'w-72' : 'w-20'}`}
+            >
+                <div className="flex flex-col gap-6 p-4 h-full">
+                    <div className="flex items-center justify-between">
+                        {isSidebarOpen && (
+                            <div className="flex flex-col gap-1 fade-in">
+                                <h1 className="text-white text-sm font-display font-bold uppercase tracking-widest text-primary">History</h1>
+                                <p className="text-text-muted text-xs font-normal">Your recent investigations</p>
                             </div>
-                        </div>
-                        <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                            <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors" size={18} />
-                            <div className="flex flex-col gap-1">
-                                <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Compliance breaches {'>'} $1M in Q2"</p>
-                                <span className="text-[10px] text-text-muted font-mono">Yesterday</span>
-                            </div>
-                        </div>
-                        <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                            <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors" size={18} />
-                            <div className="flex flex-col gap-1">
-                                <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Maturity dates for Project Alpha"</p>
-                                <span className="text-[10px] text-text-muted font-mono">2 days ago</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="mt-auto pt-6">
-                        <button className="w-full py-2 px-4 border border-border rounded-lg text-xs font-mono text-text-muted hover:text-white hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
-                            <Trash2 size={14} /> Clear History
+                        )}
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors ml-auto"
+                        >
+                            {isSidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
                         </button>
                     </div>
+
+                    {isSidebarOpen ? (
+                        <>
+                            <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full"></div>
+                            <div className="flex flex-col gap-4">
+                                <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Today</p>
+                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
+                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Show all loans with floating rates"</p>
+                                        <span className="text-[10px] text-text-muted font-mono">10:42 AM</span>
+                                    </div>
+                                </div>
+                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
+                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Compliance breaches {'>'} $1M in Q2"</p>
+                                        <span className="text-[10px] text-text-muted font-mono">Yesterday</span>
+                                    </div>
+                                </div>
+                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
+                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
+                                    <div className="flex flex-col gap-1">
+                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Maturity dates for Project Alpha"</p>
+                                        <span className="text-[10px] text-text-muted font-mono">2 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-auto pt-6">
+                                <button className="w-full py-2 px-4 border border-border rounded-lg text-xs font-mono text-text-muted hover:text-white hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+                                    <Trash2 size={14} /> Clear History
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-4 mt-4 items-center">
+                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Show all loans...">
+                                <Search size={16} />
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Compliance breaches...">
+                                <Search size={16} />
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Maturity dates...">
+                                <Search size={16} />
+                            </div>
+                        </div>
+                    )}
                 </div>
             </aside>
 
