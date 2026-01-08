@@ -3,11 +3,12 @@ import { Menu, Search, Bell, MessageSquare } from 'lucide-react';
 
 interface HeaderProps {
     onMenuClick: () => void;
+    onNotificationClick?: () => void;
     title?: string;
     subtitle?: string;
 }
 
-export const Header = ({ onMenuClick, title = "Dashboard", subtitle = "Welcome back, here's what's happening today." }: HeaderProps) => {
+export const Header = ({ onMenuClick, onNotificationClick, title = "Dashboard", subtitle = "Welcome back, here's what's happening today." }: HeaderProps) => {
     return (
         <header className="flex h-20 items-center justify-between px-6 lg:px-8 z-20 border-b border-border/30 lg:border-none shrink-0">
             <div className="flex items-center gap-4 lg:hidden">
@@ -33,7 +34,10 @@ export const Header = ({ onMenuClick, title = "Dashboard", subtitle = "Welcome b
                 </div>
 
                 <div className="flex items-center gap-3 border-l border-border/50 pl-6">
-                    <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/50 text-text-muted hover:text-primary hover:border-primary hover:bg-primary-dim transition-all">
+                    <button
+                        onClick={onNotificationClick}
+                        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/50 text-text-muted hover:text-primary hover:border-primary hover:bg-primary-dim transition-all"
+                    >
                         <Bell size={20} />
                         <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-primary shadow-glow-sm"></span>
                     </button>

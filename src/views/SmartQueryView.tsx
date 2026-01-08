@@ -1,8 +1,6 @@
 import React from 'react';
 import {
-    History,
-    Bookmark,
-    FileText,
+
     Search,
     Trash2,
     Paperclip,
@@ -35,20 +33,7 @@ export const SmartQueryView = () => {
                         <p className="text-[#888888] text-xs font-normal">Your recent investigations</p>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#141414] border border-[#222222] text-white cursor-pointer group">
-                            <History className="text-[#00FF94] w-5 h-5 group-hover:scale-110 transition-transform" />
-                            <p className="text-sm font-medium">Recent Queries</p>
-                        </div>
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#141414]/50 text-[#888888] hover:text-white transition-all cursor-pointer group">
-                            <Bookmark className="w-5 h-5 group-hover:text-[#00FF94] transition-colors" />
-                            <p className="text-sm font-medium">Saved Queries</p>
-                        </div>
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#141414]/50 text-[#888888] hover:text-white transition-all cursor-pointer group">
-                            <FileText className="w-5 h-5 group-hover:text-[#00FF94] transition-colors" />
-                            <p className="text-sm font-medium">Templates</p>
-                        </div>
-                    </div>
+
 
                     <div className="h-px bg-gradient-to-r from-transparent via-[#222222] to-transparent w-full"></div>
 

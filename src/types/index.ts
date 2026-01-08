@@ -1,5 +1,5 @@
 import React from 'react';
-export type ViewState = 'dashboard' | 'vault' | 'upload' | 'smart_query';
+export type ViewState = 'dashboard' | 'vault' | 'upload' | 'smart_query' | 'analytics' | 'compliance' | 'notifications' | 'settings';
 
 export interface Doc {
     name: string;
