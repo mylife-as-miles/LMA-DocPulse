@@ -10,6 +10,7 @@ import { ComplianceView } from './src/views/ComplianceView';
 import { NotificationsView } from './src/views/NotificationsView';
 import { SettingsView } from './src/views/SettingsView';
 import { LoanReviewView } from './src/views/LoanReviewView';
+import { ProfileView } from './src/views/ProfileView';
 import { ViewState, Doc } from './src/types';
 import { INITIAL_VAULT_DOCS } from './src/data/mockData';
 
@@ -66,6 +67,7 @@ export default function App() {
         {currentView === 'notifications' && <NotificationsView />}
         {currentView === 'settings' && <SettingsView />}
         {currentView === 'loan_review' && <LoanReviewView />}
+        {currentView === 'profile' && <ProfileView />}
 
       </main>
     </div>

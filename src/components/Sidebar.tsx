@@ -142,7 +142,10 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                 {/* Footer / Toggle */}
                 <div className="p-4 border-t border-border/50 flex flex-col gap-4">
                     {/* User Profile */}
-                    <div className={`flex items-center gap-3 rounded-xl bg-surface border border-border p-2 hover:border-primary/50 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center' : ''}`}>
+                    <div
+                        onClick={() => setView('profile')}
+                        className={`flex items-center gap-3 rounded-xl bg-surface border border-border p-2 hover:border-primary/50 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center' : ''}`}
+                    >
                         <div className="relative shrink-0">
                             <img
                                 src="https://picsum.photos/100/100"
