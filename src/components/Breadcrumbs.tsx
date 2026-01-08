@@ -19,7 +19,8 @@ export const Breadcrumbs = ({ currentView, setView }: BreadcrumbsProps) => {
             case 'notifications': return [{ label: 'Notifications', id: 'notifications' }];
             case 'settings': return [{ label: 'Settings', id: 'settings' }];
             case 'profile': return [{ label: 'Profile', id: 'profile' }];
-            case 'loan_review': return [{ label: 'Loan Reviews', id: 'dashboard' }, { label: 'Ref #10294', id: 'loan_review' }]; // Mock ID for now
+            case 'loan_reviews': return [{ label: 'Loan Reviews', id: 'loan_reviews' }];
+            case 'loan_review': return [{ label: 'Loan Reviews', id: 'loan_reviews' }, { label: 'Ref #10294', id: 'loan_review' }]; // Mock ID for now
             default: return [];
         }
     };

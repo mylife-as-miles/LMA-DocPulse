@@ -1,5 +1,5 @@
-import React from 'react';
-import { Menu, Search, Bell, MessageSquare } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Search, Bell, MessageSquare, Sparkles } from 'lucide-react';
 import { ViewState } from '../types';
 import { Breadcrumbs } from './Breadcrumbs';
 
@@ -20,8 +20,15 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView 
                 <span className="text-lg font-bold font-display tracking-tight">LMA DocPulse</span>
             </div>
 
-            <div className="hidden lg:flex items-center">
-                <Breadcrumbs currentView={currentView} setView={setView} />
+            <div className="hidden lg:flex flex-col justify-center">
+                {currentView === 'dashboard' ? (
+                    <div className="flex flex-col animate-fade-in">
+                        <h2 className="text-2xl font-bold font-display text-white tracking-tight">Dashboard</h2>
+                        <p className="text-xs text-text-muted">Welcome back, here's what's happening today.</p>
+                    </div>
+                ) : (
+                    <Breadcrumbs currentView={currentView} setView={setView} />
+                )}
             </div>
 
             <div className="flex items-center gap-6">
@@ -35,6 +42,14 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView 
                 </div>
 
                 <div className="flex items-center gap-3 border-l border-border/50 pl-6">
+                    <button
+                        onClick={() => setView('smart_query')}
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/50 transition-all 
+                        ${currentView === 'smart_query' ? 'text-primary border-primary bg-primary/10' : 'text-text-muted hover:text-primary hover:border-primary hover:bg-primary-dim'}`}
+                        title="Smart Query"
+                    >
+                        <Sparkles size={20} />
+                    </button>
                     <button
                         onClick={onNotificationClick}
                         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface/50 text-text-muted hover:text-primary hover:border-primary hover:bg-primary-dim transition-all"

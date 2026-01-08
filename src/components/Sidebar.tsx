@@ -28,12 +28,12 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
         { id: 'analytics', icon: <PieChart size={20} />, label: 'Portfolio Analytics' },
         { id: 'vault', icon: <Files size={20} />, label: 'Document Vault' },
         { id: 'compliance', icon: <ShieldCheck size={20} />, label: 'Compliance' },
-        { id: 'smart_query', icon: <Sparkles size={20} />, label: 'Smart Query' },
+        { id: 'loan_reviews', icon: <Files size={20} />, label: 'Loan Reviews' },
     ];
 
     const handleViewChange = (id: string) => {
         // Safe cast as we know the ids match ViewState (mostly)
-        if (id === 'dashboard' || id === 'vault' || id === 'smart_query' || id === 'analytics' || id === 'compliance' || id === 'settings') {
+        if (id === 'dashboard' || id === 'vault' || id === 'smart_query' || id === 'analytics' || id === 'compliance' || id === 'settings' || id === 'loan_reviews') {
             setView(id as ViewState);
         }
     };
