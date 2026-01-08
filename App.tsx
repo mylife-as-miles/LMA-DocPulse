@@ -9,6 +9,7 @@ import { PortfolioAnalyticsView } from './src/views/PortfolioAnalyticsView';
 import { ComplianceView } from './src/views/ComplianceView';
 import { NotificationsView } from './src/views/NotificationsView';
 import { SettingsView } from './src/views/SettingsView';
+import { LoanReviewView } from './src/views/LoanReviewView';
 import { ViewState, Doc } from './src/types';
 import { INITIAL_VAULT_DOCS } from './src/data/mockData';
 
@@ -56,14 +57,15 @@ export default function App() {
           subtitle={headerInfo.subtitle}
         />
 
-        {currentView === 'dashboard' && <DashboardView />}
+        {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
         {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs} />}
         {currentView === 'upload' && <UploadView setView={setCurrentView} onUploadComplete={handleUploadComplete} />}
-        {currentView === 'smart_query' && <SmartQueryView />}
+        {currentView === 'smart_query' && <SmartQueryView setView={setCurrentView} />}
         {currentView === 'analytics' && <PortfolioAnalyticsView />}
         {currentView === 'compliance' && <ComplianceView />}
         {currentView === 'notifications' && <NotificationsView />}
         {currentView === 'settings' && <SettingsView />}
+        {currentView === 'loan_review' && <LoanReviewView />}
 
       </main>
     </div>

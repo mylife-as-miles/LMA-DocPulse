@@ -22,7 +22,13 @@ import {
     Bot
 } from 'lucide-react';
 
-export const SmartQueryView = () => {
+import { ViewState } from '../types';
+
+interface SmartQueryViewProps {
+    setView?: (view: ViewState) => void;
+}
+
+export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     return (
         <div className="flex flex-1 overflow-hidden relative h-full">
             {/* History Sidebar */}
@@ -225,7 +231,11 @@ export const SmartQueryView = () => {
                                                 { id: 'LN-2023-755', name: 'Gamma Industries', amount: '$1,100,000', rate: 'Floating', date: 'Nov 30, 2024', score: 'D', scoreColor: 'text-red-400 bg-red-500/10 border-red-500/30' },
                                                 { id: 'LN-2024-101', name: 'Delta Logistics', amount: '$8,750,000', rate: 'Floating', date: 'Jan 12, 2025', score: 'A', scoreColor: 'text-[#00FF94] bg-[#00FF94]/10 border-[#00FF94]/30 shadow-[0_0_10px_rgba(0,255,148,0.2)]' }
                                             ].map((loan, idx) => (
-                                                <tr key={idx} className="hover:bg-[#141414] transition-colors group">
+                                                <tr
+                                                    key={idx}
+                                                    className="hover:bg-[#141414] transition-colors group cursor-pointer"
+                                                    onClick={() => setView?.('loan_review')}
+                                                >
                                                     <td className="p-5 font-mono text-sm text-[#00FF94]">{loan.id}</td>
                                                     <td className="p-5">
                                                         <div className="flex items-center gap-3">

@@ -24,7 +24,13 @@ import { AlertItem } from '../components/AlertItem';
 import { RiskHeatmap } from '../components/RiskHeatmap';
 import { CHART_DATA, LOANS_DATA } from '../data/mockData';
 
-export const DashboardView = () => (
+import { ViewState } from '../types';
+
+interface DashboardViewProps {
+    setView?: (view: ViewState) => void;
+}
+
+export const DashboardView = ({ setView }: DashboardViewProps) => (
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
         <div className="mx-auto max-w-[1600px] flex flex-col gap-6">
 
@@ -189,7 +195,11 @@ export const DashboardView = () => (
                             </thead>
                             <tbody className="divide-y divide-border text-white">
                                 {LOANS_DATA.map((loan) => (
-                                    <tr key={loan.id} className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer">
+                                    <tr
+                                        key={loan.id}
+                                        className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer"
+                                        onClick={() => setView?.('loan_review')}
+                                    >
                                         <td className="px-6 py-4 font-mono text-primary text-xs group-hover:underline">{loan.id}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
