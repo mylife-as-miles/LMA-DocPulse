@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { User, Shield, BellRing, Database, Smartphone, Palette, Globe, Key, Lock, Monitor, Laptop, ChevronDown } from 'lucide-react';
+import { User, Shield, BellRing, Monitor, Laptop, ChevronDown, Palette } from 'lucide-react';
+import { ViewState } from '../types';
 
-export const SettingsView = () => {
+interface SettingsViewProps {
+    setView?: (view: ViewState) => void;
+}
+
+export const SettingsView = ({ setView }: SettingsViewProps) => { // Added setView prop
     const [activeTab, setActiveTab] = useState('General');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -69,7 +74,10 @@ export const SettingsView = () => {
                                     <h3 className="text-xl font-display font-bold text-white">Profile Customization</h3>
                                     <p className="text-sm text-text-muted mt-1">Update your public profile and details.</p>
                                 </div>
-                                <button className="px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium text-white hover:border-primary transition-colors">
+                                <button
+                                    onClick={() => setView?.('public_profile')}
+                                    className="px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium text-white hover:border-primary transition-colors"
+                                >
                                     View Public Profile
                                 </button>
                             </div>

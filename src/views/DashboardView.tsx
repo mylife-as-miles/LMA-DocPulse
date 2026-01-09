@@ -22,6 +22,7 @@ import {
 import { StatCard } from '../components/StatCard';
 import { AlertItem } from '../components/AlertItem';
 import { RiskHeatmap } from '../components/RiskHeatmap';
+import { useActionFeedback } from '../components/ActionFeedback';
 import { CHART_DATA, LOANS_DATA } from '../data/mockData';
 
 import { ViewState } from '../types';
@@ -30,7 +31,11 @@ interface DashboardViewProps {
     setView?: (view: ViewState) => void;
 }
 
-export const DashboardView = ({ setView }: DashboardViewProps) => (
+export const DashboardView = ({ setView }: DashboardViewProps) => {
+    const { trigger: triggerExport } = useActionFeedback('Export Data');
+    const { trigger: triggerDiagnostics } = useActionFeedback('System Diagnostics');
+
+    return (
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
         <div className="mx-auto max-w-[1600px] flex flex-col gap-6">
 
@@ -84,7 +89,10 @@ export const DashboardView = ({ setView }: DashboardViewProps) => (
                             <button className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:text-white hover:border-primary/50 transition-colors">
                                 Last 6M
                             </button>
-                            <button className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-black hover:shadow-glow-sm transition-all">
+                            <button
+                                onClick={() => triggerExport()}
+                                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-black hover:shadow-glow-sm transition-all"
+                            >
                                 Export
                             </button>
                         </div>
@@ -134,7 +142,12 @@ export const DashboardView = ({ setView }: DashboardViewProps) => (
                 <div className="lg:col-span-1 glass-panel rounded-2xl p-6 flex flex-col h-full">
                     <div className="mb-6 flex items-center justify-between">
                         <h3 className="text-lg font-display font-bold text-white">Live Alerts</h3>
-                        <button className="text-xs font-medium text-primary hover:text-white transition-colors">View Log</button>
+                        <button
+                            onClick={() => setView?.('alerts_log')}
+                            className="text-xs font-medium text-primary hover:text-white transition-colors"
+                        >
+                            View Log
+                        </button>
                     </div>
 
                     <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
@@ -161,7 +174,10 @@ export const DashboardView = ({ setView }: DashboardViewProps) => (
                         />
                     </div>
 
-                    <button className="mt-4 w-full rounded-lg bg-surface-highlight/50 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-black transition-all border border-transparent hover:border-white">
+                    <button
+                        onClick={() => triggerDiagnostics()}
+                        className="mt-4 w-full rounded-lg bg-surface-highlight/50 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-black transition-all border border-transparent hover:border-white"
+                    >
                         Run Diagnostics
                     </button>
                 </div>
@@ -175,7 +191,10 @@ export const DashboardView = ({ setView }: DashboardViewProps) => (
                     <div className="border-b border-border px-6 py-5 flex items-center justify-between bg-surface/30">
                         <h3 className="text-lg font-display font-bold text-white">Attention Required</h3>
                         <div className="flex gap-2">
-                            <button className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:text-white hover:border-primary/50 transition-all">
+                            <button
+                                onClick={() => setView?.('filter')}
+                                className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:text-white hover:border-primary/50 transition-all"
+                            >
                                 <Filter size={14} />
                                 Filter
                             </button>
@@ -235,4 +254,5 @@ export const DashboardView = ({ setView }: DashboardViewProps) => (
 
         </div>
     </div>
-);
+    );
+};

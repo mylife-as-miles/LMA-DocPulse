@@ -13,6 +13,7 @@ import {
     ArrowUpRight
 } from 'lucide-react';
 import { ViewState } from '../types';
+import { useActionFeedback } from '../components/ActionFeedback';
 
 interface LoanReviewsListViewProps {
     setView?: (view: ViewState) => void;
@@ -20,6 +21,7 @@ interface LoanReviewsListViewProps {
 
 export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
     const [filter, setFilter] = useState('All');
+    const { trigger: triggerExport } = useActionFeedback('Export CSV');
 
     const loans = [
         { id: 'LN-2023-884', company: 'Alpha Corp', amount: '$4.5M', type: 'Term Loan B', status: 'Approved', statusColor: 'text-primary bg-primary/10 border-primary/20', date: 'Oct 24, 2024', risk: 'Low' },
@@ -49,11 +51,17 @@ export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
                                 className="h-10 w-64 rounded-lg border border-border bg-surface pl-10 pr-4 text-sm text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                             />
                         </div>
-                        <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-surface border border-border text-text-muted hover:text-white hover:border-text-muted transition-all text-sm font-medium">
+                        <button
+                            onClick={() => setView?.('filter')}
+                            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-surface border border-border text-text-muted hover:text-white hover:border-text-muted transition-all text-sm font-medium"
+                        >
                             <Filter size={16} />
                             Filter
                         </button>
-                        <button className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-black transition-all text-sm font-bold shadow-glow hover:shadow-glow-lg hover:-translate-y-0.5">
+                        <button
+                            onClick={() => triggerExport()}
+                            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-black transition-all text-sm font-bold shadow-glow hover:shadow-glow-lg hover:-translate-y-0.5"
+                        >
                             <Download size={16} />
                             Export
                         </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-export type ViewState = 'dashboard' | 'vault' | 'upload' | 'smart_query' | 'analytics' | 'compliance' | 'notifications' | 'settings' | 'loan_review' | 'profile' | 'loan_reviews';
+export type ViewState = 'dashboard' | 'vault' | 'upload' | 'smart_query' | 'analytics' | 'compliance' | 'notifications' | 'settings' | 'loan_review' | 'profile' | 'loan_reviews' | 'filter' | 'document_detail' | 'edit_profile' | 'alerts_log' | 'activity_log' | 'violations_log' | 'public_profile' | 'analytics_result';
 
 export interface Doc {
     name: string;

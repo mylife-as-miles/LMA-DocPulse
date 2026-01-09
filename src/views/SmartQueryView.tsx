@@ -25,6 +25,7 @@ import {
     ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
+import { useActionFeedback } from '../components/ActionFeedback';
 
 interface SmartQueryViewProps {
     setView?: (view: ViewState) => void;
@@ -32,6 +33,13 @@ interface SmartQueryViewProps {
 
 export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const { trigger: triggerAnalyze } = useActionFeedback('Analysis', { duration: 3000 });
+
+    const handleAnalyze = () => {
+        triggerAnalyze(() => {
+             // Mock API delay
+        });
+    };
 
     return (
         <div className="flex flex-1 overflow-hidden relative h-full bg-background">
@@ -146,7 +154,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                             <Paperclip size={16} />
                                             <span>Context</span>
                                         </button>
-                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Filter Scope">
+                                        <button
+                                            onClick={() => setView?.('filter')}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Filter Scope"
+                                        >
                                             <Sliders size={16} />
                                             <span>Filters</span>
                                         </button>
@@ -155,7 +166,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                             <span>GPT-4o</span>
                                         </button>
                                     </div>
-                                    <button className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0">
+                                    <button
+                                        onClick={handleAnalyze}
+                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0"
+                                    >
                                         <Sparkles size={16} />
                                         <span>Analyze</span>
                                     </button>
@@ -218,10 +232,16 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                             </p>
                                         </div>
                                         <div className="flex gap-4 pt-2">
-                                            <button className="text-xs font-mono uppercase tracking-wider text-primary hover:text-white transition-colors flex items-center gap-2 group">
+                                            <button
+                                                onClick={() => setView?.('analytics_result')}
+                                                className="text-xs font-mono uppercase tracking-wider text-primary hover:text-white transition-colors flex items-center gap-2 group"
+                                            >
                                                 View Analytics <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
                                             </button>
-                                            <button className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white transition-colors flex items-center gap-2">
+                                            <button
+                                                onClick={() => setView?.('filter')}
+                                                className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white transition-colors flex items-center gap-2"
+                                            >
                                                 Refine Search <Filter size={16} />
                                             </button>
                                         </div>

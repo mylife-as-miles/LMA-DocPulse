@@ -1,8 +1,16 @@
 import React from 'react';
 import { RiskHeatmap } from '../components/RiskHeatmap';
-import { ShieldAlert, FileWarning, CheckCircle, Scale, TrendingUp, AlertOctagon, Activity } from 'lucide-react';
+import { ShieldAlert, CheckCircle, TrendingUp, AlertOctagon, Activity } from 'lucide-react';
+import { useActionFeedback } from '../components/ActionFeedback';
+import { ViewState } from '../types';
 
-export const ComplianceView = () => {
+interface ComplianceViewProps {
+    setView?: (view: ViewState) => void;
+}
+
+export const ComplianceView = ({ setView }: ComplianceViewProps) => {
+     const { trigger: fixIssue } = useActionFeedback('Auto-Remediation');
+
     return (
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern">
             <div className="mx-auto max-w-[1600px] flex flex-col gap-8 pb-20">
@@ -86,7 +94,12 @@ export const ComplianceView = () => {
                                 <ShieldAlert size={18} className="text-red-500" />
                                 Critical Violations
                             </h3>
-                            <button className="text-xs text-red-400 hover:text-white transition-colors uppercase font-bold tracking-wider">View All</button>
+                            <button
+                                onClick={() => setView?.('violations_log')}
+                                className="text-xs text-red-400 hover:text-white transition-colors uppercase font-bold tracking-wider"
+                            >
+                                View All
+                            </button>
                         </div>
                         <div className="p-4 space-y-2">
                             {[1, 2, 3].map((i) => (
@@ -99,7 +112,12 @@ export const ComplianceView = () => {
                                         </div>
                                         <p className="text-xs text-text-muted mt-1">Loan #884{i} • Alpha Corp</p>
                                     </div>
-                                    <button className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 rounded-lg hover:bg-red-500 shadow-lg shadow-red-900/20 transition-all opacity-0 group-hover:opacity-100">Fix</button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); fixIssue(); }}
+                                        className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 rounded-lg hover:bg-red-500 shadow-lg shadow-red-900/20 transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        Fix
+                                    </button>
                                 </div>
                             ))}
                         </div>
