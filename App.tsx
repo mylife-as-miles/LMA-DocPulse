@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { Sidebar } from './src/components/Sidebar';
 import { Header } from './src/components/Header';
 import { DashboardView } from './src/views/DashboardView';
@@ -13,6 +14,20 @@ import { LoanReviewView } from './src/views/LoanReviewView';
 import { ProfileView } from './src/views/ProfileView';
 import { LoanReviewsListView } from './src/views/LoanReviewsListView';
 
+// Import new views (will be created in next steps, but keeping imports ready or commenting out until created to avoid build errors.
+// For now, I'll assume I create them before running the app, or I can add them as I go.
+// However, to make this file compilable immediately, I will create empty placeholder files for the new views in the next step.
+// For now, I'll add the imports assuming they exist or will exist shortly.)
+import { FilterView } from './src/views/FilterView';
+import { DocumentDetailView } from './src/views/DocumentDetailView';
+import { EditProfileView } from './src/views/EditProfileView';
+import { AlertsLogView } from './src/views/AlertsLogView';
+import { ActivityLogView } from './src/views/ActivityLogView';
+import { ViolationsLogView } from './src/views/ViolationsLogView';
+import { PublicProfileView } from './src/views/PublicProfileView';
+import { AnalyticsResultView } from './src/views/AnalyticsResultView';
+
+
 import { ViewState, Doc } from './src/types';
 import { INITIAL_VAULT_DOCS } from './src/data/mockData';
 
@@ -23,8 +38,14 @@ export default function App() {
   const getInitialView = (): ViewState => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      // Type guard could be stricter here, but for now simple check
-      if (['dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance', 'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews'].includes(hash)) {
+      const validViews: ViewState[] = [
+        'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+        'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
+        'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
+        'violations_log', 'public_profile', 'analytics_result'
+      ];
+
+      if (validViews.includes(hash as ViewState)) {
         return hash as ViewState;
       }
     }
@@ -44,7 +65,14 @@ export default function App() {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash && hash !== currentView) {
-        if (['dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance', 'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews'].includes(hash)) {
+        // We can cast here safely as long as we trust the hash to be valid or fallback
+         const validViews: ViewState[] = [
+            'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+            'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
+            'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
+            'violations_log', 'public_profile', 'analytics_result'
+          ];
+        if (validViews.includes(hash as ViewState)) {
           setCurrentView(hash as ViewState);
         }
       }
@@ -62,6 +90,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-text-main font-sans selection:bg-primary selection:text-black">
+      <Toaster position="top-right" theme="dark" richColors />
       <Sidebar
         isOpen={sidebarOpen}
         setIsOpen={setSidebarOpen}
@@ -89,6 +118,16 @@ export default function App() {
         {currentView === 'loan_reviews' && <LoanReviewsListView setView={setCurrentView} />}
         {currentView === 'loan_review' && <LoanReviewView />}
         {currentView === 'profile' && <ProfileView />}
+
+        {/* New Views */}
+        {currentView === 'filter' && <FilterView setView={setCurrentView} />}
+        {currentView === 'document_detail' && <DocumentDetailView setView={setCurrentView} />}
+        {currentView === 'edit_profile' && <EditProfileView setView={setCurrentView} />}
+        {currentView === 'alerts_log' && <AlertsLogView setView={setCurrentView} />}
+        {currentView === 'activity_log' && <ActivityLogView setView={setCurrentView} />}
+        {currentView === 'violations_log' && <ViolationsLogView setView={setCurrentView} />}
+        {currentView === 'public_profile' && <PublicProfileView setView={setCurrentView} />}
+        {currentView === 'analytics_result' && <AnalyticsResultView setView={setCurrentView} />}
 
       </main>
     </div>

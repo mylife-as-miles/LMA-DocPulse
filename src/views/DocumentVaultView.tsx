@@ -62,7 +62,10 @@ export const DocumentVaultView = ({ setView, docs }: DocumentVaultViewProps) => 
                 <div className="border-b border-border px-6 py-5 flex items-center justify-between bg-surface/30">
                     <h3 className="text-lg font-display font-bold text-white">Recent Files</h3>
                     <div className="flex gap-2">
-                        <button className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:text-white transition-all">
+                        <button
+                            onClick={() => setView('filter')}
+                            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-muted hover:text-white transition-all"
+                        >
                             <Filter size={14} />
                             Filter
                         </button>
@@ -83,7 +86,11 @@ export const DocumentVaultView = ({ setView, docs }: DocumentVaultViewProps) => 
                         </thead>
                         <tbody className="divide-y divide-border text-white">
                             {docs.map((doc, idx) => (
-                                <tr key={idx} className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer">
+                                <tr
+                                    key={idx}
+                                    onClick={() => setView('document_detail')}
+                                    className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer"
+                                >
                                     <td className="px-6 py-4 text-text-muted">
                                         {doc.type === 'PDF' ? <FileText size={20} /> : <FileIcon size={20} />}
                                     </td>
@@ -99,7 +106,10 @@ export const DocumentVaultView = ({ setView, docs }: DocumentVaultViewProps) => 
                                     <td className="px-6 py-4 text-text-muted text-xs">{doc.date}</td>
                                     <td className="px-6 py-4 text-text-muted text-xs font-mono">{doc.size}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <button className="text-text-muted hover:text-white transition-colors">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setView('document_detail'); }}
+                                            className="text-text-muted hover:text-white transition-colors"
+                                        >
                                             <ChevronRight size={20} />
                                         </button>
                                     </td>

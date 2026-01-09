@@ -1,7 +1,15 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Award, CheckCircle, TrendingUp, Clock, FileText } from 'lucide-react';
+import { ViewState } from '../types';
+import { useActionFeedback } from '../components/ActionFeedback';
 
-export const ProfileView = () => {
+interface ProfileViewProps {
+    setView?: (view: ViewState) => void;
+}
+
+export const ProfileView = ({ setView }: ProfileViewProps) => {
+    const { trigger: shareProfile } = useActionFeedback('Share Profile');
+
     return (
         <div className="flex-1 overflow-y-auto p-0 relative custom-scrollbar">
             {/* Hero Background */}
@@ -44,10 +52,16 @@ export const ProfileView = () => {
                     </div>
 
                     <div className="flex gap-3">
-                        <button className="px-6 py-2.5 rounded-lg bg-surface border border-border text-white text-sm font-bold hover:bg-surface-highlight transition-all">
+                        <button
+                            onClick={() => setView?.('edit_profile')}
+                            className="px-6 py-2.5 rounded-lg bg-surface border border-border text-white text-sm font-bold hover:bg-surface-highlight transition-all"
+                        >
                             Edit Profile
                         </button>
-                        <button className="px-6 py-2.5 rounded-lg bg-primary text-black text-sm font-bold hover:bg-primary-hover shadow-glow transition-all">
+                        <button
+                            onClick={() => shareProfile()}
+                            className="px-6 py-2.5 rounded-lg bg-primary text-black text-sm font-bold hover:bg-primary-hover shadow-glow transition-all"
+                        >
                             Share Profile
                         </button>
                     </div>
@@ -100,7 +114,12 @@ export const ProfileView = () => {
                         <section className="glass-panel p-6 rounded-2xl">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-bold text-white font-display">Recent Activity</h3>
-                                <button className="text-primary text-xs font-bold uppercase hover:text-white transition-colors">View All</button>
+                                <button
+                                    onClick={() => setView?.('activity_log')}
+                                    className="text-primary text-xs font-bold uppercase hover:text-white transition-colors"
+                                >
+                                    View All
+                                </button>
                             </div>
                             <div className="space-y-6">
                                 {[
