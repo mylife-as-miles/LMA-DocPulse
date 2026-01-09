@@ -14,10 +14,7 @@ import { LoanReviewView } from './src/views/LoanReviewView';
 import { ProfileView } from './src/views/ProfileView';
 import { LoanReviewsListView } from './src/views/LoanReviewsListView';
 
-// Import new views (will be created in next steps, but keeping imports ready or commenting out until created to avoid build errors.
-// For now, I'll assume I create them before running the app, or I can add them as I go.
-// However, to make this file compilable immediately, I will create empty placeholder files for the new views in the next step.
-// For now, I'll add the imports assuming they exist or will exist shortly.)
+// Import new views
 import { FilterView } from './src/views/FilterView';
 import { DocumentDetailView } from './src/views/DocumentDetailView';
 import { EditProfileView } from './src/views/EditProfileView';
@@ -26,6 +23,7 @@ import { ActivityLogView } from './src/views/ActivityLogView';
 import { ViolationsLogView } from './src/views/ViolationsLogView';
 import { PublicProfileView } from './src/views/PublicProfileView';
 import { AnalyticsResultView } from './src/views/AnalyticsResultView';
+import { LandingPage } from './src/views/LandingPage';
 
 
 import { ViewState, Doc } from './src/types';
@@ -39,7 +37,7 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
       const validViews: ViewState[] = [
-        'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+        'landing', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
         'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
         'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
         'violations_log', 'public_profile', 'analytics_result'
@@ -49,7 +47,7 @@ export default function App() {
         return hash as ViewState;
       }
     }
-    return 'dashboard';
+    return 'landing';
   };
 
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
@@ -67,7 +65,7 @@ export default function App() {
       if (hash && hash !== currentView) {
         // We can cast here safely as long as we trust the hash to be valid or fallback
          const validViews: ViewState[] = [
-            'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+            'landing', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
             'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
             'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
             'violations_log', 'public_profile', 'analytics_result'
@@ -87,6 +85,16 @@ export default function App() {
     setVaultDocs(prev => [...newDocs, ...prev]);
     setCurrentView('vault');
   };
+
+  // If landing page, render full screen without sidebar/header
+  if (currentView === 'landing') {
+    return (
+      <div className="min-h-screen w-full bg-background text-text-main font-sans selection:bg-primary selection:text-black">
+        <Toaster position="top-right" theme="dark" richColors />
+        <LandingPage setView={setCurrentView} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-text-main font-sans selection:bg-primary selection:text-black">
@@ -114,7 +122,7 @@ export default function App() {
         {currentView === 'analytics' && <PortfolioAnalyticsView />}
         {currentView === 'compliance' && <ComplianceView />}
         {currentView === 'notifications' && <NotificationsView />}
-        {currentView === 'settings' && <SettingsView />}
+        {currentView === 'settings' && <SettingsView setView={setCurrentView} />}
         {currentView === 'loan_reviews' && <LoanReviewsListView setView={setCurrentView} />}
         {currentView === 'loan_review' && <LoanReviewView />}
         {currentView === 'profile' && <ProfileView />}
