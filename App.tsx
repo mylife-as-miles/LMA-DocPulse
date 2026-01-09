@@ -136,7 +136,7 @@ export default function App() {
         {currentView === 'settings' && <SettingsView setView={setCurrentView} />}
         {currentView === 'loan_reviews' && <LoanReviewsListView setView={setCurrentView} />}
         {currentView === 'loan_review' && <LoanReviewView />}
-        {currentView === 'profile' && <ProfileView />}
+        {currentView === 'profile' && <ProfileView setView={setCurrentView} />}
 
         {/* New Views */}
         {currentView === 'filter' && <FilterView setView={setCurrentView} />}
