@@ -142,27 +142,35 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                 {/* Footer / Toggle */}
                 <div className="p-4 border-t border-border/50 flex flex-col gap-4">
                     {/* User Profile */}
-                    <div
-                        onClick={() => setView('profile')}
-                        className={`flex items-center gap-3 rounded-xl bg-surface border border-border p-2 hover:border-primary/50 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center' : ''}`}
-                    >
-                        <div className="relative shrink-0">
-                            <img
-                                src="https://picsum.photos/100/100"
-                                alt="User"
-                                className="h-8 w-8 rounded-full object-cover ring-2 ring-border group-hover:ring-primary transition-all"
-                            />
-                            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-primary border-2 border-surface"></span>
-                        </div>
-                        {!isCollapsed && (
-                            <div className="flex flex-col overflow-hidden animate-fade-in">
-                                <span className="truncate text-xs font-bold text-white font-display">Alex Morgan</span>
-                                <span className="truncate text-[10px] text-text-muted">Senior Analyst</span>
+                    <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
+                        <div
+                            onClick={() => setView('profile')}
+                            className={`flex flex-1 items-center gap-3 rounded-xl bg-surface border border-border p-2 hover:border-primary/50 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center w-full' : ''}`}
+                            title="View Profile"
+                        >
+                            <div className="relative shrink-0">
+                                <img
+                                    src="https://picsum.photos/100/100"
+                                    alt="User"
+                                    className="h-8 w-8 rounded-full object-cover ring-2 ring-border group-hover:ring-primary transition-all"
+                                />
+                                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-primary border-2 border-surface"></span>
                             </div>
-                        )}
-                        {!isCollapsed && (
-                            <LogOut size={16} className="ml-auto text-text-muted hover:text-white transition-colors" />
-                        )}
+                            {!isCollapsed && (
+                                <div className="flex flex-col overflow-hidden animate-fade-in">
+                                    <span className="truncate text-xs font-bold text-white font-display">Alex Morgan</span>
+                                    <span className="truncate text-[10px] text-text-muted">Senior Analyst</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => setView('auth')}
+                            className={`flex items-center justify-center p-2 rounded-xl bg-surface border border-border hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500 transition-all text-text-muted ${isCollapsed ? 'w-full' : ''}`}
+                            title="Sign Out"
+                        >
+                            <LogOut size={18} />
+                        </button>
                     </div>
 
                     {/* Collapse Toggle */}
