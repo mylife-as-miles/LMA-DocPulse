@@ -24,6 +24,7 @@ import { ViolationsLogView } from './src/views/ViolationsLogView';
 import { PublicProfileView } from './src/views/PublicProfileView';
 import { AnalyticsResultView } from './src/views/AnalyticsResultView';
 import { LandingPage } from './src/views/LandingPage';
+import { AuthView } from './src/views/AuthView';
 
 
 import { ViewState, Doc } from './src/types';
@@ -37,7 +38,7 @@ export default function App() {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
       const validViews: ViewState[] = [
-        'landing', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+        'landing', 'auth', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
         'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
         'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
         'violations_log', 'public_profile', 'analytics_result'
@@ -65,7 +66,7 @@ export default function App() {
       if (hash && hash !== currentView) {
         // We can cast here safely as long as we trust the hash to be valid or fallback
          const validViews: ViewState[] = [
-            'landing', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+            'landing', 'auth', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
             'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
             'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
             'violations_log', 'public_profile', 'analytics_result'
@@ -92,6 +93,16 @@ export default function App() {
       <div className="min-h-screen w-full bg-background text-text-main font-sans selection:bg-primary selection:text-black">
         <Toaster position="top-right" theme="dark" richColors />
         <LandingPage setView={setCurrentView} />
+      </div>
+    );
+  }
+
+  // If auth page, render full screen without sidebar/header
+  if (currentView === 'auth') {
+    return (
+      <div className="min-h-screen w-full bg-background text-text-main font-sans selection:bg-primary selection:text-black">
+        <Toaster position="top-right" theme="dark" richColors />
+        <AuthView setView={setCurrentView} />
       </div>
     );
   }

@@ -115,13 +115,13 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
                     </div>
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => setView('dashboard')}
+                            onClick={() => setView('auth')}
                             className="text-sm font-bold text-white hover:text-primary transition-colors"
                         >
                             Sign In
                         </button>
                         <button
-                            onClick={() => setView('dashboard')}
+                            onClick={() => setView('auth')}
                             className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-black text-sm font-bold rounded-full transition-all shadow-glow hover:scale-105 active:scale-95"
                         >
                             Get Started
@@ -153,7 +153,7 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
 
                     <div className="hero-text flex flex-col sm:flex-row items-center gap-4">
                         <button
-                            onClick={() => setView('dashboard')}
+                            onClick={() => setView('auth')}
                             className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-black text-base font-bold rounded-full transition-all shadow-glow flex items-center justify-center gap-2 group"
                         >
                             Start Free Trial
@@ -363,7 +363,7 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
-                            onClick={() => setView('dashboard')}
+                            onClick={() => setView('auth')}
                             className="w-full sm:w-auto px-10 py-5 bg-white text-black text-lg font-bold rounded-full hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.3)]"
                         >
                             Get Started Now
