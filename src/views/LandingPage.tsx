@@ -14,6 +14,8 @@ import {
     Search
 } from 'lucide-react';
 import { ViewState } from '../types';
+import { layouts } from '../components/AbstractBankUIs';
+import { ScanningFeature } from '../components/ScanningFeature';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,6 +28,14 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
     const marqueeRef = useRef<HTMLDivElement>(null);
     const featuresRef = useRef(null);
     const ctaRef = useRef(null);
+    const [currentLayoutIndex, setCurrentLayoutIndex] = React.useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentLayoutIndex((prev) => (prev + 1) % layouts.length);
+        }, 400);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         // Hero Animation
@@ -33,11 +43,6 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
         tl.fromTo(".hero-text",
             { y: 100, opacity: 0 },
             { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: "power4.out" }
-        )
-        .fromTo(".hero-ui",
-            { y: 50, opacity: 0, rotateX: 10 },
-            { y: 0, opacity: 1, rotateX: 0, duration: 1.2, ease: "power3.out" },
-            "-=0.5"
         );
 
         // Marquee Animation
@@ -131,116 +136,54 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
             </nav>
 
             {/* Hero Section */}
-            <section ref={heroRef} className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+            <section ref={heroRef} className="relative h-screen min-h-[800px] w-full flex items-center justify-center overflow-hidden">
+                 {/* Flashing Background UI */}
+                 <div className="absolute inset-0 z-0">
+                    {layouts.map((Layout, index) => (
+                        <div
+                            key={index}
+                            className={`absolute inset-0 transition-opacity duration-0 ${index === currentLayoutIndex ? 'opacity-100' : 'opacity-0'}`}
+                        >
+                            <Layout />
+                        </div>
+                    ))}
+                    {/* Dark overlay to ensure text readability */}
+                    <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px]"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background"></div>
+                </div>
 
-                <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
-                    <div className="hero-text inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-primary text-xs font-bold uppercase tracking-wider mb-8">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+
+                <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10 px-6 mt-[-50px]">
+                    <div className="hero-text inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-primary text-xs font-bold uppercase tracking-wider mb-8 backdrop-blur-md">
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                         New: AI-Powered Smart Extraction 2.0
                     </div>
 
-                    <h1 className="hero-text text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-white mb-8 leading-[1.1]">
+                    <h1 className="hero-text text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-white mb-8 leading-[1.1] drop-shadow-2xl">
                         Document Intelligence <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-primary bg-[200%_auto] animate-shine">
                             Reimagined.
                         </span>
                     </h1>
 
-                    <p className="hero-text text-lg md:text-xl text-text-muted max-w-2xl mb-10 leading-relaxed">
+                    <p className="hero-text text-lg md:text-xl text-text-muted max-w-2xl mb-10 leading-relaxed drop-shadow-md">
                         Automate LMA compliance, extract critical data, and streamline your syndicated loan workflow with the world's most advanced AI engine.
                     </p>
 
                     <div className="hero-text flex flex-col sm:flex-row items-center gap-4">
                         <button
                             onClick={() => setView('auth')}
-                            className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-black text-base font-bold rounded-full transition-all shadow-glow flex items-center justify-center gap-2 group"
+                            className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary-hover text-black text-base font-bold rounded-full transition-all shadow-glow flex items-center justify-center gap-2 group hover:scale-105"
                         >
                             Start Free Trial
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </button>
-                        <button className="w-full sm:w-auto px-8 py-4 bg-surface border border-border hover:bg-surface-highlight text-white text-base font-bold rounded-full transition-all flex items-center justify-center gap-2">
+                        <button className="w-full sm:w-auto px-8 py-4 bg-surface/50 backdrop-blur-md border border-white/10 hover:bg-white/10 text-white text-base font-bold rounded-full transition-all flex items-center justify-center gap-2">
                             <Play size={18} className="fill-current" />
                             Watch Demo
                         </button>
-                    </div>
-
-                    {/* Hero UI Mockup */}
-                    <div className="hero-ui mt-20 relative w-full max-w-5xl mx-auto perspective-[2000px]">
-                        <div className="relative bg-[#0A0A0A] rounded-xl border border-white/10 shadow-2xl overflow-hidden aspect-[16/9] transform-gpu rotate-x-[15deg]">
-                            {/* Fake Browser Header */}
-                            <div className="h-10 border-b border-white/5 bg-white/[0.02] flex items-center px-4 gap-2">
-                                <div className="flex gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-                                </div>
-                                <div className="ml-4 flex-1 max-w-lg bg-black/20 h-6 rounded flex items-center px-3 text-[10px] text-text-muted font-mono">
-                                    https://app.lmadocpulse.com/dashboard
-                                </div>
-                            </div>
-
-                            {/* App Content Preview */}
-                            <div className="p-6 grid grid-cols-12 gap-6 h-full bg-[radial-gradient(circle_at_50%_0%,_var(--tw-gradient-stops))] from-primary/5 via-background to-background">
-                                <div className="col-span-3 space-y-4">
-                                    <div className="h-24 rounded-lg bg-white/5 border border-white/5"></div>
-                                    <div className="h-24 rounded-lg bg-white/5 border border-white/5"></div>
-                                    <div className="h-24 rounded-lg bg-white/5 border border-white/5"></div>
-                                </div>
-                                <div className="col-span-6 space-y-4">
-                                    <div className="h-48 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center">
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                                                <Search className="text-primary" size={32} />
-                                            </div>
-                                            <div className="h-2 w-32 bg-white/10 rounded"></div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="h-32 rounded-lg bg-white/5 border border-white/5"></div>
-                                        <div className="h-32 rounded-lg bg-white/5 border border-white/5"></div>
-                                    </div>
-                                </div>
-                                <div className="col-span-3 bg-white/5 rounded-lg border border-white/5 p-4 space-y-3">
-                                    <div className="h-8 w-8 rounded bg-green-500/20 flex items-center justify-center text-green-500"><CheckCircle size={16} /></div>
-                                    <div className="h-2 w-20 bg-white/10 rounded"></div>
-                                    <div className="h-2 w-16 bg-white/10 rounded"></div>
-                                    <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-                                        <div className="h-2 w-full bg-white/5 rounded"></div>
-                                        <div className="h-2 w-full bg-white/5 rounded"></div>
-                                        <div className="h-2 w-2/3 bg-white/5 rounded"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Floating Elements */}
-                        <div className="absolute -right-12 top-20 bg-surface border border-border p-4 rounded-xl shadow-2xl animate-float">
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                    <CheckCircle size={16} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-white">Compliance Checked</div>
-                                    <div className="text-xs text-text-muted">Just now</div>
-                                </div>
-                            </div>
-                            <div className="h-1 w-full bg-green-500/20 rounded-full overflow-hidden">
-                                <div className="h-full w-full bg-green-500"></div>
-                            </div>
-                        </div>
-
-                        <div className="absolute -left-8 bottom-20 bg-surface border border-border p-4 rounded-xl shadow-2xl animate-float-delayed">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                                    <Command size={20} />
-                                </div>
-                                <div>
-                                    <div className="text-sm font-bold text-white">Smart Extraction</div>
-                                    <div className="text-xs text-text-muted">Processing 24 documents...</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -304,7 +247,7 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
             </section>
 
             {/* Advanced Feature Showcase */}
-            <section className="py-32 bg-white/[0.02] border-y border-white/5">
+            <section className="py-32 bg-white/[0.02] border-y border-white/5 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col lg:flex-row items-center gap-20">
                         <div className="lg:w-1/2 space-y-8">
@@ -312,18 +255,20 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
                                 <FileText size={12} />
                                 Smart Parsing
                             </div>
-                            <h2 className="text-4xl md:text-5xl font-display font-bold text-white">Turn unstructured PDFs into structured data.</h2>
-                            <p className="text-lg text-text-muted">
-                                Stop manually copying data from PDF loan agreements. Our engine identifies definitions, clauses, and schedules, converting them into a queryable database.
+                            <h2 className="text-4xl md:text-5xl font-display font-bold text-white leading-tight">
+                                Turn unstructured PDFs into <span className="text-primary">structured intelligence.</span>
+                            </h2>
+                            <p className="text-lg text-text-muted leading-relaxed font-light">
+                                Eliminate manual data entry. Our proprietary engine parses complex LMA loan agreements, identifying definitions, clauses, and schedules with human-level precision.
                             </p>
-                            <ul className="space-y-4">
+                            <ul className="space-y-4 mt-8">
                                 {[
-                                    "Recognizes standard LMA clauses automatically",
-                                    "Links defined terms to their definitions",
-                                    "Exports to Excel, JSON, or direct API integration"
+                                    "Automatic Clause Recognition & Linking",
+                                    "Entity Extraction (Borrowers, Lenders, Agents)",
+                                    "Export to Excel, JSON, or API"
                                 ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-white">
-                                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                                    <li key={i} className="flex items-center gap-3 text-white font-medium">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 shadow-[0_0_10px_rgba(0,255,157,0.2)]">
                                             <CheckCircle size={14} />
                                         </div>
                                         {item}
@@ -331,21 +276,9 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
                                 ))}
                             </ul>
                         </div>
-                        <div className="lg:w-1/2 relative">
+                        <div className="lg:w-1/2 relative perspective-[2000px]">
                             <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/20 to-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
-                            <div className="relative bg-black rounded-xl border border-white/10 p-2 shadow-2xl">
-                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop" alt="Dashboard" className="rounded-lg opacity-80" />
-
-                                <div className="absolute top-1/4 -left-10 bg-surface border border-border p-4 rounded-xl shadow-xl flex items-center gap-4 animate-float">
-                                    <div className="w-10 h-10 rounded bg-red-500/20 flex items-center justify-center text-red-500">
-                                        <FileText size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs font-bold text-text-muted uppercase">Scanning</div>
-                                        <div className="text-sm font-bold text-white">Facility Agreement.pdf</div>
-                                    </div>
-                                </div>
-                            </div>
+                            <ScanningFeature />
                         </div>
                     </div>
                 </div>
