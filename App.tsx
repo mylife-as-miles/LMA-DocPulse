@@ -28,10 +28,16 @@ import { AuthView } from './src/views/AuthView';
 
 
 import { ViewState, Doc } from './src/types';
-import { INITIAL_VAULT_DOCS } from './src/data/mockData';
+import { initDB, db } from './src/db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Initialize DB
+  useEffect(() => {
+    initDB();
+  }, []);
 
   // Initial state check from hash, default to dashboard
   const getInitialView = (): ViewState => {
@@ -52,7 +58,12 @@ export default function App() {
   };
 
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
-  const [vaultDocs, setVaultDocs] = useState<Doc[]>(INITIAL_VAULT_DOCS);
+
+  // Replace useState with useLiveQuery for vaultDocs
+  const vaultDocs = useLiveQuery(
+    () => db.docs.toArray(),
+    []
+  );
 
   // Sync state to hash
   useEffect(() => {
@@ -82,8 +93,9 @@ export default function App() {
   }, [currentView]);
 
 
-  const handleUploadComplete = (newDocs: Doc[]) => {
-    setVaultDocs(prev => [...newDocs, ...prev]);
+  const handleUploadComplete = async (newDocs: Doc[]) => {
+    // Add new docs to Dexie instead of state
+    await db.docs.bulkAdd(newDocs);
     setCurrentView('vault');
   };
 
@@ -127,7 +139,7 @@ export default function App() {
         />
 
         {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
-        {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs} />}
+        {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs || []} />}
         {currentView === 'upload' && <UploadView setView={setCurrentView} onUploadComplete={handleUploadComplete} />}
         {currentView === 'smart_query' && <SmartQueryView setView={setCurrentView} />}
         {currentView === 'analytics' && <PortfolioAnalyticsView />}

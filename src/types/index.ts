@@ -2,6 +2,7 @@ import React from 'react';
 export type ViewState = 'landing' | 'auth' | 'dashboard' | 'vault' | 'upload' | 'smart_query' | 'analytics' | 'compliance' | 'notifications' | 'settings' | 'loan_review' | 'profile' | 'loan_reviews' | 'filter' | 'document_detail' | 'edit_profile' | 'alerts_log' | 'activity_log' | 'violations_log' | 'public_profile' | 'analytics_result';
 
 export interface Doc {
+    id?: number;
     name: string;
     type: 'PDF' | 'DOCX' | 'XLSX' | 'File';
     size: string;
