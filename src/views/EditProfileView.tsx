@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Save, User, Mail, Briefcase, MapPin, Phone, X, Plus } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
 import { toast } from 'sonner';
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface EditProfileViewProps {
     setView: (view: ViewState) => void;
@@ -11,17 +13,76 @@ interface EditProfileViewProps {
 
 export const EditProfileView = ({ setView }: EditProfileViewProps) => {
     const { trigger: saveProfile } = useActionFeedback('Update Profile');
-    const [skills, setSkills] = useState([
-        'LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling',
-        'Compliance', 'Structured Finance', 'Team Leadership'
-    ]);
+    const [userId, setUserId] = useState<number | undefined>(undefined);
+
+    // Initial load of user ID
+    useEffect(() => {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            setUserId(user.id);
+        }
+    }, []);
+
+    // Fetch user data
+    const user = useLiveQuery(
+        () => (userId ? db.users.get(userId) : Promise.resolve(undefined)),
+        [userId]
+    );
+
+    // Local state for form fields
+    const [formData, setFormData] = useState({
+        name: '',
+        title: '',
+        email: '',
+        phone: '',
+        location: '',
+        bio: '',
+        avatar: ''
+    });
+
+    const [skills, setSkills] = useState<string[]>([]);
     const [newSkill, setNewSkill] = useState('');
+
+    // Update local state when user data is loaded
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                title: user.title || 'Senior Credit Analyst',
+                email: user.email || '',
+                phone: user.phone || '+44 20 7123 4567',
+                location: user.location || 'London, United Kingdom',
+                bio: user.bio || 'Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance. Specialized in structured finance and leveraging AI tools to streamline documentation review processes.',
+                avatar: user.avatar || 'https://picsum.photos/100/100'
+            });
+            setSkills(user.skills || [
+                'LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling',
+                'Compliance', 'Structured Finance', 'Team Leadership'
+            ]);
+        }
+    }, [user]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!userId) return;
+
         await saveProfile(async () => {
-             // Mock API call
-             return new Promise(resolve => setTimeout(resolve, 800));
+             await db.users.update(userId, {
+                 name: formData.name,
+                 title: formData.title,
+                 email: formData.email,
+                 phone: formData.phone,
+                 location: formData.location,
+                 bio: formData.bio,
+                 skills: skills,
+                 avatar: formData.avatar
+             });
         });
         setTimeout(() => setView('profile'), 1000);
     };
@@ -75,7 +136,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-2xl p-1 bg-gradient-to-br from-primary to-transparent shadow-glow">
                                     <img
-                                        src="https://picsum.photos/100/100"
+                                        src={formData.avatar}
                                         alt="Current Avatar"
                                         className="w-full h-full object-cover rounded-xl border-2 border-black"
                                     />
@@ -103,35 +164,71 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <User size={14} /> Full Name
                                 </label>
-                                <input type="text" defaultValue="Alex Morgan" className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner" />
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                                />
                             </div>
                              <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Briefcase size={14} /> Job Title
                                 </label>
-                                <input type="text" defaultValue="Senior Credit Analyst" className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner" />
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                                />
                             </div>
                              <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Mail size={14} /> Email
                                 </label>
-                                <input type="email" defaultValue="alex.morgan@lmadocpulse.com" className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner" />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                                />
                             </div>
                              <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Phone size={14} /> Phone
                                 </label>
-                                <input type="tel" defaultValue="+44 20 7123 4567" className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner" />
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                                />
                             </div>
                              <div className="md:col-span-2 space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <MapPin size={14} /> Location
                                 </label>
-                                <input type="text" defaultValue="London, United Kingdom" className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner" />
+                                <input
+                                    type="text"
+                                    name="location"
+                                    value={formData.location}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                                />
                             </div>
                             <div className="md:col-span-2 space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted group-focus-within:text-primary transition-colors">Bio</label>
-                                <textarea rows={4} className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none shadow-inner leading-relaxed" defaultValue="Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance. Specialized in structured finance and leveraging AI tools to streamline documentation review processes." />
+                                <textarea
+                                    name="bio"
+                                    rows={4}
+                                    value={formData.bio}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none shadow-inner leading-relaxed"
+                                />
                             </div>
                         </div>
                     </div>
