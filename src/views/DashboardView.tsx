@@ -23,7 +23,8 @@ import { StatCard } from '../components/StatCard';
 import { AlertItem } from '../components/AlertItem';
 import { RiskHeatmap } from '../components/RiskHeatmap';
 import { useActionFeedback } from '../components/ActionFeedback';
-import { CHART_DATA, LOANS_DATA } from '../data/mockData';
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 import { ViewState } from '../types';
 
@@ -34,6 +35,9 @@ interface DashboardViewProps {
 export const DashboardView = ({ setView }: DashboardViewProps) => {
     const { trigger: triggerExport } = useActionFeedback('Export Data');
     const { trigger: triggerDiagnostics } = useActionFeedback('System Diagnostics');
+
+    const chartData = useLiveQuery(() => db.chartData.toArray()) || [];
+    const loansData = useLiveQuery(() => db.loans.toArray()) || [];
 
     return (
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
@@ -100,7 +104,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
 
                     <div className="flex-1 min-h-[250px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.2} />
@@ -213,7 +217,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border text-white">
-                                {LOANS_DATA.map((loan) => (
+                                {loansData.map((loan) => (
                                     <tr
                                         key={loan.id}
                                         className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer"

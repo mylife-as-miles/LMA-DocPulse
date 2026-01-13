@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { toast } from 'sonner';
+import { db } from '../db';
 
 interface AuthViewProps {
     setView: (view: ViewState) => void;
@@ -29,6 +30,7 @@ export const AuthView = ({ setView }: AuthViewProps) => {
     // Form states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState(''); // Added name state for signup
 
     // Animation refs
     const leftPanelRef = useRef(null);
@@ -59,19 +61,46 @@ export const AuthView = ({ setView }: AuthViewProps) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false);
-            toast.success(mode === 'login' ? "Welcome back!" : "Account created successfully!");
+        try {
+            if (mode === 'signup') {
+                const existingUser = await db.users.where('email').equals(email).first();
+                if (existingUser) {
+                    toast.error("User with this email already exists.");
+                    setIsLoading(false);
+                    return;
+                }
+                await db.users.add({
+                    email,
+                    password,
+                    name: name || email.split('@')[0]
+                });
+                toast.success("Account created successfully! Please log in.");
+                setMode('login'); // Switch to login after signup
+                setIsLoading(false);
+            } else {
+                const user = await db.users.where('email').equals(email).first();
+                if (user && user.password === password) {
+                    toast.success("Welcome back!");
+                    // Store user session (simple version)
+                    localStorage.setItem('currentUser', JSON.stringify(user));
 
-            // Exit animation
-            gsap.to(containerRef.current, {
-                opacity: 0,
-                y: -20,
-                duration: 0.5,
-                onComplete: () => setView('dashboard')
-            });
-        }, 1500);
+                    // Exit animation
+                    gsap.to(containerRef.current, {
+                        opacity: 0,
+                        y: -20,
+                        duration: 0.5,
+                        onComplete: () => setView('dashboard')
+                    });
+                } else {
+                    toast.error("Invalid email or password.");
+                    setIsLoading(false);
+                }
+            }
+        } catch (error) {
+            console.error("Auth error:", error);
+            toast.error("An error occurred during authentication.");
+            setIsLoading(false);
+        }
     };
 
     const toggleMode = () => {
@@ -180,6 +209,26 @@ export const AuthView = ({ setView }: AuthViewProps) => {
 
                     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-4">
+                            {mode === 'signup' && (
+                                <div className="form-element space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-text-muted">Full Name</label>
+                                    <div className="relative group">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <div className="w-[18px] flex justify-center">
+                                                 <span className="text-slate-500 group-focus-within:text-primary transition-colors font-bold">Aa</span>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="w-full bg-surface border border-border rounded-lg pl-10 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
+                                            placeholder="John Doe"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="form-element space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wider text-text-muted">Email</label>
                                 <div className="relative group">

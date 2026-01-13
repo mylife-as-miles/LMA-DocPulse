@@ -20,7 +20,7 @@ interface ActionFeedbackProps {
 export const useActionFeedback = (actionName: string, options?: { successMessage?: string, errorMessage?: string, duration?: number }) => {
     const [state, setState] = useState<ActionState>('idle');
 
-    const trigger = async (promiseOrFn: () => Promise<void> | void) => {
+    const trigger = async (promiseOrFn?: () => Promise<void> | void) => {
         setState('processing');
         const toastId = toast.loading(`${actionName}...`, {
              description: 'Please wait while we process your request.',
