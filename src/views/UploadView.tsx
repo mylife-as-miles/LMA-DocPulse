@@ -3,7 +3,6 @@ import {
     UploadCloud,
     FileText,
     X,
-    File as FileIcon,
     CheckCircle2,
     Trash2,
     Image as ImageIcon,
@@ -115,12 +114,22 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
 
         const newDocs: Doc[] = readyItems.map(item => {
             const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
+            // Generate some dummy entities for the requirement
+            const dummyEntities = [
+                "Alpha Corp",
+                "LMA Banking Group",
+                "USD 50,000,000",
+                "24 October 2024"
+            ];
+
             return {
                 name: item.file.name,
                 type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
                 size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
-                status: 'Analyzed', // Immediate Analysis for demo
-                date: 'Just now'
+                status: 'Analyzed',
+                date: new Date().toLocaleDateString(),
+                fileData: item.file, // Store the Blob
+                entities: dummyEntities
             };
         });
 

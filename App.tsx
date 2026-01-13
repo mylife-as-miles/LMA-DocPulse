@@ -58,6 +58,7 @@ export default function App() {
   };
 
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
+  const [selectedDocId, setSelectedDocId] = useState<number | undefined>(undefined);
 
   // Replace useState with useLiveQuery for vaultDocs
   const vaultDocs = useLiveQuery(
@@ -139,7 +140,13 @@ export default function App() {
         />
 
         {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
-        {currentView === 'vault' && <DocumentVaultView setView={setCurrentView} docs={vaultDocs || []} />}
+        {currentView === 'vault' && (
+          <DocumentVaultView
+            setView={setCurrentView}
+            docs={vaultDocs || []}
+            onSelectDoc={(id) => setSelectedDocId(id)}
+          />
+        )}
         {currentView === 'upload' && <UploadView setView={setCurrentView} onUploadComplete={handleUploadComplete} />}
         {currentView === 'smart_query' && <SmartQueryView setView={setCurrentView} />}
         {currentView === 'analytics' && <PortfolioAnalyticsView />}
@@ -152,7 +159,12 @@ export default function App() {
 
         {/* New Views */}
         {currentView === 'filter' && <FilterView setView={setCurrentView} />}
-        {currentView === 'document_detail' && <DocumentDetailView setView={setCurrentView} />}
+        {currentView === 'document_detail' && (
+          <DocumentDetailView
+            setView={setCurrentView}
+            docId={selectedDocId}
+          />
+        )}
         {currentView === 'edit_profile' && <EditProfileView setView={setCurrentView} />}
         {currentView === 'alerts_log' && <AlertsLogView setView={setCurrentView} />}
         {currentView === 'activity_log' && <ActivityLogView setView={setCurrentView} />}

@@ -1,16 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Download, Eye, FileText, Info, Share2, Printer, Search } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+// Configure PDF worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocumentDetailViewProps {
     setView: (view: ViewState) => void;
+    docId?: number;
 }
 
-export const DocumentDetailView = ({ setView }: DocumentDetailViewProps) => {
+export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) => {
     const { trigger: triggerDownload } = useActionFeedback('Download');
     const { trigger: triggerShare } = useActionFeedback('Share');
+
+    const doc = useLiveQuery(() => docId ? db.docs.get(docId) : Promise.resolve(undefined), [docId]);
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (doc && doc.fileData) {
+            const url = URL.createObjectURL(doc.fileData);
+            setFileUrl(url);
+            return () => URL.revokeObjectURL(url);
+        }
+    }, [doc]);
+
+    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+        setNumPages(numPages);
+    };
+
+    const handleDownload = () => {
+        if (fileUrl && doc) {
+            triggerDownload();
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = doc.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const handleShare = async () => {
+        triggerShare();
+        if (navigator.share && doc) {
+            try {
+                await navigator.share({
+                    title: doc.name,
+                    text: 'Shared from DocPulse',
+                    url: window.location.href, // Or generate a specific link if we had a backend
+                });
+            } catch (error) {
+                console.log('Error sharing:', error);
+            }
+        } else {
+             // Fallback
+             alert('Share feature not supported on this browser or context.');
+        }
+    };
+
+    const handlePrint = () => {
+        if (fileUrl) {
+            const printWindow = window.open(fileUrl);
+            if (printWindow) {
+                printWindow.print();
+            }
+        }
+    };
+
+    if (!doc) {
+        return <div className="flex items-center justify-center h-full text-white">Loading...</div>;
+    }
 
     return (
         <motion.div
@@ -33,25 +99,28 @@ export const DocumentDetailView = ({ setView }: DocumentDetailViewProps) => {
                             <FileText size={20} />
                         </div>
                         <div>
-                            <h1 className="text-white font-bold text-sm leading-tight">Loan_Agreement_Alpha_Corp_Signed.pdf</h1>
-                            <p className="text-xs text-text-muted">Uploaded 2 hours ago • 4.2 MB</p>
+                            <h1 className="text-white font-bold text-sm leading-tight">{doc.name}</h1>
+                            <p className="text-xs text-text-muted">Uploaded {doc.date} • {doc.size}</p>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                      <button
-                        onClick={() => triggerShare()}
+                        onClick={handleShare}
                         className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Share"
                     >
                         <Share2 size={18} />
                     </button>
                     <button
-                        onClick={() => triggerDownload()}
+                        onClick={handleDownload}
                         className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Download"
                     >
                         <Download size={18} />
                     </button>
-                     <button className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Print">
+                     <button
+                        onClick={handlePrint}
+                        className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Print"
+                    >
                         <Printer size={18} />
                     </button>
                     <div className="h-6 w-px bg-border mx-2"></div>
@@ -66,38 +135,38 @@ export const DocumentDetailView = ({ setView }: DocumentDetailViewProps) => {
 
             {/* Content Container */}
             <div className="flex-1 flex overflow-hidden relative">
-                {/* PDF Viewer Mock */}
+                {/* PDF Viewer */}
                 <div className="flex-1 bg-[#1a1a1a] p-8 overflow-y-auto flex justify-center custom-scrollbar">
-                    <div className="w-full max-w-4xl bg-white min-h-[1000px] shadow-2xl mb-8 relative group">
-                        {/* Placeholder Content */}
-                        <div className="p-16 space-y-8 font-serif text-slate-800">
-                             <div className="text-center mb-12">
-                                <h1 className="text-2xl font-bold uppercase tracking-widest mb-4">Facility Agreement</h1>
-                                <p className="text-sm text-slate-500">Dated 24 October 2024</p>
-                            </div>
-
-                            <p className="leading-loose text-justify text-sm">
-                                <strong>THIS AGREEMENT</strong> is made on 24 October 2024 between <strong>ALPHA CORP</strong> as borrower (the "Borrower") and <strong>LMA BANKING GROUP</strong> as lender (the "Lender").
-                            </p>
-
-                            <h3 className="text-sm font-bold uppercase mt-8">1. Definitions and Interpretation</h3>
-                            <p className="leading-loose text-justify text-sm">
-                                1.1 In this Agreement, unless the context otherwise requires, the following terms shall have the meanings ascribed to them below:
-                            </p>
-                            <p className="pl-8 leading-loose text-justify text-sm italic text-slate-600">
-                                "Facility" means the term loan facility made available under this Agreement as described in Clause 2 (The Facility).
-                            </p>
-                            <p className="pl-8 leading-loose text-justify text-sm italic text-slate-600">
-                                "Interest Period" means, in relation to a Loan, each period determined in accordance with Clause 9 (Interest Periods).
-                            </p>
-
-                             {/* Highlight overlay */}
-                             <div className="absolute top-[350px] left-[60px] right-[60px] h-[60px] bg-yellow-300/20 border border-yellow-400/50 rounded cursor-pointer hover:bg-yellow-300/30 transition-colors group/highlight">
-                                <div className="absolute -right-32 top-0 bg-surface border border-border p-2 rounded shadow-xl opacity-0 group-hover/highlight:opacity-100 transition-opacity w-28">
-                                    <p className="text-[10px] text-text-muted">Identified as Definition</p>
-                                </div>
+                    <div className="w-full max-w-4xl bg-white min-h-[1000px] shadow-2xl mb-8 relative group text-slate-800">
+                         {doc.type === 'PDF' && fileUrl ? (
+                            <Document
+                                file={fileUrl}
+                                onLoadSuccess={onDocumentLoadSuccess}
+                                className="flex flex-col items-center"
+                            >
+                                {Array.from(new Array(numPages), (el, index) => (
+                                    <Page
+                                        key={`page_${index + 1}`}
+                                        pageNumber={index + 1}
+                                        width={800} // Fixed width for consistency
+                                        className="mb-4 shadow-sm"
+                                    />
+                                ))}
+                            </Document>
+                         ) : doc.type === 'DOCX' ? (
+                             <div className="p-10 flex flex-col items-center justify-center h-full">
+                                 <FileText size={64} className="text-blue-500 mb-4" />
+                                 <h2 className="text-xl font-bold">DOCX Preview Not Supported</h2>
+                                 <p className="text-slate-500 mt-2">Please download the file to view its contents.</p>
+                                 <button onClick={handleDownload} className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Download File</button>
                              </div>
-                        </div>
+                         ) : (
+                             <div className="p-10 flex flex-col items-center justify-center h-full">
+                                <FileText size={64} className="text-slate-400 mb-4" />
+                                <h2 className="text-xl font-bold">Preview Not Available</h2>
+                                <p className="text-slate-500 mt-2">No preview available for this file type.</p>
+                             </div>
+                         )}
                     </div>
                 </div>
 
@@ -112,14 +181,21 @@ export const DocumentDetailView = ({ setView }: DocumentDetailViewProps) => {
                         <div className="space-y-1">
                             <p className="text-xs font-bold text-text-muted uppercase">Status</p>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border text-primary bg-primary/10 border-primary/20">
-                                Analyzed
+                                {doc.status}
                             </span>
                         </div>
                         <div className="space-y-1">
                             <p className="text-xs font-bold text-text-muted uppercase">Entities Found</p>
                             <div className="flex flex-wrap gap-2">
-                                <span className="px-2 py-1 rounded bg-surface-highlight border border-border text-xs text-white">Alpha Corp</span>
-                                <span className="px-2 py-1 rounded bg-surface-highlight border border-border text-xs text-white">LMA Banking</span>
+                                {doc.entities && doc.entities.length > 0 ? (
+                                    doc.entities.map((entity, idx) => (
+                                        <span key={idx} className="px-2 py-1 rounded bg-surface-highlight border border-border text-xs text-white">
+                                            {entity}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-xs text-text-muted italic">No entities found</span>
+                                )}
                             </div>
                         </div>
                          <div className="space-y-1">
@@ -127,12 +203,13 @@ export const DocumentDetailView = ({ setView }: DocumentDetailViewProps) => {
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-text-muted">Effective</span>
-                                    <span className="text-white font-mono">24 Oct 2024</span>
+                                    <span className="text-white font-mono">{doc.date}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
+                                {/* Mock termination date since we don't have it yet */}
+                                {/* <div className="flex justify-between text-sm">
                                     <span className="text-text-muted">Termination</span>
-                                    <span className="text-white font-mono">24 Oct 2029</span>
-                                </div>
+                                    <span className="text-white font-mono">-</span>
+                                </div> */}
                             </div>
                         </div>
                     </div>
