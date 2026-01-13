@@ -35,6 +35,12 @@ export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) 
         setNumPages(numPages);
     };
 
+    const handleApprove = async () => {
+        if (doc && doc.id) {
+            await db.docs.update(doc.id, { status: 'Analyzed' });
+        }
+    };
+
     const handleDownload = () => {
         if (fileUrl && doc) {
             triggerDownload();
@@ -178,11 +184,24 @@ export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) 
                         </h3>
                     </div>
                     <div className="p-4 space-y-6 flex-1 overflow-y-auto">
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                             <p className="text-xs font-bold text-text-muted uppercase">Status</p>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border text-primary bg-primary/10 border-primary/20">
-                                {doc.status}
-                            </span>
+                            <div className="flex flex-col gap-2">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border w-fit
+                                    ${doc.status === 'Analyzed' ? 'text-primary bg-primary/10 border-primary/20' :
+                                    doc.status === 'Review' ? 'text-accent-orange bg-accent-orange/10 border-accent-orange/20' :
+                                    'text-text-muted bg-surface-highlight border-border'}`}>
+                                    {doc.status}
+                                </span>
+                                {doc.status !== 'Analyzed' && (
+                                    <button
+                                        onClick={handleApprove}
+                                        className="text-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 px-3 py-1.5 rounded transition-colors"
+                                    >
+                                        Mark as Analyzed
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-1">
                             <p className="text-xs font-bold text-text-muted uppercase">Entities Found</p>
