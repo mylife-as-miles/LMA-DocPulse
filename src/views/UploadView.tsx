@@ -122,11 +122,15 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                 "24 October 2024"
             ];
 
+            // Simple logic to determine status for demo purposes
+            // If filename contains "draft", mark for review. Otherwise mostly Analyzed.
+            const isReview = item.file.name.toLowerCase().includes('draft') || Math.random() > 0.8;
+
             return {
                 name: item.file.name,
                 type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
                 size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
-                status: 'Analyzed',
+                status: isReview ? 'Review' : 'Analyzed',
                 date: new Date().toLocaleDateString(),
                 fileData: item.file, // Store the Blob
                 entities: dummyEntities
