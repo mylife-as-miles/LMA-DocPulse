@@ -46,3 +46,14 @@ export interface Alert {
     subtitle: string;
     type: 'critical' | 'warning' | 'info';
 }
+
+export interface Loan {
+    id: string; // e.g. "LN-2023-884"
+    counterparty: string; // e.g. "Alpha Corp"
+    amount: string; // e.g. "$4.5M"
+    type: string; // e.g. "Term Loan B"
+    status: 'Approved' | 'In Review' | 'Rejected' | 'Pending';
+    date: string; // e.g. "Oct 24, 2024"
+    risk: 'Low' | 'Medium' | 'High' | 'Critical';
+    deadline?: string;
+}
