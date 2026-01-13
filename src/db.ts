@@ -1,6 +1,5 @@
 import Dexie, { Table } from 'dexie';
 import { Doc } from './types';
-import { INITIAL_VAULT_DOCS } from './data/mockData';
 
 export interface User {
   id?: number;
@@ -52,10 +51,11 @@ export const db = new AppDatabase();
 
 // Initialize DB with mock data if empty
 export const initDB = async () => {
-    const docsCount = await db.docs.count();
-    if (docsCount === 0) {
-        await db.docs.bulkAdd(INITIAL_VAULT_DOCS);
-    }
+    // Replaced mock docs initialization with realtime data check (effectively doing nothing for docs initially)
+    // const docsCount = await db.docs.count();
+    // if (docsCount === 0) {
+    //     await db.docs.bulkAdd(INITIAL_VAULT_DOCS);
+    // }
 
     // We can also initialize other data if needed, but the prompt mainly focused on mockData replacement.
     // Let's bring in CHART_DATA and LOANS_DATA too

@@ -8,6 +8,8 @@ export interface Doc {
     size: string;
     status: string;
     date: string;
+    fileData?: Blob;
+    entities?: string[];
 }
 
 export interface QueueItem {
