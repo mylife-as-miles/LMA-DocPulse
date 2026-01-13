@@ -7,6 +7,12 @@ export interface User {
   email: string;
   password: string; // Storing plain text password for now as per simple auth requirement, ideally should be hashed
   name: string;
+  title?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  skills?: string[];
+  avatar?: string;
 }
 
 export interface ChartData {

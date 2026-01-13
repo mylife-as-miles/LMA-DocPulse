@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Award, CheckCircle, TrendingUp, Clock, FileText } from 'lucide-react';
 import { ViewState } from '../types';
 import { useActionFeedback } from '../components/ActionFeedback';
+import { db, User } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface ProfileViewProps {
     setView?: (view: ViewState) => void;
@@ -9,6 +11,36 @@ interface ProfileViewProps {
 
 export const ProfileView = ({ setView }: ProfileViewProps) => {
     const { trigger: shareProfile } = useActionFeedback('Share Profile');
+    const [userId, setUserId] = useState<number | undefined>(undefined);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            setUserId(user.id);
+        }
+    }, []);
+
+    const user = useLiveQuery(
+        () => (userId ? db.users.get(userId) : Promise.resolve(undefined)),
+        [userId]
+    );
+
+    if (!user && !userId) {
+         // Fallback or loading if no user logged in (though app architecture implies login)
+         // But for visual continuity we can keep rendering something or a loader.
+         // Let's rely on the structure but maybe show generic info if data missing
+    }
+
+    const displayName = user?.name || "User";
+    const displayTitle = user?.title || "Senior Credit Analyst";
+    const displayEmail = user?.email || "user@example.com";
+    const displayPhone = user?.phone || "+44 20 7123 4567";
+    const displayLocation = user?.location || "London, UK";
+    const displayBio = user?.bio || "Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance. Specialized in structured finance and leveraging AI tools to streamline documentation review processes. Consistently maintaining high accuracy rates while managing high-volume portfolios.";
+    const displaySkills = user?.skills || ['LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling', 'Compliance', 'Structured Finance', 'Team Leadership', 'Regulatory Reporting'];
+    const displayAvatar = user?.avatar || "https://picsum.photos/100/100";
+
 
     return (
         <div className="flex-1 overflow-y-auto p-0 relative custom-scrollbar">
@@ -24,7 +56,7 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                     <div className="relative">
                         <div className="w-32 h-32 rounded-2xl p-1 bg-gradient-to-br from-primary to-transparent shadow-glow">
                             <img
-                                src="https://picsum.photos/100/100"
+                                src={displayAvatar}
                                 alt="Profile"
                                 className="w-full h-full object-cover rounded-xl border-4 border-black"
                             />
@@ -36,17 +68,17 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                     </div>
 
                     <div className="flex-1 space-y-2">
-                        <h1 className="text-3xl md:text-4xl font-display font-bold text-white">Alex Morgan</h1>
-                        <p className="text-lg text-primary font-medium">Senior Credit Analyst</p>
+                        <h1 className="text-3xl md:text-4xl font-display font-bold text-white">{displayName}</h1>
+                        <p className="text-lg text-primary font-medium">{displayTitle}</p>
                         <div className="flex flex-wrap gap-4 pt-2">
                             <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <Mail size={14} /> alex.morgan@lmadocpulse.com
+                                <Mail size={14} /> {displayEmail}
                             </span>
                             <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <Phone size={14} /> +44 20 7123 4567
+                                <Phone size={14} /> {displayPhone}
                             </span>
                             <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <MapPin size={14} /> London, UK
+                                <MapPin size={14} /> {displayLocation}
                             </span>
                         </div>
                     </div>
@@ -94,16 +126,14 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
                             <h3 className="text-lg font-bold text-white mb-4 font-display">About Me</h3>
                             <p className="text-text-muted leading-relaxed">
-                                Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance.
-                                Specialized in structured finance and leveraging AI tools to streamline documentation review processes.
-                                Consistently maintaining high accuracy rates while managing high-volume portfolios.
+                                {displayBio}
                             </p>
                         </section>
 
                         <section className="glass-panel p-6 rounded-2xl">
                             <h3 className="text-lg font-bold text-white mb-6 font-display">Expertise & Skills</h3>
                             <div className="flex flex-wrap gap-2">
-                                {['LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling', 'Compliance', 'Structured Finance', 'Team Leadership', 'Regulatory Reporting'].map((skill, i) => (
+                                {displaySkills.map((skill, i) => (
                                     <span key={i} className="px-3 py-1.5 rounded-full bg-surface-highlight border border-border text-sm text-slate-300 hover:text-white hover:border-primary/50 transition-colors cursor-default">
                                         {skill}
                                     </span>
