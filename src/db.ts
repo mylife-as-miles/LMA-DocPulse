@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Doc } from './types';
+import { Doc, Alert } from './types';
 
 export interface User {
   id?: number;
@@ -32,9 +32,10 @@ export interface Loan {
 
 export class AppDatabase extends Dexie {
   users!: Table<User>;
-  docs!: Table<Doc, number>; // Primary key is number (auto-incremented) but we'll see if Doc has an ID
+  docs!: Table<Doc, number>; // Primary key is number (auto-incremented)
   chartData!: Table<ChartData, number>;
   loans!: Table<Loan, string>; // Primary key is ID string
+  alerts!: Table<Alert, number>;
 
   constructor() {
     super('LMA_DocPulse_DB');
@@ -42,7 +43,8 @@ export class AppDatabase extends Dexie {
       users: '++id, email',
       docs: '++id, name, type, status, date',
       chartData: '++id, month',
-      loans: 'id, counterparty, risk'
+      loans: 'id, counterparty, risk',
+      alerts: '++id, type'
     });
   }
 }
@@ -51,15 +53,9 @@ export const db = new AppDatabase();
 
 // Initialize DB with mock data if empty
 export const initDB = async () => {
-    // Replaced mock docs initialization with realtime data check (effectively doing nothing for docs initially)
-    // const docsCount = await db.docs.count();
-    // if (docsCount === 0) {
-    //     await db.docs.bulkAdd(INITIAL_VAULT_DOCS);
-    // }
-
     // We can also initialize other data if needed, but the prompt mainly focused on mockData replacement.
     // Let's bring in CHART_DATA and LOANS_DATA too
-    const { CHART_DATA, LOANS_DATA } = await import('./data/mockData');
+    const { CHART_DATA, LOANS_DATA, INITIAL_ALERTS } = await import('./data/mockData');
 
     const chartCount = await db.chartData.count();
     if (chartCount === 0) {
@@ -69,5 +65,10 @@ export const initDB = async () => {
     const loansCount = await db.loans.count();
     if (loansCount === 0) {
         await db.loans.bulkAdd(LOANS_DATA);
+    }
+
+    const alertsCount = await db.alerts.count();
+    if (alertsCount === 0) {
+        await db.alerts.bulkAdd(INITIAL_ALERTS);
     }
 };

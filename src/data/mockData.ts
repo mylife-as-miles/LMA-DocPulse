@@ -1,4 +1,4 @@
-import { Doc } from '../types';
+import { Alert } from '../types';
 
 export const CHART_DATA = [
     { month: 'MAY', score: 30 },
@@ -15,9 +15,11 @@ export const LOANS_DATA = [
     { id: '#LN-102-B', counterparty: 'Apex Partners', initial: 'A', initialColor: 'text-primary bg-primary/10 border-primary/20', risk: 'Safe', riskColor: 'text-primary bg-primary/10 border-primary/20', deadline: 'Nov 02, 2023' },
 ];
 
-export const INITIAL_VAULT_DOCS: Doc[] = [
-    { name: 'LMA_Facility_Agreement_v2.pdf', type: 'PDF', size: '2.4 MB', status: 'Analyzed', date: 'Today, 10:23 AM' },
-    { name: 'Syndicated_Loan_Term_Sheet.docx', type: 'DOCX', size: '1.8 MB', status: 'Pending', date: 'Yesterday, 4:15 PM' },
-    { name: 'Omega_Holdings_Financials_Q3.xlsx', type: 'XLSX', size: '4.2 MB', status: 'Analyzed', date: 'Oct 24, 2023' },
-    { name: 'Legal_Opinion_Letter_Draft.pdf', type: 'PDF', size: '850 KB', status: 'Review', date: 'Oct 22, 2023' },
+export const INITIAL_ALERTS: Alert[] = [
+    { title: "LIBOR Clause Missing", time: "2m", subtitle: "Loan #8839 • Syndicated Term", type: 'critical' },
+    { title: "Doc Incomplete", time: "45m", subtitle: "Loan #4402 • Acme Corp", type: 'warning' },
+    { title: "AI Suggestion", time: "2h", subtitle: "Optimization for Loan #9921", type: 'info' }
 ];
+
+// Deprecated since we use empty state for Vault
+// export const INITIAL_VAULT_DOCS: Doc[] = [ ... ];
