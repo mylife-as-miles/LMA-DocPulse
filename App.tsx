@@ -59,6 +59,7 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
   const [selectedDocId, setSelectedDocId] = useState<number | undefined>(undefined);
+  const [selectedLoanId, setSelectedLoanId] = useState<string | undefined>(undefined);
 
   // Replace useState with useLiveQuery for vaultDocs
   const vaultDocs = useLiveQuery(
@@ -153,8 +154,18 @@ export default function App() {
         {currentView === 'compliance' && <ComplianceView />}
         {currentView === 'notifications' && <NotificationsView />}
         {currentView === 'settings' && <SettingsView setView={setCurrentView} />}
-        {currentView === 'loan_reviews' && <LoanReviewsListView setView={setCurrentView} />}
-        {currentView === 'loan_review' && <LoanReviewView />}
+        {currentView === 'loan_reviews' && (
+          <LoanReviewsListView
+            setView={setCurrentView}
+            onSelectLoan={(id) => setSelectedLoanId(id)}
+          />
+        )}
+        {currentView === 'loan_review' && (
+          <LoanReviewView
+            loanId={selectedLoanId}
+            setView={setCurrentView}
+          />
+        )}
         {currentView === 'profile' && <ProfileView setView={setCurrentView} />}
 
         {/* New Views */}

@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Doc, Alert } from './types';
+import { Doc, Alert, Loan } from './types';
 
 export interface User {
   id?: number;
@@ -20,16 +20,6 @@ export interface ChartData {
     score: number;
 }
 
-export interface Loan {
-    id: string;
-    counterparty: string;
-    initial: string;
-    initialColor: string;
-    risk: string;
-    riskColor: string;
-    deadline: string;
-}
-
 export class AppDatabase extends Dexie {
   users!: Table<User>;
   docs!: Table<Doc, number>; // Primary key is number (auto-incremented)
@@ -39,11 +29,11 @@ export class AppDatabase extends Dexie {
 
   constructor() {
     super('LMA_DocPulse_DB');
-    this.version(1).stores({
+    this.version(2).stores({
       users: '++id, email',
       docs: '++id, name, type, status, date',
       chartData: '++id, month',
-      loans: 'id, counterparty, risk',
+      loans: 'id, counterparty, risk, status, type',
       alerts: '++id, type'
     });
   }
@@ -63,6 +53,8 @@ export const initDB = async () => {
     }
 
     const loansCount = await db.loans.count();
+    // Check if we need to re-seed loans (e.g. if we have old format data, we might want to clear it, but here we just check count)
+    // For simplicity, we assume if count is 0, we add. If user wants to force reset, they can clear DB.
     if (loansCount === 0) {
         await db.loans.bulkAdd(LOANS_DATA);
     }

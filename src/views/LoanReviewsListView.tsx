@@ -10,27 +10,73 @@ import {
     Clock,
     AlertTriangle,
     FileText,
-    ArrowUpRight
+    ArrowUpRight,
+    Inbox
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { useActionFeedback } from '../components/ActionFeedback';
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface LoanReviewsListViewProps {
     setView?: (view: ViewState) => void;
+    onSelectLoan?: (id: string) => void;
 }
 
-export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
+export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListViewProps) => {
     const [filter, setFilter] = useState('All');
     const { trigger: triggerExport } = useActionFeedback('Export CSV');
 
-    const loans = [
-        { id: 'LN-2023-884', company: 'Alpha Corp', amount: '$4.5M', type: 'Term Loan B', status: 'Approved', statusColor: 'text-primary bg-primary/10 border-primary/20', date: 'Oct 24, 2024', risk: 'Low' },
-        { id: 'LN-2023-902', company: 'Beta Holdings', amount: '$12.25M', type: 'Revolver', status: 'In Review', statusColor: 'text-accent-orange bg-accent-orange/10 border-accent-orange/20', date: 'Dec 15, 2024', risk: 'Medium' },
-        { id: 'LN-2023-755', company: 'Gamma Industries', amount: '$1.1M', type: 'Bridge Loan', status: 'Rejected', statusColor: 'text-accent-red bg-accent-red/10 border-accent-red/20', date: 'Nov 30, 2024', risk: 'High' },
-        { id: 'LN-2024-101', company: 'Delta Logistics', amount: '$8.75M', type: 'Syndicated', status: 'Approved', statusColor: 'text-primary bg-primary/10 border-primary/20', date: 'Jan 12, 2025', risk: 'Low' },
-        { id: 'LN-2024-112', company: 'Epsilon Energy', amount: '$25.0M', type: 'Project Finance', status: 'Pending', statusColor: 'text-blue-400 bg-blue-400/10 border-blue-400/20', date: 'Feb 28, 2025', risk: 'Medium' },
-        { id: 'LN-2024-005', company: 'Zeta Tech', amount: '$3.2M', type: 'Venture Debt', status: 'Approved', statusColor: 'text-primary bg-primary/10 border-primary/20', date: 'Mar 10, 2025', risk: 'High' },
-    ];
+    const loans = useLiveQuery(() => db.loans.toArray()) || [];
+
+    const handleLoanClick = (loanId: string) => {
+        if (onSelectLoan) onSelectLoan(loanId);
+        if (setView) setView('loan_review');
+    };
+
+    // Calculate stats
+    const totalReviews = loans.length;
+    const pendingAction = loans.filter(l => l.status === 'Pending' || l.status === 'In Review').length;
+    const criticalRisks = loans.filter(l => l.risk === 'Critical').length;
+
+    // Status color mapping
+    const getStatusColor = (status: string) => {
+        switch(status) {
+            case 'Approved': return 'text-primary bg-primary/10 border-primary/20';
+            case 'In Review': return 'text-accent-orange bg-accent-orange/10 border-accent-orange/20';
+            case 'Rejected': return 'text-accent-red bg-accent-red/10 border-accent-red/20';
+            case 'Pending': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+            default: return 'text-text-muted bg-surface-highlight border-border';
+        }
+    };
+
+    if (loans.length === 0) {
+         return (
+            <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
+                <div className="mx-auto max-w-[1600px] flex flex-col gap-8 h-full">
+                     {/* Header & Controls (Simplified) */}
+                    <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+                        <div className="space-y-2">
+                            <h1 className="text-4xl font-display font-bold text-white tracking-tight">Loan Reviews</h1>
+                            <p className="text-text-muted">Manage and Audit your ongoing loan agreements.</p>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-4 opacity-70">
+                        <div className="w-20 h-20 rounded-full bg-surface-highlight flex items-center justify-center mb-2">
+                            <FileText size={40} className="text-text-muted opacity-50" />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-medium text-white">No loan reviews found</h4>
+                            <p className="text-sm text-text-muted max-w-xs mx-auto mt-1">
+                                Loans will appear here once they are added to the system.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+         );
+    }
 
     return (
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
@@ -71,17 +117,17 @@ export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
                 {/* Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Reviews', value: '1,248', change: '+12%', icon: FileText, color: 'text-blue-400' },
-                        { label: 'Pending Action', value: '42', change: '-5%', icon: Clock, color: 'text-accent-orange' },
-                        { label: 'Critical Risks', value: '15', change: '+2%', icon: AlertTriangle, color: 'text-accent-red' },
-                        { label: 'Avg. Turnaround', value: '2.4 Days', change: '-8%', icon: CheckCircle2, color: 'text-primary' },
+                        { label: 'Total Reviews', value: totalReviews.toString(), change: 'Realtime', icon: FileText, color: 'text-blue-400' },
+                        { label: 'Pending Action', value: pendingAction.toString(), change: 'Action Req', icon: Clock, color: 'text-accent-orange' },
+                        { label: 'Critical Risks', value: criticalRisks.toString(), change: 'Alert', icon: AlertTriangle, color: 'text-accent-red' },
+                        { label: 'Avg. Turnaround', value: '2.4 Days', change: '-8%', icon: CheckCircle2, color: 'text-primary' }, // Hardcoded for now
                     ].map((stat, i) => (
                         <div key={i} className="glass-panel p-5 rounded-xl border border-border/50 hover:border-border transition-colors group">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`p-2 rounded-lg bg-surface-highlight ${stat.color} bg-opacity-10`}>
                                     <stat.icon size={20} className={stat.color} />
                                 </div>
-                                <span className={`text-xs font-bold ${stat.change.startsWith('+') ? 'text-primary' : 'text-accent-red'} bg-surface-highlight px-2 py-1 rounded`}>
+                                <span className={`text-xs font-bold ${stat.change === 'Realtime' ? 'text-primary' : 'text-text-muted'} bg-surface-highlight px-2 py-1 rounded`}>
                                     {stat.change}
                                 </span>
                             </div>
@@ -109,24 +155,24 @@ export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
                             <tbody className="divide-y divide-border">
                                 {loans.map((loan, i) => (
                                     <tr
-                                        key={i}
+                                        key={loan.id || i}
                                         className="hover:bg-surface-highlight/30 transition-colors group cursor-pointer"
-                                        onClick={() => setView && setView('loan_review')}
+                                        onClick={() => handleLoanClick(loan.id)}
                                     >
                                         <td className="p-5 font-mono text-sm text-primary group-hover:underline">{loan.id}</td>
                                         <td className="p-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="size-8 rounded bg-surface-highlight flex items-center justify-center text-xs font-bold text-white">
-                                                    {loan.company.substring(0, 2).toUpperCase()}
+                                                    {loan.counterparty.substring(0, 2).toUpperCase()}
                                                 </div>
-                                                <span className="text-sm font-medium text-white">{loan.company}</span>
+                                                <span className="text-sm font-medium text-white">{loan.counterparty}</span>
                                             </div>
                                         </td>
                                         <td className="p-5 text-sm font-mono text-white text-right">{loan.amount}</td>
                                         <td className="p-5 text-sm text-text-muted">{loan.type}</td>
                                         <td className="p-5 text-sm text-text-muted font-mono">{loan.date}</td>
                                         <td className="p-5">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${loan.statusColor}`}>
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${getStatusColor(loan.status)}`}>
                                                 <span className="size-1.5 rounded-full bg-current"></span>
                                                 {loan.status}
                                             </span>
@@ -146,9 +192,10 @@ export const LoanReviewsListView = ({ setView }: LoanReviewsListViewProps) => {
                             </tbody>
                         </table>
                     </div>
+                    {/* Simplified load more */}
                     <div className="p-4 border-t border-border flex justify-center bg-surface/30">
                         <button className="text-xs font-mono font-bold text-text-muted hover:text-white transition-colors flex items-center gap-2">
-                            LOAD MORE <ChevronDown size={14} />
+                            End of List
                         </button>
                     </div>
                 </div>
