@@ -12,6 +12,7 @@ import {
     LogOut
 } from 'lucide-react';
 import { ViewState } from '../types';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -22,6 +23,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
     const navItems = [
         { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -165,13 +167,28 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                         </div>
 
                         <button
-                            onClick={() => setView('auth')}
+                            onClick={() => setShowSignOutConfirm(true)}
                             className={`flex items-center justify-center p-2 rounded-xl bg-surface border border-border hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500 transition-all text-text-muted ${isCollapsed ? 'w-full' : ''}`}
                             title="Sign Out"
                         >
                             <LogOut size={18} />
                         </button>
                     </div>
+
+                    {/* Sign Out Confirmation Modal */}
+                    <ConfirmationModal
+                        isOpen={showSignOutConfirm}
+                        onClose={() => setShowSignOutConfirm(false)}
+                        onConfirm={() => {
+                            // Clear session if needed
+                            localStorage.removeItem('currentUser');
+                            setView('auth');
+                        }}
+                        title="Sign Out"
+                        message="Are you sure you want to sign out? You will need to log in again to access your portfolio."
+                        confirmText="Sign Out"
+                        isDanger={true}
+                    />
 
                     {/* Collapse Toggle */}
                     <button
