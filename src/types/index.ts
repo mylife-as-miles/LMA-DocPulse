@@ -38,3 +38,11 @@ export interface AlertItemProps {
     icon: React.ReactNode;
     colorClass: string;
 }
+
+export interface Alert {
+    id?: number;
+    title: string;
+    time: string;
+    subtitle: string;
+    type: 'critical' | 'warning' | 'info';
+}

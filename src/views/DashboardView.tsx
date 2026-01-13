@@ -38,6 +38,16 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
 
     const chartData = useLiveQuery(() => db.chartData.toArray()) || [];
     const loansData = useLiveQuery(() => db.loans.toArray()) || [];
+    const docs = useLiveQuery(() => db.docs.toArray()) || [];
+    const alerts = useLiveQuery(() => db.alerts.toArray()) || [];
+
+    // Calculate real stats
+    const activeLoansCount = loansData.length;
+    const criticalRisksCount = loansData.filter(l => l.risk === 'Critical').length;
+    const pendingApprovalsCount = docs.filter(d => d.status === 'Review' || d.status === 'Pending').length;
+    const currentScore = chartData.length > 0 ? chartData[chartData.length - 1].score : 0;
+    const previousScore = chartData.length > 1 ? chartData[chartData.length - 2].score : 0;
+    const scoreTrend = currentScore - previousScore;
 
     return (
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
@@ -47,7 +57,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                     title="Active Loans"
-                    value="142"
+                    value={activeLoansCount.toString()}
                     trend="+5%"
                     trendUp={true}
                     icon={<Landmark size={22} />}
@@ -55,23 +65,23 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                 />
                 <StatCard
                     title="Compliance Score"
-                    value="94%"
-                    trend="+2%"
-                    trendUp={true}
+                    value={`${currentScore}%`}
+                    trend={`${scoreTrend > 0 ? '+' : ''}${scoreTrend}%`}
+                    trendUp={scoreTrend >= 0}
                     icon={<CheckCircle2 size={22} />}
                     iconColorClass="text-text-muted group-hover:text-primary group-hover:bg-primary/10"
                 />
                 <StatCard
                     title="Critical Risks"
-                    value="3"
-                    badge="+1 New"
+                    value={criticalRisksCount.toString()}
+                    badge={criticalRisksCount > 0 ? "+1 New" : undefined} // Logic for "new" is harder without timestamps on risk changes, keeping visual for now
                     badgeColorClass="bg-accent-red/10 text-accent-red border-accent-red/20"
                     icon={<AlertTriangle size={22} />}
                     iconColorClass="text-text-muted group-hover:text-accent-red group-hover:bg-accent-red/10"
                 />
                 <StatCard
                     title="Pending Approvals"
-                    value="12"
+                    value={pendingApprovalsCount.toString()}
                     trend="0%"
                     trendUp={false}
                     icon={<Clock size={22} />}
@@ -155,27 +165,30 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                     </div>
 
                     <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
-                        <AlertItem
-                            title="LIBOR Clause Missing"
-                            time="2m"
-                            subtitle="Loan #8839 • Syndicated Term"
-                            icon={<Gavel size={18} />}
-                            colorClass="text-accent-red group-hover:bg-accent-red group-hover:text-black"
-                        />
-                        <AlertItem
-                            title="Doc Incomplete"
-                            time="45m"
-                            subtitle="Loan #4402 • Acme Corp"
-                            icon={<FileText size={18} />}
-                            colorClass="text-accent-orange group-hover:bg-accent-orange group-hover:text-black"
-                        />
-                        <AlertItem
-                            title="AI Suggestion"
-                            time="2h"
-                            subtitle="Optimization for Loan #9921"
-                            icon={<Bot size={18} />}
-                            colorClass="text-primary group-hover:bg-primary group-hover:text-black"
-                        />
+                        {alerts.length > 0 ? (
+                            alerts.map((alert, idx) => (
+                                <AlertItem
+                                    key={alert.id || idx}
+                                    title={alert.title}
+                                    time={alert.time}
+                                    subtitle={alert.subtitle}
+                                    icon={
+                                        alert.type === 'critical' ? <Gavel size={18} /> :
+                                        alert.type === 'warning' ? <FileText size={18} /> :
+                                        <Bot size={18} />
+                                    }
+                                    colorClass={
+                                        alert.type === 'critical' ? "text-accent-red group-hover:bg-accent-red group-hover:text-black" :
+                                        alert.type === 'warning' ? "text-accent-orange group-hover:bg-accent-orange group-hover:text-black" :
+                                        "text-primary group-hover:bg-primary group-hover:text-black"
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-text-muted text-sm">
+                                No active alerts
+                            </div>
+                        )}
                     </div>
 
                     <button
