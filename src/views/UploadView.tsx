@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ViewState, Doc, QueueItem, Loan } from '../types';
 import { db } from '../db';
+import { openai, getLoanAnalysisPrompt } from '../services/openai';
 
 interface UploadViewProps {
     setView: (v: ViewState) => void;
@@ -114,61 +115,80 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
         if (readyItems.length === 0) return;
 
         const newLoans: Loan[] = [];
+        const newDocs: Doc[] = [];
 
-        const newDocs: Doc[] = readyItems.map(item => {
+        // Process each file sequentially to allow for async API calls
+        for (const item of readyItems) {
             const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
 
-            // Generate simulated data for extraction
-            const companies = ["Alpha Corp", "Beta Holdings", "Gamma Industries", "Omega LLC", "Zeta Tech"];
-            const types = ["Term Loan A", "Revolver", "Syndicated", "Bridge Loan"];
-            const risks: ("Low" | "Medium" | "High" | "Critical")[] = ["Low", "Medium", "High", "Critical"];
+            // Read basic content (simulated read of first 1000 chars for text files, or just use name)
+            // In a real app, we'd use pdf.js or similar here.
+            // For now, we rely on the filename and a dummy content placeholder if we can't read it.
+            const contentSnippet = "Content extraction pending...";
 
-            // Use random seed or just random for demo
-            const randomCompany = companies[Math.floor(Math.random() * companies.length)];
-            const randomType = types[Math.floor(Math.random() * types.length)];
-            const randomRisk = risks[Math.floor(Math.random() * risks.length)];
-            const randomAmount = `$${(Math.random() * 50 + 1).toFixed(1)}M`;
+            let extractedData: any = {};
+
+            try {
+                // Call OpenAI for "Real" Analysis
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-5", // Using the frontier model as requested
+                    messages: [
+                        { role: "user", content: getLoanAnalysisPrompt(item.file.name, contentSnippet) }
+                    ],
+                    response_format: { type: "json_object" }
+                });
+
+                const content = completion.choices[0].message.content;
+                if (content) {
+                    extractedData = JSON.parse(content);
+                }
+            } catch (error) {
+                console.error("OpenAI Analysis Failed, falling back to simulation:", error);
+                // Fallback to simulation if API key is missing or fails
+                extractedData = {
+                    counterparty: "Unknown Corp",
+                    amount: "$10.0M",
+                    type: "Term Loan",
+                    risk: "Medium",
+                    status: "Review",
+                    deadline: "TBD"
+                };
+            }
+
             const randomId = `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-
-            const deadlineDate = new Date();
-            deadlineDate.setDate(deadlineDate.getDate() + Math.floor(Math.random() * 30) + 1);
-            const deadlineStr = deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-            // Generate entities based on the "extracted" data
-            const dummyEntities = [
-                randomCompany,
+            // Generate entities based on the extracted data
+            const entities = [
+                extractedData.counterparty || "Unknown",
                 "LMA Banking Group",
-                randomAmount,
+                extractedData.amount || "N/A",
                 todayStr
             ];
-
-            // Simple logic to determine status for demo purposes
-            const isReview = item.file.name.toLowerCase().includes('draft') || Math.random() > 0.8;
 
             // Create corresponding Loan record
             const newLoan: Loan = {
                 id: randomId,
-                counterparty: randomCompany,
-                amount: randomAmount,
-                type: randomType,
-                status: isReview ? 'In Review' : 'Approved',
+                counterparty: extractedData.counterparty || "Unknown",
+                amount: extractedData.amount || "$0M",
+                type: extractedData.type || "General",
+                status: (extractedData.status === 'Approved' || extractedData.status === 'In Review') ? extractedData.status : 'In Review',
                 date: todayStr,
-                risk: randomRisk,
-                deadline: deadlineStr
+                risk: (extractedData.risk as any) || "Medium",
+                deadline: extractedData.deadline || todayStr
             };
             newLoans.push(newLoan);
 
-            return {
+            newDocs.push({
                 name: item.file.name,
                 type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
                 size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
-                status: isReview ? 'Review' : 'Analyzed',
+                status: newLoan.status === 'Approved' ? 'Analyzed' : 'Review',
                 date: todayStr,
-                fileData: item.file, // Store the Blob
-                entities: dummyEntities
-            };
-        });
+                fileData: item.file,
+                entities: entities
+            });
+        }
 
         // Save generated loans to DB
         if (newLoans.length > 0) {
