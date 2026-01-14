@@ -32,7 +32,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
             exit={{ opacity: 0, scale: 0.95 }}
             className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar"
         >
-             <div className="mx-auto max-w-6xl flex flex-col gap-8 pb-20">
+            <div className="mx-auto max-w-6xl flex flex-col gap-8 pb-20">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
@@ -67,7 +67,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                             <p className="text-2xl font-bold text-white">$145.2M</p>
                         </div>
                     </div>
-                     <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
+                    <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
                         <div className="p-3 bg-green-500/10 text-green-400 rounded-xl">
                             <BarChart2 size={24} />
                         </div>
@@ -76,7 +76,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                             <p className="text-2xl font-bold text-white">325 bps</p>
                         </div>
                     </div>
-                     <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
+                    <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
                         <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
                             <PieChart size={24} />
                         </div>
@@ -89,40 +89,44 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
 
                 {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                     <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col">
+                    <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Rate Type Distribution</h3>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RePieChart>
-                                <Pie
-                                    data={riskData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {riskData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
-                                <Legend />
-                            </RePieChart>
-                        </ResponsiveContainer>
+                        <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RePieChart>
+                                    <Pie
+                                        data={riskData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#8884d8"
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {riskData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
+                                    <Legend />
+                                </RePieChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
 
-                    <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col">
+                    <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Maturity Timeline</h3>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={maturityData}>
-                                <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip cursor={{fill: '#ffffff10'}} contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
-                                <Bar dataKey="loans" fill="#00FF94" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={maturityData}>
+                                    <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                                    <Tooltip cursor={{ fill: '#ffffff10' }} contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
+                                    <Bar dataKey="loans" fill="#00FF94" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
 
@@ -132,7 +136,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                         Analysis indicates a high concentration of floating rate loans maturing in Q3. Given the current volatility in LIBOR/SOFR spreads, it is recommended to review hedging strategies for <strong>Gamma Industries</strong> and <strong>Beta Holdings</strong>.
                     </p>
                 </div>
-             </div>
+            </div>
         </motion.div>
     );
 };
