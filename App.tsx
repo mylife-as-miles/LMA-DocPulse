@@ -148,7 +148,13 @@ export default function App() {
             onSelectDoc={(id) => setSelectedDocId(id)}
           />
         )}
-        {currentView === 'upload' && <UploadView setView={setCurrentView} onUploadComplete={handleUploadComplete} />}
+        {currentView === 'upload' && (
+          <UploadView
+            setView={setCurrentView}
+            onUploadComplete={handleUploadComplete}
+            onSelectLoan={(id) => setSelectedLoanId(id)}
+          />
+        )}
         {currentView === 'smart_query' && <SmartQueryView setView={setCurrentView} />}
         {currentView === 'analytics' && <PortfolioAnalyticsView />}
         {currentView === 'compliance' && <ComplianceView />}

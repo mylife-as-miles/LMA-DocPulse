@@ -45,6 +45,12 @@ Extract or generate a JSON object with the following fields:
 - risk (string): One of ["Low", "Medium", "High", "Critical"].
 - status (string): "Approved" or "In Review".
 - deadline (string): A date string (e.g., "Oct 24, 2025").
+- reviewData (object): An object containing:
+    - summary (string): A brief summary of the facility.
+    - borrowerDetails (string): Description of the borrower.
+    - financialCovenants (string): Key covenants.
+    - eventsOfDefault (string): Key events of default.
+    - signatures (string): Status of signatures.
 
 Return ONLY the JSON object.
 `;

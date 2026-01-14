@@ -50,7 +50,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                     </span>
                     <h3 className="text-white text-lg font-display font-bold tracking-tight">Facility Details</h3>
                 </div>
-                <div className="glass-panel border border-border rounded-xl p-6 md:p-8">
+                <div className="glass-panel border border-border rounded-xl p-6 md:p-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="group">
                             <label className="text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2 block font-display">Type</label>
@@ -72,6 +72,12 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             </div>
                         </div>
                     </div>
+                    {loan?.reviewData?.summary && (
+                        <div className="pt-4 border-t border-white/5">
+                             <label className="text-text-muted text-[11px] font-bold uppercase tracking-wider mb-2 block font-display">Overview</label>
+                             <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{loan.reviewData.summary}</p>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>
@@ -184,7 +190,34 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                 </div>
 
                 {/* Content Rendering based on active section */}
-                {activeSection === 'summary' ? renderSummary() : renderEmptyState(activeSection.replace(/-/g, ' '))}
+                {(() => {
+                    if (activeSection === 'summary') return renderSummary();
+
+                    let content = null;
+                    if (loan?.reviewData) {
+                        switch (activeSection) {
+                            case 'borrower-details': content = loan.reviewData.borrowerDetails; break;
+                            case 'financial-covenants': content = loan.reviewData.financialCovenants; break;
+                            case 'events-of-default': content = loan.reviewData.eventsOfDefault; break;
+                            case 'signatures': content = loan.reviewData.signatures; break;
+                        }
+                    }
+
+                    if (content) {
+                        return (
+                            <div className="px-10 pb-8 animate-fade-in">
+                                <div className="glass-panel border border-border rounded-xl p-6 md:p-8">
+                                    <div className="prose prose-invert max-w-none">
+                                        <h3 className="text-white text-lg font-display font-bold mb-4 capitalize">{activeSection.replace(/-/g, ' ')}</h3>
+                                        <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{typeof content === 'string' ? content : JSON.stringify(content, null, 2)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    return renderEmptyState(activeSection.replace(/-/g, ' '));
+                })()}
 
             </main>
         </div>

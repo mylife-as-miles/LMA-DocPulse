@@ -19,9 +19,10 @@ import { toast } from 'sonner';
 interface UploadViewProps {
     setView: (v: ViewState) => void;
     onUploadComplete: (newDocs: Doc[]) => void;
+    onSelectLoan?: (id: string) => void;
 }
 
-export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
+export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadViewProps) => {
     const [dragActive, setDragActive] = useState(false);
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -190,7 +191,8 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                     status: (extractedData.status === 'Approved' || extractedData.status === 'In Review') ? extractedData.status : 'In Review',
                     date: todayStr,
                     risk: (extractedData.risk as any) || "Medium",
-                    deadline: extractedData.deadline || todayStr
+                    deadline: extractedData.deadline || todayStr,
+                    reviewData: extractedData.reviewData
                 };
                 newLoans.push(newLoan);
 
@@ -212,7 +214,15 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
 
             if (newDocs.length > 0) {
                  toast.success(`Successfully analyzed ${newDocs.length} documents.`);
-                 onUploadComplete(newDocs);
+
+                 // If we have a selected loan handler and created at least one loan, select the last one and navigate
+                 if (newLoans.length > 0 && onSelectLoan) {
+                     const lastLoan = newLoans[newLoans.length - 1];
+                     onSelectLoan(lastLoan.id);
+                     setView('loan_review');
+                 } else {
+                     onUploadComplete(newDocs);
+                 }
             } else {
                  toast.warning("No documents were successfully analyzed.");
             }

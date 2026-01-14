@@ -47,6 +47,13 @@ export interface Alert {
     type: 'critical' | 'warning' | 'info';
 }
 
+export interface Query {
+    id?: number;
+    text: string;
+    timestamp: number;
+    model: string;
+}
+
 export interface Loan {
     id: string; // e.g. "LN-2023-884"
     counterparty: string; // e.g. "Alpha Corp"
@@ -56,4 +63,11 @@ export interface Loan {
     date: string; // e.g. "Oct 24, 2024"
     risk: 'Low' | 'Medium' | 'High' | 'Critical';
     deadline?: string;
+    reviewData?: {
+        summary?: string;
+        borrowerDetails?: any;
+        financialCovenants?: any;
+        eventsOfDefault?: any;
+        signatures?: any;
+    };
 }

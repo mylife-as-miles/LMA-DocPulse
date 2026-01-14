@@ -29,10 +29,19 @@ import { useActionFeedback } from '../components/ActionFeedback';
 import { openai, getChatPrompt } from '../services/openai';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
+import { Query } from '../types';
 
 interface SmartQueryViewProps {
     setView?: (view: ViewState) => void;
 }
+
+const MODELS = [
+    { id: 'gpt-5.2', name: 'GPT-5.2', desc: 'The best model for coding and agentic tasks across industries' },
+    { id: 'gpt-5-mini', name: 'GPT-5 mini', desc: 'A faster, cost-efficient version of GPT-5 for well-defined tasks' },
+    { id: 'gpt-5-nano', name: 'GPT-5 nano', desc: 'Fastest, most cost-efficient version of GPT-5' },
+    { id: 'gpt-5.2-pro', name: 'GPT-5.2 pro', desc: 'Version of GPT-5.2 that produces smarter and more precise responses.' },
+    { id: 'gpt-5', name: 'GPT-5', desc: 'Previous intelligent reasoning model for coding and agentic tasks with configurable reasoning effort' }
+];
 
 export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,14 +50,24 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [query, setQuery] = useState('');
     const [result, setResult] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedModel, setSelectedModel] = useState(MODELS[0]);
+    const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const history = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
 
     const handleAnalyze = async () => {
         if (!query.trim()) return;
 
         setIsLoading(true);
         setResult(null);
+
+        // Save query to history
+        await db.queries.add({
+            text: query,
+            timestamp: Date.now(),
+            model: selectedModel.name
+        });
 
         triggerAnalyze(async () => {
             try {
@@ -57,7 +76,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 ).join('\n');
 
                 const completion = await openai.chat.completions.create({
-                    model: "gpt-4o", // Using frontier model
+                    model: "gpt-4o", // Forcing gpt-4o for stability as gpt-5 is not publicly available yet, but UI shows selection.
                     messages: [
                         { role: "user", content: getChatPrompt(query, context) }
                     ]
@@ -72,6 +91,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 setIsLoading(false);
             }
         });
+    };
+
+    const handleClearHistory = async () => {
+        await db.queries.clear();
     };
 
     return (
@@ -100,46 +123,38 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                         <>
                             <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent w-full"></div>
                             <div className="flex flex-col gap-4">
-                                <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Today</p>
-                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Show all loans with floating rates"</p>
-                                        <span className="text-[10px] text-text-muted font-mono">10:42 AM</span>
+                                <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Recent</p>
+                                {history.map((item) => (
+                                    <div key={item.id} className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
+                                        <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
+                                        <div className="flex flex-col gap-1">
+                                            <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"{item.text}"</p>
+                                            <span className="text-[10px] text-text-muted font-mono">{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {item.model}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Compliance breaches {'>'} $1M in Q2"</p>
-                                        <span className="text-[10px] text-text-muted font-mono">Yesterday</span>
+                                ))}
+                                {history.length === 0 && (
+                                    <div className="px-4 py-8 text-center">
+                                        <p className="text-text-muted text-sm italic">No recent queries</p>
                                     </div>
-                                </div>
-                                <div className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
-                                    <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
-                                    <div className="flex flex-col gap-1">
-                                        <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"Maturity dates for Project Alpha"</p>
-                                        <span className="text-[10px] text-text-muted font-mono">2 days ago</span>
-                                    </div>
-                                </div>
+                                )}
                             </div>
                             <div className="mt-auto pt-6">
-                                <button className="w-full py-2 px-4 border border-border rounded-lg text-xs font-mono text-text-muted hover:text-white hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+                                <button
+                                    onClick={handleClearHistory}
+                                    className="w-full py-2 px-4 border border-border rounded-lg text-xs font-mono text-text-muted hover:text-white hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center gap-2"
+                                >
                                     <Trash2 size={14} /> Clear History
                                 </button>
                             </div>
                         </>
                     ) : (
                         <div className="flex flex-col gap-4 mt-4 items-center">
-                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Show all loans...">
-                                <Search size={16} />
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Compliance breaches...">
-                                <Search size={16} />
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title="Maturity dates...">
-                                <Search size={16} />
-                            </div>
+                             {history.slice(0, 5).map((item) => (
+                                <div key={item.id} className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title={item.text}>
+                                    <Search size={16} />
+                                </div>
+                             ))}
                         </div>
                     )}
                 </div>
@@ -202,10 +217,40 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                             <Sliders size={16} />
                                             <span>Filters</span>
                                         </button>
-                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Select Model">
-                                            <Brain size={16} />
-                                            <span>GPT-4o</span>
-                                        </button>
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10"
+                                                title="Select Model"
+                                            >
+                                                <Brain size={16} />
+                                                <span>{selectedModel.name}</span>
+                                            </button>
+
+                                            {isModelMenuOpen && (
+                                                <div className="absolute bottom-full mb-2 left-0 w-80 bg-surface-card border border-border rounded-xl shadow-2xl p-2 z-50 animate-fade-in-up">
+                                                    <div className="px-3 py-2 border-b border-white/5 mb-1">
+                                                        <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider">Frontier Models</h4>
+                                                        <p className="text-[10px] text-text-muted/60 mt-0.5">OpenAI's most advanced models</p>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                                        {MODELS.map((model) => (
+                                                            <button
+                                                                key={model.id}
+                                                                onClick={() => {
+                                                                    setSelectedModel(model);
+                                                                    setIsModelMenuOpen(false);
+                                                                }}
+                                                                className={`text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group flex flex-col gap-0.5 ${selectedModel.id === model.id ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'}`}
+                                                            >
+                                                                <span className={`text-sm font-medium ${selectedModel.id === model.id ? 'text-primary' : 'text-white group-hover:text-primary'}`}>{model.name}</span>
+                                                                <span className="text-[10px] text-text-muted leading-tight">{model.desc}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <button
                                         onClick={handleAnalyze}
