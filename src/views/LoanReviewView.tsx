@@ -20,12 +20,135 @@ import {
     Target,
     Zap,
     Globe,
-    Clock
+    Clock,
+    LucideIcon
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { ViewState, Loan, ReviewData, Covenant } from '../types';
 import { toast } from 'sonner';
+
+// Separate component for Viability Cards to use hooks properly
+interface ViabilityCardProps {
+    itemKey: string;
+    title: string;
+    icon: LucideIcon;
+    color: string;
+    text: string;
+    score: number;
+}
+
+const ViabilityCard = ({ itemKey, title, icon: Icon, color, text, score }: ViabilityCardProps) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedText, setEditedText] = useState(text);
+
+    return (
+        <div
+            className={`bg-surface rounded-xl border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-white/5 hover:border-white/10'
+                }`}
+        >
+            {/* Card Header - Always Visible */}
+            <div
+                className="p-4 cursor-pointer flex items-center justify-between"
+                onClick={() => !isEditing && setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${color}`}>
+                        <Icon size={20} />
+                    </div>
+                    <div>
+                        <h4 className="text-white font-medium text-sm">{title}</h4>
+                        <p className="text-text-muted text-xs truncate max-w-[200px]">
+                            {isExpanded ? '' : text.substring(0, 40) + (text.length > 40 ? '...' : '')}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {/* Score Ring */}
+                    <div className="relative w-12 h-12 flex items-center justify-center">
+                        <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/10" />
+                            <circle
+                                cx="24" cy="24" r="20"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="transparent"
+                                strokeDasharray={126}
+                                strokeDashoffset={126 - (126 * score) / 100}
+                                className={`${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'} transition-all duration-500`}
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                        <span className={`absolute text-xs font-bold ${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'}`}>
+                            {score}
+                        </span>
+                    </div>
+                    <ChevronDown
+                        size={18}
+                        className={`text-text-muted transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                    />
+                </div>
+            </div>
+
+            {/* Expandable Content */}
+            <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                <div className="px-4 pb-4 border-t border-white/5 pt-4">
+                    {/* Score Bar */}
+                    <div className="mb-4">
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-text-muted">Score</span>
+                            <span className={`font-bold ${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'}`}>{score}/100</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 ${score >= 80 ? 'bg-primary' : score >= 60 ? 'bg-accent-orange' : 'bg-red-500'}`}
+                                style={{ width: `${score}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Editable Text Area */}
+                    {isEditing ? (
+                        <div className="space-y-2">
+                            <textarea
+                                value={editedText}
+                                onChange={(e) => setEditedText(e.target.value)}
+                                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-sm resize-none focus:outline-none focus:border-primary/50 min-h-[100px]"
+                                placeholder="Enter analysis..."
+                            />
+                            <div className="flex gap-2 justify-end">
+                                <button
+                                    onClick={() => { setIsEditing(false); setEditedText(text); }}
+                                    className="px-3 py-1.5 text-xs text-text-muted hover:text-white border border-border rounded-lg hover:border-white/30 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => { setIsEditing(false); toast.success('Changes saved'); }}
+                                    className="px-3 py-1.5 text-xs bg-primary text-black font-bold rounded-lg hover:bg-primary-hover transition-colors"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="group/text">
+                            <p className="text-white/90 text-sm leading-relaxed">{editedText}</p>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                                className="mt-3 flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors"
+                            >
+                                <Edit size={12} />
+                                Edit Analysis
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 interface LoanReviewViewProps {
     loanId?: string;
@@ -367,115 +490,17 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                     const data = reviewData?.commercialViability?.[item.key as keyof typeof reviewData.commercialViability] as { text?: string; score?: number } | undefined;
                                     const score = data?.score || 0;
                                     const text = data?.text || "Analysis pending...";
-                                    const [isExpanded, setIsExpanded] = React.useState(false);
-                                    const [isEditing, setIsEditing] = React.useState(false);
-                                    const [editedText, setEditedText] = React.useState(text);
 
                                     return (
-                                        <div
+                                        <ViabilityCard
                                             key={item.key}
-                                            className={`bg-surface rounded-xl border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-white/5 hover:border-white/10'
-                                                }`}
-                                        >
-                                            {/* Card Header - Always Visible */}
-                                            <div
-                                                className="p-4 cursor-pointer flex items-center justify-between"
-                                                onClick={() => !isEditing && setIsExpanded(!isExpanded)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${item.color}`}>
-                                                        <item.icon size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-white font-medium text-sm">{item.title}</h4>
-                                                        <p className="text-text-muted text-xs truncate max-w-[200px]">
-                                                            {isExpanded ? '' : text.substring(0, 40) + (text.length > 40 ? '...' : '')}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    {/* Score Ring */}
-                                                    <div className="relative w-12 h-12 flex items-center justify-center">
-                                                        <svg className="w-full h-full transform -rotate-90">
-                                                            <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/10" />
-                                                            <circle
-                                                                cx="24" cy="24" r="20"
-                                                                stroke="currentColor"
-                                                                strokeWidth="4"
-                                                                fill="transparent"
-                                                                strokeDasharray={126}
-                                                                strokeDashoffset={126 - (126 * score) / 100}
-                                                                className={`${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'} transition-all duration-500`}
-                                                                strokeLinecap="round"
-                                                            />
-                                                        </svg>
-                                                        <span className={`absolute text-xs font-bold ${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'}`}>
-                                                            {score}
-                                                        </span>
-                                                    </div>
-                                                    <ChevronDown
-                                                        size={18}
-                                                        className={`text-text-muted transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Expandable Content */}
-                                            <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-                                                <div className="px-4 pb-4 border-t border-white/5 pt-4">
-                                                    {/* Score Bar */}
-                                                    <div className="mb-4">
-                                                        <div className="flex justify-between text-xs mb-1">
-                                                            <span className="text-text-muted">Score</span>
-                                                            <span className={`font-bold ${score >= 80 ? 'text-primary' : score >= 60 ? 'text-accent-orange' : 'text-red-500'}`}>{score}/100</span>
-                                                        </div>
-                                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-500 ${score >= 80 ? 'bg-primary' : score >= 60 ? 'bg-accent-orange' : 'bg-red-500'}`}
-                                                                style={{ width: `${score}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Editable Text Area */}
-                                                    {isEditing ? (
-                                                        <div className="space-y-2">
-                                                            <textarea
-                                                                value={editedText}
-                                                                onChange={(e) => setEditedText(e.target.value)}
-                                                                className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-sm resize-none focus:outline-none focus:border-primary/50 min-h-[100px]"
-                                                                placeholder="Enter analysis..."
-                                                            />
-                                                            <div className="flex gap-2 justify-end">
-                                                                <button
-                                                                    onClick={() => { setIsEditing(false); setEditedText(text); }}
-                                                                    className="px-3 py-1.5 text-xs text-text-muted hover:text-white border border-border rounded-lg hover:border-white/30 transition-colors"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { setIsEditing(false); toast.success('Changes saved'); }}
-                                                                    className="px-3 py-1.5 text-xs bg-primary text-black font-bold rounded-lg hover:bg-primary-hover transition-colors"
-                                                                >
-                                                                    Save
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="group/text">
-                                                            <p className="text-white/90 text-sm leading-relaxed">{editedText}</p>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
-                                                                className="mt-3 flex items-center gap-1.5 text-xs text-text-muted hover:text-primary transition-colors"
-                                                            >
-                                                                <Edit size={12} />
-                                                                Edit Analysis
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                            itemKey={item.key}
+                                            title={item.title}
+                                            icon={item.icon}
+                                            color={item.color}
+                                            text={text}
+                                            score={score}
+                                        />
                                     );
                                 })}
                             </div>
