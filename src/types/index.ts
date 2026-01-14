@@ -70,11 +70,21 @@ export interface Covenant {
     description?: string; // Additional context like "stepping down to..."
 }
 
+export interface ViabilityComponent {
+    text: string;
+    score: number; // 0-100
+    isEdited?: boolean;
+}
+
 export interface CommercialViability {
-    valueProposition: string;
-    scalabilityPotential: string;
-    efficiencyGains: string;
-    potentialImpact: string;
+    valueProposition: ViabilityComponent;
+    scalabilityPotential: ViabilityComponent;
+    efficiencyGains: ViabilityComponent;
+    potentialImpact: ViabilityComponent;
+    riskMitigation: ViabilityComponent;
+    marketOpportunity: ViabilityComponent;
+    competitiveAdvantage: ViabilityComponent;
+    overallScore?: number; // Calculated average
 }
 
 export interface ReviewData {

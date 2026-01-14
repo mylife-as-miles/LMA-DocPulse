@@ -51,11 +51,15 @@ Extract or generate a JSON object with the following fields:
     - standardizationScore (number): 0-100 score representing adherence to LMA standards.
     - clauseStats (object): { total: number, standard: number, deviations: number }.
     - borrowerDetails (object): { entityName, jurisdiction, registrationNumber, legalAddress }.
-    - commercialViability (object):
-        - valueProposition (string): Key value prop of the deal.
-        - scalabilityPotential (string): Assessment of scalability.
-        - efficiencyGains (string): Expected efficiency improvements.
-        - potentialImpact (string): Strategic impact analysis.
+    - commercialViability (object): For EACH of the following 7 fields, return an object with "text" (string analysis) and "score" (number 0-100):
+        - valueProposition: { text: "Key value prop analysis", score: 0-100 }
+        - scalabilityPotential: { text: "Scalability assessment", score: 0-100 }
+        - efficiencyGains: { text: "Efficiency improvements expected", score: 0-100 }
+        - potentialImpact: { text: "Strategic impact analysis", score: 0-100 }
+        - riskMitigation: { text: "Risk mitigation strategies identified", score: 0-100 }
+        - marketOpportunity: { text: "Market opportunity assessment", score: 0-100 }
+        - competitiveAdvantage: { text: "Competitive advantages identified", score: 0-100 }
+        - overallScore: (number) Average of all component scores.
     - financialCovenants (array of objects): MUST be a JSON array. If none, return []. Each object must have:
         - termName (string): e.g., "Interest Cover Ratio".
         - clauseRef (string): e.g., "Clause 22.1".
