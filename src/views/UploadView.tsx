@@ -14,6 +14,7 @@ import {
 import { ViewState, Doc, QueueItem, Loan } from '../types';
 import { db } from '../db';
 import { openai, getLoanAnalysisPrompt, hasApiKey } from '../services/openai';
+import { extractTextFromPDF } from '../utils/pdfExtract';
 import { toast } from 'sonner';
 
 interface UploadViewProps {
@@ -144,8 +145,20 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
 
                 const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
 
-                // Read basic content (simulated read of first 1000 chars for text files, or just use name)
-                const contentSnippet = "Content extraction pending...";
+                // Read basic content
+                let contentSnippet = "Content extraction pending...";
+                if (ext === 'PDF') {
+                    try {
+                        contentSnippet = await extractTextFromPDF(item.file);
+                    } catch (e) {
+                        console.error("PDF extraction failed, falling back to metadata", e);
+                        contentSnippet = "PDF Text Extraction Failed. Please infer from filename.";
+                    }
+                } else if (ext === 'DOCX') {
+                    // DOCX extraction in browser is harder without libraries like mammoth.js
+                    // For now, we'll note it.
+                     contentSnippet = "DOCX Content extraction not yet implemented in browser. Infer from filename.";
+                }
 
                 let extractedData: any = {};
 
@@ -158,7 +171,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                         ],
                         response_format: { type: "json_object" }
                     }, {
-                        timeout: 30000 // 30s timeout per file
+                        timeout: 60000 // Increased timeout for text processing
                     });
 
                     const content = completion.choices[0].message.content;
