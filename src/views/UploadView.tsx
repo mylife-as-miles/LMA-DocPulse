@@ -215,7 +215,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                     size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
                     status: newLoan.status === 'Approved' ? 'Analyzed' : 'Review',
                     date: todayStr,
-                    fileData: item.file,
+                    // fileData: item.file, // Removing raw file storage to prevent IDB serialization issues
                     entities: entities
                 });
             }

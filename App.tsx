@@ -78,12 +78,12 @@ export default function App() {
       const hash = window.location.hash.replace('#', '');
       if (hash && hash !== currentView) {
         // We can cast here safely as long as we trust the hash to be valid or fallback
-         const validViews: ViewState[] = [
-            'landing', 'auth', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
-            'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
-            'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
-            'violations_log', 'public_profile', 'analytics_result'
-          ];
+        const validViews: ViewState[] = [
+          'landing', 'auth', 'dashboard', 'vault', 'upload', 'smart_query', 'analytics', 'compliance',
+          'notifications', 'settings', 'loan_review', 'profile', 'loan_reviews',
+          'filter', 'document_detail', 'edit_profile', 'alerts_log', 'activity_log',
+          'violations_log', 'public_profile', 'analytics_result'
+        ];
         if (validViews.includes(hash as ViewState)) {
           setCurrentView(hash as ViewState);
         }
@@ -96,8 +96,7 @@ export default function App() {
 
 
   const handleUploadComplete = async (newDocs: Doc[]) => {
-    // Add new docs to Dexie instead of state
-    await db.docs.bulkAdd(newDocs);
+    // Navigation handled, persistence already done in UploadView
     setCurrentView('vault');
   };
 
