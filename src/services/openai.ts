@@ -1,8 +1,15 @@
 import OpenAI from 'openai';
 
-// In a real production app, this should be a backend call.
-// For this "Option B" client-side demo, we use the key from env vars.
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+// Helper to get key from storage or env
+const getApiKey = () => {
+  const localKey = localStorage.getItem('openai_api_key');
+  if (localKey && localKey.trim() !== '') {
+    return localKey;
+  }
+  return import.meta.env.VITE_OPENAI_API_KEY;
+};
+
+const apiKey = getApiKey();
 
 // Initialize the client
 // dangerouslyAllowBrowser: true is required for client-side usage
@@ -10,6 +17,19 @@ export const openai = new OpenAI({
   apiKey: apiKey || 'dummy-key', // Fallback to avoid crash on init, but calls will fail if missing
   dangerouslyAllowBrowser: true
 });
+
+export const hasApiKey = () => {
+    // Check if key exists and isn't the dummy fallback
+    const currentKey = getApiKey();
+    return !!currentKey && currentKey !== 'dummy-key';
+};
+
+// Force reload client if key changes (simple approach for now is to reload page,
+// but we can also export a function to re-instantiate if needed, though OpenAI client is usually singleton-ish in usage here)
+export const updateApiKey = (key: string) => {
+    localStorage.setItem('openai_api_key', key);
+    window.location.reload(); // Simple way to ensure new key is picked up by the module-level init
+};
 
 export const getLoanAnalysisPrompt = (filename: string, fileContent: string) => `
 You are an expert financial analyst AI (LMA DocPulse).

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { User, Shield, BellRing, Monitor, Laptop, ChevronDown, Palette, Globe, Key, Smartphone, LogOut } from 'lucide-react';
+import { User, Shield, BellRing, Monitor, Laptop, ChevronDown, Palette, Globe, Key, Smartphone, LogOut, Zap } from 'lucide-react';
 import { ViewState } from '../types';
+import { toast } from 'sonner';
 
 interface SettingsViewProps {
     setView?: (view: ViewState) => void;
@@ -16,6 +17,27 @@ export const SettingsView = ({ setView }: SettingsViewProps) => {
         { id: 'Security', icon: Shield },
         { id: 'Notifications', icon: BellRing },
     ];
+
+    // API Key State
+    const [apiKey, setApiKey] = useState(localStorage.getItem('openai_api_key') || '');
+    const [isSavingKey, setIsSavingKey] = useState(false);
+
+    const handleSaveApiKey = () => {
+        setIsSavingKey(true);
+        // Simulate a small delay for better UX
+        setTimeout(() => {
+            localStorage.setItem('openai_api_key', apiKey);
+            setIsSavingKey(false);
+            toast.success("API Key Saved Successfully", {
+                description: "Your OpenAI integration is now configured."
+            });
+
+            // Reload after a short delay to apply changes globally
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }, 800);
+    };
 
     const renderAccount = () => (
         <div className="flex-1 space-y-8 min-w-0 animate-fade-in">
@@ -102,6 +124,39 @@ export const SettingsView = ({ setView }: SettingsViewProps) => {
                             </div>
                         </div>
                     ))}
+                </div>
+            </div>
+
+            {/* API Configuration */}
+            <div className="glass-panel p-8 rounded-2xl space-y-6 border border-primary/20 bg-primary/5">
+                 <div className="flex items-center gap-3 mb-6">
+                    <Zap size={24} className="text-yellow-400" />
+                    <h3 className="text-xl font-display font-bold text-white">API Configuration</h3>
+                </div>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-text-muted flex justify-between">
+                            <span>OpenAI API Key</span>
+                            <span className="text-xs text-primary/70">Required for AI features</span>
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="password"
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                                placeholder="sk-..."
+                                className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner font-mono text-sm"
+                            />
+                            <button
+                                onClick={handleSaveApiKey}
+                                disabled={isSavingKey}
+                                className="px-6 py-3 bg-primary text-black font-bold rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                            >
+                                {isSavingKey ? 'Saving...' : 'Save Key'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-text-muted">Your API key is stored locally on your device and never sent to our servers.</p>
+                    </div>
                 </div>
             </div>
 

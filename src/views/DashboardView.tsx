@@ -49,6 +49,27 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
     const previousScore = chartData.length > 1 ? chartData[chartData.length - 2].score : 0;
     const scoreTrend = currentScore - previousScore;
 
+    const getRiskColor = (risk: string) => {
+        switch (risk) {
+            case 'Critical': return 'bg-accent-red/10 text-accent-red border-accent-red/20';
+            case 'High': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+            case 'Medium': return 'bg-accent-orange/10 text-accent-orange border-accent-orange/20';
+            case 'Low': return 'bg-primary/10 text-primary border-primary/20';
+            default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+        }
+    };
+
+    const getInitialColor = (name: string) => {
+        const colors = [
+            'border-primary text-primary',
+            'border-blue-400 text-blue-400',
+            'border-purple-400 text-purple-400',
+            'border-orange-400 text-orange-400'
+        ];
+        const index = name.length % colors.length;
+        return colors[index];
+    };
+
     return (
     <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
         <div className="mx-auto max-w-[1600px] flex flex-col gap-6">
@@ -74,7 +95,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                 <StatCard
                     title="Critical Risks"
                     value={criticalRisksCount.toString()}
-                    badge={criticalRisksCount > 0 ? "+1 New" : undefined} // Logic for "new" is harder without timestamps on risk changes, keeping visual for now
+                    badge={criticalRisksCount > 0 ? "+1 New" : undefined}
                     badgeColorClass="bg-accent-red/10 text-accent-red border-accent-red/20"
                     icon={<AlertTriangle size={22} />}
                     iconColorClass="text-text-muted group-hover:text-accent-red group-hover:bg-accent-red/10"
@@ -230,34 +251,40 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border text-white">
-                                {loansData.map((loan) => (
-                                    <tr
-                                        key={loan.id}
-                                        className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer"
-                                        onClick={() => setView?.('loan_review')}
-                                    >
-                                        <td className="px-6 py-4 font-mono text-primary text-xs group-hover:underline">{loan.id}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold border ${loan.initialColor}`}>
-                                                    {loan.initial}
+                                {loansData.map((loan) => {
+                                    const initial = loan.counterparty ? loan.counterparty.charAt(0).toUpperCase() : '?';
+                                    const initialColor = getInitialColor(loan.counterparty || '');
+                                    const riskColor = getRiskColor(loan.risk);
+
+                                    return (
+                                        <tr
+                                            key={loan.id}
+                                            className="hover:bg-surface-highlight/40 transition-colors group cursor-pointer"
+                                            onClick={() => setView?.('loan_review')}
+                                        >
+                                            <td className="px-6 py-4 font-mono text-primary text-xs group-hover:underline">{loan.id}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold border ${initialColor}`}>
+                                                        {initial}
+                                                    </div>
+                                                    <span className="font-medium">{loan.counterparty}</span>
                                                 </div>
-                                                <span className="font-medium">{loan.counterparty}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold uppercase border tracking-wider ${loan.riskColor}`}>
-                                                {loan.risk}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-text-muted text-xs">{loan.deadline}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-text-muted hover:text-white transition-colors">
-                                                <MoreHorizontal size={20} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 rounded px-2 py-1 text-[10px] font-bold uppercase border tracking-wider ${riskColor}`}>
+                                                    {loan.risk}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-text-muted text-xs">{loan.deadline}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button className="text-text-muted hover:text-white transition-colors">
+                                                    <MoreHorizontal size={20} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
