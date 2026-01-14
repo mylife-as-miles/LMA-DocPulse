@@ -1,4 +1,5 @@
 import React from 'react';
+
 export type ViewState = 'landing' | 'auth' | 'dashboard' | 'vault' | 'upload' | 'smart_query' | 'analytics' | 'compliance' | 'notifications' | 'settings' | 'loan_review' | 'profile' | 'loan_reviews' | 'filter' | 'document_detail' | 'edit_profile' | 'alerts_log' | 'activity_log' | 'violations_log' | 'public_profile' | 'analytics_result';
 
 export interface Doc {
@@ -54,6 +55,36 @@ export interface Query {
     model: string;
 }
 
+export interface BorrowerDetails {
+    entityName: string;
+    jurisdiction: string;
+    registrationNumber: string;
+    legalAddress: string;
+}
+
+export interface Covenant {
+    termName: string;
+    clauseRef: string;
+    value: string;
+    status: 'LMA STANDARD' | 'DEVIATION';
+    description?: string; // Additional context like "stepping down to..."
+}
+
+export interface ReviewData {
+    summary: string;
+    confidenceScore: number; // 0-100
+    standardizationScore: number; // 0-100
+    clauseStats: {
+        total: number;
+        standard: number;
+        deviations: number;
+    };
+    borrowerDetails: BorrowerDetails;
+    financialCovenants: Covenant[];
+    eventsOfDefault?: string | string[]; // Kept flexible for now
+    signatures?: string | any;
+}
+
 export interface Loan {
     id: string; // e.g. "LN-2023-884"
     counterparty: string; // e.g. "Alpha Corp"
@@ -63,11 +94,5 @@ export interface Loan {
     date: string; // e.g. "Oct 24, 2024"
     risk: 'Low' | 'Medium' | 'High' | 'Critical';
     deadline?: string;
-    reviewData?: {
-        summary?: string;
-        borrowerDetails?: any;
-        financialCovenants?: any;
-        eventsOfDefault?: any;
-        signatures?: any;
-    };
+    reviewData?: ReviewData;
 }
