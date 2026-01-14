@@ -327,7 +327,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             </div>
 
                             {/* Table Rows */}
-                            {reviewData?.financialCovenants && reviewData.financialCovenants.length > 0 ? (
+                            {Array.isArray(reviewData?.financialCovenants) && reviewData.financialCovenants.length > 0 ? (
                                 reviewData.financialCovenants.map((covenant, idx) => (
                                     <div key={idx} className={`grid grid-cols-12 gap-4 p-5 border-b border-white/5 items-center hover:bg-white/[0.02] transition-colors ${covenant.status === 'DEVIATION' ? 'bg-accent-orange/5' : ''}`}>
                                         <div className="col-span-4">

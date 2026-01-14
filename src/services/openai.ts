@@ -19,16 +19,16 @@ export const openai = new OpenAI({
 });
 
 export const hasApiKey = () => {
-    // Check if key exists and isn't the dummy fallback
-    const currentKey = getApiKey();
-    return !!currentKey && currentKey !== 'dummy-key';
+  // Check if key exists and isn't the dummy fallback
+  const currentKey = getApiKey();
+  return !!currentKey && currentKey !== 'dummy-key';
 };
 
 // Force reload client if key changes (simple approach for now is to reload page,
 // but we can also export a function to re-instantiate if needed, though OpenAI client is usually singleton-ish in usage here)
 export const updateApiKey = (key: string) => {
-    localStorage.setItem('openai_api_key', key);
-    window.location.reload(); // Simple way to ensure new key is picked up by the module-level init
+  localStorage.setItem('openai_api_key', key);
+  window.location.reload(); // Simple way to ensure new key is picked up by the module-level init
 };
 
 export const getLoanAnalysisPrompt = (filename: string, fileContent: string) => `
@@ -51,7 +51,7 @@ Extract or generate a JSON object with the following fields:
     - standardizationScore (number): 0-100 score representing adherence to LMA standards.
     - clauseStats (object): { total: number, standard: number, deviations: number }.
     - borrowerDetails (object): { entityName, jurisdiction, registrationNumber, legalAddress }.
-    - financialCovenants (array of objects): Each object must have:
+    - financialCovenants (array of objects): MUST be a JSON array. If none, return []. Each object must have:
         - termName (string): e.g., "Interest Cover Ratio".
         - clauseRef (string): e.g., "Clause 22.1".
         - value (string): e.g., "4.00:1".
