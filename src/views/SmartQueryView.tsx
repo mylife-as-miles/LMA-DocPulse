@@ -26,6 +26,9 @@ import {
     ChevronRight,
 } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
+import { openai, getChatPrompt } from '../services/openai';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db';
 
 interface SmartQueryViewProps {
     setView?: (view: ViewState) => void;
@@ -35,9 +38,39 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const { trigger: triggerAnalyze } = useActionFeedback('Analysis', { duration: 3000 });
 
-    const handleAnalyze = () => {
-        triggerAnalyze(() => {
-             // Mock API delay
+    const [query, setQuery] = useState('');
+    const [result, setResult] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const loans = useLiveQuery(() => db.loans.toArray()) || [];
+
+    const handleAnalyze = async () => {
+        if (!query.trim()) return;
+
+        setIsLoading(true);
+        setResult(null);
+
+        triggerAnalyze(async () => {
+            try {
+                const context = loans.map(l =>
+                    `- Loan ${l.id} (${l.type}) with ${l.counterparty}: ${l.amount}, Risk: ${l.risk}, Status: ${l.status}, Deadline: ${l.deadline}`
+                ).join('\n');
+
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-5", // Using frontier model
+                    messages: [
+                        { role: "user", content: getChatPrompt(query, context) }
+                    ]
+                });
+
+                const content = completion.choices[0].message.content;
+                setResult(content);
+            } catch (error) {
+                console.error("OpenAI Chat Failed:", error);
+                setResult("Sorry, I couldn't connect to the AI service. Please check your API key or network connection.");
+            } finally {
+                setIsLoading(false);
+            }
         });
     };
 
@@ -146,6 +179,14 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         className="w-full bg-transparent border-none focus:ring-0 text-white placeholder:text-text-muted/50 resize-none text-xl font-light leading-relaxed p-6 focus:outline-none"
                                         placeholder="e.g., 'Which loans are missing LMA compliance clauses?'"
                                         rows={2}
+                                        value={query}
+                                        onChange={(e) => setQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleAnalyze();
+                                            }
+                                        }}
                                     ></textarea>
                                 </div>
                                 <div className="flex justify-between items-center px-4 py-3 bg-surface-highlight/30 border-t border-white/5">
@@ -163,15 +204,16 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         </button>
                                         <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Select Model">
                                             <Brain size={16} />
-                                            <span>GPT-4o</span>
+                                            <span>GPT-5</span>
                                         </button>
                                     </div>
                                     <button
                                         onClick={handleAnalyze}
-                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0"
+                                        disabled={isLoading}
+                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Sparkles size={16} />
-                                        <span>Analyze</span>
+                                        <span>{isLoading ? 'Thinking...' : 'Analyze'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -198,198 +240,62 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                         </div>
 
                         {/* Results Section */}
-                        <div className="flex flex-col gap-6 animate-fade-in-up mt-8 border-t border-border pt-10">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-display font-bold text-white flex items-center gap-3">
-                                    <span className="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                                        <Search size={18} />
-                                    </span>
-                                    <span>Results for <span className="text-text-muted font-normal italic">"Show all loans with floating rates"</span></span>
-                                </h3>
-                                <div className="flex gap-2">
-                                    <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Export CSV">
-                                        <Download size={16} />
-                                        <span className="hidden sm:inline">Export</span>
-                                    </button>
-                                    <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Save Query">
-                                        <BookmarkPlus size={16} />
-                                        <span className="hidden sm:inline">Save</span>
-                                    </button>
+                        {result && (
+                            <div className="flex flex-col gap-6 animate-fade-in-up mt-8 border-t border-border pt-10">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-display font-bold text-white flex items-center gap-3">
+                                        <span className="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                            <Search size={18} />
+                                        </span>
+                                        <span>Result</span>
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Export CSV">
+                                            <Download size={16} />
+                                            <span className="hidden sm:inline">Export</span>
+                                        </button>
+                                        <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Save Query">
+                                            <BookmarkPlus size={16} />
+                                            <span className="hidden sm:inline">Save</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="relative overflow-hidden bg-gradient-to-br from-surface-highlight to-surface-dark border border-border rounded-2xl p-1">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-                                <div className="bg-surface-dark/50 backdrop-blur-sm rounded-xl p-6 flex flex-col md:flex-row gap-6 items-start">
-                                    <div className="p-3 bg-surface-highlight rounded-xl border border-white/5 shrink-0 shadow-lg">
-                                        <Sparkles className="text-primary animate-pulse" size={24} />
-                                    </div>
-                                    <div className="flex-1 space-y-4">
-                                        <div className="prose prose-invert max-w-none">
-                                            <p className="text-lg text-white font-light leading-relaxed">
-                                                I found <span className="font-bold text-primary">12 loans</span> in your portfolio that currently have floating interest rates. Most of these are tied to LIBOR transition clauses.
-                                                <span className="text-orange-400 bg-orange-400/10 px-1 rounded ml-1">3 loans</span> are flagged as high risk due to upcoming maturity dates.
-                                            </p>
+                                <div className="relative overflow-hidden bg-gradient-to-br from-surface-highlight to-surface-dark border border-border rounded-2xl p-1">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                                    <div className="bg-surface-dark/50 backdrop-blur-sm rounded-xl p-6 flex flex-col md:flex-row gap-6 items-start">
+                                        <div className="p-3 bg-surface-highlight rounded-xl border border-white/5 shrink-0 shadow-lg">
+                                            <Sparkles className="text-primary animate-pulse" size={24} />
                                         </div>
-                                        <div className="flex gap-4 pt-2">
-                                            <button
-                                                onClick={() => setView?.('analytics_result')}
-                                                className="text-xs font-mono uppercase tracking-wider text-primary hover:text-white transition-colors flex items-center gap-2 group"
-                                            >
-                                                View Analytics <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => setView?.('filter')}
-                                                className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white transition-colors flex items-center gap-2"
-                                            >
-                                                Refine Search <Filter size={16} />
-                                            </button>
+                                        <div className="flex-1 space-y-4">
+                                            <div className="prose prose-invert max-w-none">
+                                                <p className="text-lg text-white font-light leading-relaxed whitespace-pre-wrap">
+                                                    {result}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-4 pt-2">
+                                                <button
+                                                    onClick={() => setView?.('analytics_result')}
+                                                    className="text-xs font-mono uppercase tracking-wider text-primary hover:text-white transition-colors flex items-center gap-2 group"
+                                                >
+                                                    View Analytics <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setView?.('filter')}
+                                                    className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white transition-colors flex items-center gap-2"
+                                                >
+                                                    Refine Search <Filter size={16} />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex flex-row md:flex-col gap-2 border-l border-white/5 pl-4 md:pl-0 md:border-l-0 md:border-t-0">
-                                        <button className="p-2 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"><ThumbsUp size={18} /></button>
-                                        <button className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"><ThumbsDown size={18} /></button>
+                                        <div className="flex flex-row md:flex-col gap-2 border-l border-white/5 pl-4 md:pl-0 md:border-l-0 md:border-t-0">
+                                            <button className="p-2 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"><ThumbsUp size={18} /></button>
+                                            <button className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"><ThumbsDown size={18} /></button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="bg-surface-highlight/30 backdrop-blur rounded-2xl border border-border overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-surface-highlight border-b border-border">
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">Loan ID</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">Counterparty</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider text-right">Amount</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">Rate Type</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider">Maturity</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider text-center">Risk Score</th>
-                                                <th className="p-5 text-[11px] font-mono font-bold text-text-muted uppercase tracking-wider text-right">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
-                                            <tr className="hover:bg-surface-highlight transition-colors group">
-                                                <td className="p-5 font-mono text-sm text-primary">LN-2023-884</td>
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-lg bg-surface-dark border border-white/10 flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-xs font-bold text-white">
-                                                            AC
-                                                        </div>
-                                                        <span className="text-sm font-medium text-white">Alpha Corp</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-sm font-mono text-white text-right">$4,500,000</td>
-                                                <td className="p-5">
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        Floating
-                                                    </span>
-                                                </td>
-                                                <td className="p-5 text-sm text-text-muted font-mono">Oct 24, 2024</td>
-                                                <td className="p-5 text-center">
-                                                    <div className="inline-flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/30 shadow-[0_0_10px_rgba(0,255,148,0.2)]">
-                                                        A+
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <button className="text-text-muted hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-surface-highlight transition-colors group">
-                                                <td className="p-5 font-mono text-sm text-primary">LN-2023-902</td>
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-lg bg-surface-dark border border-white/10 flex items-center justify-center bg-gradient-to-br from-indigo-500/20 to-pink-500/20 text-xs font-bold text-white">
-                                                            BH
-                                                        </div>
-                                                        <span className="text-sm font-medium text-white">Beta Holdings</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-sm font-mono text-white text-right">$12,250,000</td>
-                                                <td className="p-5">
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        Floating
-                                                    </span>
-                                                </td>
-                                                <td className="p-5 text-sm text-text-muted font-mono">Dec 15, 2024</td>
-                                                <td className="p-5 text-center">
-                                                    <div className="inline-flex items-center justify-center size-8 rounded-full bg-yellow-500/10 text-yellow-400 text-xs font-bold border border-yellow-500/30">
-                                                        B-
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <button className="text-text-muted hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-surface-highlight transition-colors group">
-                                                <td className="p-5 font-mono text-sm text-primary">LN-2023-755</td>
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-lg bg-surface-dark border border-white/10 flex items-center justify-center bg-gradient-to-br from-green-500/20 to-teal-500/20 text-xs font-bold text-white">
-                                                            GI
-                                                        </div>
-                                                        <span className="text-sm font-medium text-white">Gamma Ind.</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-sm font-mono text-white text-right">$1,100,000</td>
-                                                <td className="p-5">
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        Floating
-                                                    </span>
-                                                </td>
-                                                <td className="p-5 text-sm text-text-muted font-mono">Nov 30, 2024</td>
-                                                <td className="p-5 text-center">
-                                                    <div className="inline-flex items-center justify-center size-8 rounded-full bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/30">
-                                                        D
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <button className="text-text-muted hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-surface-highlight transition-colors group">
-                                                <td className="p-5 font-mono text-sm text-primary">LN-2024-101</td>
-                                                <td className="p-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-8 rounded-lg bg-surface-dark border border-white/10 flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-red-500/20 text-xs font-bold text-white">
-                                                            DL
-                                                        </div>
-                                                        <span className="text-sm font-medium text-white">Delta Log.</span>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-sm font-mono text-white text-right">$8,750,000</td>
-                                                <td className="p-5">
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                                                        Floating
-                                                    </span>
-                                                </td>
-                                                <td className="p-5 text-sm text-text-muted font-mono">Jan 12, 2025</td>
-                                                <td className="p-5 text-center">
-                                                    <div className="inline-flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/30 shadow-[0_0_10px_rgba(0,255,148,0.2)]">
-                                                        A
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right">
-                                                    <button className="text-text-muted hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
-                                                        <MoreVertical size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="bg-surface-highlight/50 p-4 border-t border-border flex justify-center">
-                                    <button className="text-xs font-mono font-bold text-text-muted hover:text-primary transition-colors flex items-center gap-2">
-                                        VIEW ALL 12 LOANS <ChevronDown size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                     </div>
                 </div>
