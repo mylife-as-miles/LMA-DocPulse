@@ -42,7 +42,11 @@ Extract or generate a JSON object with the following fields:
 - counterparty (string): Name of the borrower/company.
 - amount (string): Loan amount (e.g., "$50.0M").
 - type (string): Type of loan (e.g., "Term Loan B", "Revolver").
-- risk (string): One of ["Low", "Medium", "High", "Critical"].
+- risk (string): Assess based on deviations and covenant strictness. Use:
+    - "Critical" if there are major deviations, unusual clauses, or high-risk covenants
+    - "High" if there are significant deviations or aggressive terms
+    - "Medium" if there are minor deviations but mostly standard terms
+    - "Low" if fully LMA standard compliant with no deviations
 - status (string): "Approved" or "In Review" (Default to "In Review" if deviations found).
 - deadline (string): A date string (e.g., "Oct 24, 2025").
 - reviewData (object):
