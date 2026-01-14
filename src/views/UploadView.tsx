@@ -10,7 +10,8 @@ import {
     Info,
     Lock
 } from 'lucide-react';
-import { ViewState, Doc, QueueItem } from '../types';
+import { ViewState, Doc, QueueItem, Loan } from '../types';
+import { db } from '../db';
 
 interface UploadViewProps {
     setView: (v: ViewState) => void;
@@ -108,34 +109,71 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
         setQueue(prev => prev.filter(i => i.id !== id));
     };
 
-    const handleAnalyze = () => {
+    const handleAnalyze = async () => {
         const readyItems = queue.filter(i => i.status === 'ready');
         if (readyItems.length === 0) return;
 
+        const newLoans: Loan[] = [];
+
         const newDocs: Doc[] = readyItems.map(item => {
             const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
-            // Generate some dummy entities for the requirement
+
+            // Generate simulated data for extraction
+            const companies = ["Alpha Corp", "Beta Holdings", "Gamma Industries", "Omega LLC", "Zeta Tech"];
+            const types = ["Term Loan A", "Revolver", "Syndicated", "Bridge Loan"];
+            const risks: ("Low" | "Medium" | "High" | "Critical")[] = ["Low", "Medium", "High", "Critical"];
+
+            // Use random seed or just random for demo
+            const randomCompany = companies[Math.floor(Math.random() * companies.length)];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            const randomRisk = risks[Math.floor(Math.random() * risks.length)];
+            const randomAmount = `$${(Math.random() * 50 + 1).toFixed(1)}M`;
+            const randomId = `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+
+            const deadlineDate = new Date();
+            deadlineDate.setDate(deadlineDate.getDate() + Math.floor(Math.random() * 30) + 1);
+            const deadlineStr = deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            // Generate entities based on the "extracted" data
             const dummyEntities = [
-                "Alpha Corp",
+                randomCompany,
                 "LMA Banking Group",
-                "USD 50,000,000",
-                "24 October 2024"
+                randomAmount,
+                todayStr
             ];
 
             // Simple logic to determine status for demo purposes
-            // If filename contains "draft", mark for review. Otherwise mostly Analyzed.
             const isReview = item.file.name.toLowerCase().includes('draft') || Math.random() > 0.8;
+
+            // Create corresponding Loan record
+            const newLoan: Loan = {
+                id: randomId,
+                counterparty: randomCompany,
+                amount: randomAmount,
+                type: randomType,
+                status: isReview ? 'In Review' : 'Approved',
+                date: todayStr,
+                risk: randomRisk,
+                deadline: deadlineStr
+            };
+            newLoans.push(newLoan);
 
             return {
                 name: item.file.name,
                 type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
                 size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
                 status: isReview ? 'Review' : 'Analyzed',
-                date: new Date().toLocaleDateString(),
+                date: todayStr,
                 fileData: item.file, // Store the Blob
                 entities: dummyEntities
             };
         });
+
+        // Save generated loans to DB
+        if (newLoans.length > 0) {
+            await db.loans.bulkAdd(newLoans);
+        }
 
         onUploadComplete(newDocs);
     };
