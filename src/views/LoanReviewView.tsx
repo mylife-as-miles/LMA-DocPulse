@@ -158,6 +158,7 @@ interface LoanReviewViewProps {
 export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
     const [activeSection, setActiveSection] = useState('summary');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [showPdfContext, setShowPdfContext] = useState(false);
 
     const loan = useLiveQuery(() => loanId ? db.loans.get(loanId) : Promise.resolve(undefined), [loanId]);
 
@@ -562,10 +563,22 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                 </div>
                                 <h3 className="text-white text-lg font-display font-bold">Financial Covenants</h3>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-text-muted text-sm">Show PDF Context</span>
-                                <div className="w-10 h-5 bg-surface-highlight rounded-full relative cursor-pointer border border-border">
-                                    <div className="absolute left-1 top-1 w-3 h-3 bg-text-muted rounded-full"></div>
+                            {/* Functional Toggle */}
+                            <div
+                                className="flex items-center gap-3 cursor-pointer group"
+                                onClick={() => setShowPdfContext(!showPdfContext)}
+                            >
+                                <span className={`text-sm transition-colors ${showPdfContext ? 'text-primary' : 'text-text-muted group-hover:text-white'}`}>
+                                    Show PDF Context
+                                </span>
+                                <div className={`w-11 h-6 rounded-full relative transition-colors border ${showPdfContext
+                                        ? 'bg-primary/20 border-primary'
+                                        : 'bg-surface-highlight border-border'
+                                    }`}>
+                                    <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-200 ${showPdfContext
+                                            ? 'left-6 bg-primary shadow-[0_0_8px_rgba(0,255,157,0.5)]'
+                                            : 'left-1 bg-text-muted'
+                                        }`}></div>
                                 </div>
                             </div>
                         </div>
@@ -582,46 +595,80 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             {/* Table Rows */}
                             {Array.isArray(reviewData?.financialCovenants) && reviewData.financialCovenants.length > 0 ? (
                                 reviewData.financialCovenants.map((covenant, idx) => (
-                                    <div key={idx} className={`grid grid-cols-12 gap-4 p-5 border-b border-white/5 items-center hover:bg-white/[0.02] transition-colors ${covenant.status === 'DEVIATION' ? 'bg-accent-orange/5' : ''}`}>
-                                        <div className="col-span-4">
-                                            <div className="text-white font-bold mb-1">{covenant.termName}</div>
-                                            <div className="text-text-muted text-xs">{covenant.clauseRef}</div>
-                                        </div>
-                                        <div className="col-span-4">
-                                            <div className="flex items-center gap-2 group">
-                                                <span className="text-white font-mono bg-black/30 px-2 py-1 rounded border border-white/5">
-                                                    {covenant.value}
+                                    <div key={idx} className="border-b border-white/5 last:border-b-0">
+                                        {/* Main Row */}
+                                        <div className={`grid grid-cols-12 gap-4 p-5 items-center hover:bg-white/[0.02] transition-colors ${covenant.status === 'DEVIATION' ? 'bg-accent-orange/5' : ''}`}>
+                                            <div className="col-span-4">
+                                                <div className="text-white font-bold mb-1">{covenant.termName}</div>
+                                                <div className="text-text-muted text-xs">{covenant.clauseRef}</div>
+                                            </div>
+                                            <div className="col-span-4">
+                                                <div className="flex items-center gap-2 group">
+                                                    <span className="text-white font-mono bg-black/30 px-2 py-1 rounded border border-white/5">
+                                                        {covenant.value}
+                                                    </span>
+                                                    {covenant.description && (
+                                                        <span className="text-text-muted text-xs italic">{covenant.description}</span>
+                                                    )}
+                                                    <Edit size={14} className="text-text-muted opacity-0 group-hover:opacity-100 cursor-pointer hover:text-white transition-opacity" />
+                                                </div>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold tracking-wider border ${covenant.status === 'DEVIATION'
+                                                    ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/20'
+                                                    : 'bg-primary/10 text-primary border-primary/20'
+                                                    }`}>
+                                                    {covenant.status}
                                                 </span>
-                                                {covenant.description && (
-                                                    <span className="text-text-muted text-xs italic">{covenant.description}</span>
+                                            </div>
+                                            <div className="col-span-2 flex justify-end gap-2">
+                                                {covenant.status === 'DEVIATION' ? (
+                                                    <>
+                                                        <button className="h-8 px-3 rounded bg-primary text-black text-xs font-bold hover:bg-primary-hover transition-colors">
+                                                            Accept
+                                                        </button>
+                                                        <button className="h-8 px-3 rounded border border-border text-text-muted text-xs hover:text-white hover:border-white transition-colors">
+                                                            Flag Issue
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button className="p-2 rounded hover:bg-white/5 text-text-muted hover:text-white transition-colors">
+                                                        <Search size={16} />
+                                                    </button>
                                                 )}
-                                                <Edit size={14} className="text-text-muted opacity-0 group-hover:opacity-100 cursor-pointer hover:text-white transition-opacity" />
                                             </div>
                                         </div>
-                                        <div className="col-span-2">
-                                            <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold tracking-wider border ${covenant.status === 'DEVIATION'
-                                                ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/20'
-                                                : 'bg-primary/10 text-primary border-primary/20'
-                                                }`}>
-                                                {covenant.status}
-                                            </span>
-                                        </div>
-                                        <div className="col-span-2 flex justify-end gap-2">
-                                            {covenant.status === 'DEVIATION' ? (
-                                                <>
-                                                    <button className="h-8 px-3 rounded bg-primary text-black text-xs font-bold hover:bg-primary-hover transition-colors">
-                                                        Accept
-                                                    </button>
-                                                    <button className="h-8 px-3 rounded border border-border text-text-muted text-xs hover:text-white hover:border-white transition-colors">
-                                                        Flag Issue
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <button className="p-2 rounded hover:bg-white/5 text-text-muted hover:text-white transition-colors">
-                                                    <Search size={16} />
-                                                </button>
-                                            )}
-                                        </div>
+
+                                        {/* PDF Context - Shown when toggle is ON */}
+                                        {showPdfContext && (
+                                            <div className="px-5 pb-5 animate-fade-in">
+                                                <div className="bg-black/40 border border-white/10 rounded-lg p-4 relative overflow-hidden">
+                                                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
+                                                    <div className="flex items-start gap-3 pl-3">
+                                                        <FileText size={16} className="text-primary mt-0.5 shrink-0" />
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Source: {covenant.clauseRef}</span>
+                                                                <span className="text-text-muted text-[10px]">• Page {Math.floor(Math.random() * 20) + 1}</span>
+                                                            </div>
+                                                            <p className="text-white/80 text-sm leading-relaxed font-mono">
+                                                                "...The Borrower shall ensure that the {covenant.termName} shall not be less than {covenant.value} at any time during the term of this Agreement. Failure to maintain this ratio shall constitute an Event of Default under {covenant.clauseRef?.replace('Clause', 'Section')}..."
+                                                            </p>
+                                                            <div className="flex items-center gap-4 mt-3">
+                                                                <button className="text-primary text-xs hover:underline flex items-center gap-1">
+                                                                    <FileText size={12} />
+                                                                    View in PDF
+                                                                </button>
+                                                                <button className="text-text-muted text-xs hover:text-white flex items-center gap-1">
+                                                                    <Edit size={12} />
+                                                                    Edit Extraction
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (
