@@ -20,6 +20,7 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { ViewState, Loan, ReviewData, Covenant } from '../types';
+import { toast } from 'sonner';
 
 interface LoanReviewViewProps {
     loanId?: string;
@@ -88,6 +89,24 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
         return 'text-red-500';
     };
 
+    const handleApproveAll = async () => {
+        if (!loan || !loan.id) return;
+        try {
+            await db.loans.update(loan.id, { status: 'Approved' });
+            toast.success("Loan Agreement Approved", {
+                description: `Loan #${loan.id} has been marked as approved.`
+            });
+            if (setView) {
+                setTimeout(() => setView('loan_reviews'), 1500);
+            }
+        } catch (error) {
+            console.error("Failed to approve loan:", error);
+            toast.error("Approval Failed", {
+                description: "An error occurred while updating the loan status."
+            });
+        }
+    };
+
     return (
         <div className="flex flex-1 overflow-hidden relative h-full">
             {/* Sidebar */}
@@ -126,7 +145,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                 if (section === 'Financial Covenants' && reviewData?.clauseStats?.deviations > 0) {
                                     statusColor = 'bg-accent-orange shadow-[0_0_6px_#f59e0b]';
                                 } else if (section === 'Events of Default') {
-                                     statusColor = 'bg-red-500 shadow-[0_0_6px_#ef4444]';
+                                    statusColor = 'bg-red-500 shadow-[0_0_6px_#ef4444]';
                                 } else if (section === 'Signatures') {
                                     statusColor = 'bg-text-muted';
                                 }
@@ -181,7 +200,10 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             <Download size={18} />
                             Export Report
                         </button>
-                        <button className="flex items-center gap-2 h-10 px-6 rounded bg-primary hover:bg-primary-hover text-black transition-all text-sm font-bold shadow-glow border border-transparent hover:scale-105 active:scale-95">
+                        <button
+                            onClick={handleApproveAll}
+                            className="flex items-center gap-2 h-10 px-6 rounded bg-primary hover:bg-primary-hover text-black transition-all text-sm font-bold shadow-glow border border-transparent hover:scale-105 active:scale-95"
+                        >
                             <CheckCircle size={18} />
                             Approve All
                         </button>
@@ -257,10 +279,10 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                     {/* Borrower Details Section */}
                     <section id="borrower-details" className="scroll-mt-32">
                         <div className="flex items-center gap-3 mb-4">
-                             <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-primary">
+                            <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-primary">
                                 <Check size={14} />
-                             </div>
-                             <h3 className="text-white text-lg font-display font-bold">Borrower Details</h3>
+                            </div>
+                            <h3 className="text-white text-lg font-display font-bold">Borrower Details</h3>
                         </div>
                         <div className="glass-panel border border-border rounded-xl p-6 md:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -346,11 +368,10 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                             </div>
                                         </div>
                                         <div className="col-span-2">
-                                            <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold tracking-wider border ${
-                                                covenant.status === 'DEVIATION'
+                                            <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold tracking-wider border ${covenant.status === 'DEVIATION'
                                                 ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/20'
                                                 : 'bg-primary/10 text-primary border-primary/20'
-                                            }`}>
+                                                }`}>
                                                 {covenant.status}
                                             </span>
                                         </div>
@@ -381,29 +402,29 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                     {/* Placeholder for Events of Default if data exists */}
                     {reviewData?.eventsOfDefault && (
                         <section id="events-of-default" className="scroll-mt-32">
-                             <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center gap-3 mb-4">
                                 <div className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center text-red-500">
                                     <AlertTriangle size={14} />
                                 </div>
                                 <h3 className="text-white text-lg font-display font-bold">Events of Default</h3>
-                             </div>
-                             <div className="glass-panel border border-border rounded-xl p-6">
+                            </div>
+                            <div className="glass-panel border border-border rounded-xl p-6">
                                 <pre className="text-white text-sm whitespace-pre-wrap font-sans">{JSON.stringify(reviewData.eventsOfDefault, null, 2)}</pre>
-                             </div>
+                            </div>
                         </section>
                     )}
 
                     {/* Placeholder for Signatures */}
                     <section id="signatures" className="scroll-mt-32">
-                         <div className="flex items-center gap-3 mb-4">
-                                <div className="w-6 h-6 rounded bg-surface-highlight flex items-center justify-center text-text-muted">
-                                    <PenTool size={14} />
-                                </div>
-                                <h3 className="text-white text-lg font-display font-bold">Signatures</h3>
-                             </div>
-                             <div className="glass-panel border border-border rounded-xl p-6">
-                                <p className="text-text-muted">Signature verification status available in full report.</p>
-                             </div>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-6 h-6 rounded bg-surface-highlight flex items-center justify-center text-text-muted">
+                                <PenTool size={14} />
+                            </div>
+                            <h3 className="text-white text-lg font-display font-bold">Signatures</h3>
+                        </div>
+                        <div className="glass-panel border border-border rounded-xl p-6">
+                            <p className="text-text-muted">Signature verification status available in full report.</p>
+                        </div>
                     </section>
                 </div>
             </main>
