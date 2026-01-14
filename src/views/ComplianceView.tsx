@@ -18,8 +18,17 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
     const chartData = useLiveQuery(() => db.chartData.toArray()) || [];
     const alerts = useLiveQuery(() => db.alerts.toArray()) || [];
 
-    const currentScore = chartData.length > 0 ? chartData[chartData.length - 1].score : 0;
-    const previousScore = chartData.length > 1 ? chartData[chartData.length - 2].score : 0;
+    // Dynamic Compliance Score Calc
+    let calculatedScore = 100;
+    loans.forEach(l => {
+        if (l.risk === 'Critical') calculatedScore -= 15;
+        else if (l.risk === 'High') calculatedScore -= 5;
+        else if (l.risk === 'Medium') calculatedScore -= 1;
+    });
+    calculatedScore = Math.max(0, calculatedScore);
+
+    const currentScore = calculatedScore;
+    const previousScore = 100;
     const scoreTrend = currentScore - previousScore;
 
     const criticalIssuesCount = loans.filter(l => l.risk === 'Critical').length + alerts.filter(a => a.type === 'critical').length;
@@ -31,7 +40,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
     // Use Analyzed docs as "Recently Cleared" proxy for demo
     const recentlyAnalyzed = docs.filter(d => d.status === 'Analyzed').sort((a,b) => b.id! - a.id!).slice(0, 5);
 
-    if (loans.length === 0 && docs.length === 0 && chartData.length === 0) {
+    if (loans.length === 0 && docs.length === 0) {
         return (
              <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern">
                  <div className="mx-auto max-w-[1600px] flex flex-col items-center justify-center h-full text-center py-20">
@@ -116,14 +125,10 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h3 className="text-lg font-bold text-white">Portfolio Risk Heatmap</h3>
-                            <p className="text-xs text-text-muted">Concentration by Industry & Region</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-text-muted hover:text-white transition-colors">By Industry</button>
-                            <button className="px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-text-muted hover:text-white transition-colors">By Region</button>
+                            <p className="text-xs text-text-muted">Concentration by Risk Level</p>
                         </div>
                     </div>
-                    <RiskHeatmap />
+                    <RiskHeatmap loans={loans} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

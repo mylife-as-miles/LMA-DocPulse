@@ -45,9 +45,28 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
     const activeLoansCount = loansData.length;
     const criticalRisksCount = loansData.filter(l => l.risk === 'Critical').length;
     const pendingApprovalsCount = docs.filter(d => d.status === 'Review' || d.status === 'Pending').length;
-    const currentScore = chartData.length > 0 ? chartData[chartData.length - 1].score : 0;
-    const previousScore = chartData.length > 1 ? chartData[chartData.length - 2].score : 0;
+
+    // Dynamic Compliance Score Calc
+    // Start at 100. Deduct points for risks.
+    let calculatedScore = 100;
+    loansData.forEach(l => {
+        if (l.risk === 'Critical') calculatedScore -= 15;
+        else if (l.risk === 'High') calculatedScore -= 5;
+        else if (l.risk === 'Medium') calculatedScore -= 1;
+    });
+    calculatedScore = Math.max(0, calculatedScore);
+
+    // Use calculated score if chartData is empty, otherwise use DB trend logic (if we were logging history)
+    // Since we cleared mock history, we just show current score.
+    const currentScore = calculatedScore;
+    const previousScore = 100; // Assume perfect start for demo trend if no history
     const scoreTrend = currentScore - previousScore;
+
+    // Synthetic chart data for visualization if empty
+    const displayChartData = chartData.length > 0 ? chartData : [
+        { month: 'Start', score: 100 },
+        { month: 'Current', score: currentScore }
+    ];
 
     const getRiskColor = (risk: string) => {
         switch (risk) {
@@ -135,7 +154,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
 
                     <div className="flex-1 min-h-[250px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={displayChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.2} />
@@ -292,7 +311,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
 
                 {/* Risk Heatmap */}
                 <div className="lg:col-span-1 glass-panel rounded-2xl p-6">
-                    <RiskHeatmap />
+                    <RiskHeatmap loans={loansData} />
                 </div>
             </div>
 
