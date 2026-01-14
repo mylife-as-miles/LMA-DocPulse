@@ -150,14 +150,14 @@ export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) 
                                 onLoadSuccess={onDocumentLoadSuccess}
                                 className="flex flex-col items-center"
                             >
-                                {Array.from(new Array(numPages), (el, index) => (
-                                    <Page
-                                        key={`page_${index + 1}`}
-                                        pageNumber={index + 1}
-                                        width={800} // Fixed width for consistency
-                                        className="mb-4 shadow-sm"
-                                    />
-                                ))}
+                                <Page
+                                    pageNumber={1}
+                                    width={800} // Fixed width for consistency
+                                    className="mb-4 shadow-sm"
+                                />
+                                {numPages && numPages > 1 && (
+                                    <p className="text-gray-500 text-sm mt-4">Showing page 1 of {numPages}</p>
+                                )}
                             </Document>
                          ) : doc.type === 'DOCX' ? (
                              <div className="p-10 flex flex-col items-center justify-center h-full">
