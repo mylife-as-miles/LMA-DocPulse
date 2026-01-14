@@ -33,24 +33,32 @@ export const updateApiKey = (key: string) => {
 
 export const getLoanAnalysisPrompt = (filename: string, fileContent: string) => `
 You are an expert financial analyst AI (LMA DocPulse).
-Analyze the following loan agreement document (or filename context if content is minimal).
+Analyze the following loan agreement document.
 
 Filename: "${filename}"
-Content Snippet: "${fileContent.substring(0, 1000)}..."
+Content: "${fileContent.substring(0, 50000)}..."
 
 Extract or generate a JSON object with the following fields:
 - counterparty (string): Name of the borrower/company.
 - amount (string): Loan amount (e.g., "$50.0M").
 - type (string): Type of loan (e.g., "Term Loan B", "Revolver").
 - risk (string): One of ["Low", "Medium", "High", "Critical"].
-- status (string): "Approved" or "In Review".
+- status (string): "Approved" or "In Review" (Default to "In Review" if deviations found).
 - deadline (string): A date string (e.g., "Oct 24, 2025").
-- reviewData (object): An object containing:
+- reviewData (object):
     - summary (string): A brief summary of the facility.
-    - borrowerDetails (string): Description of the borrower.
-    - financialCovenants (string): Key covenants.
-    - eventsOfDefault (string): Key events of default.
-    - signatures (string): Status of signatures.
+    - confidenceScore (number): 0-100 score representing extraction confidence.
+    - standardizationScore (number): 0-100 score representing adherence to LMA standards.
+    - clauseStats (object): { total: number, standard: number, deviations: number }.
+    - borrowerDetails (object): { entityName, jurisdiction, registrationNumber, legalAddress }.
+    - financialCovenants (array of objects): Each object must have:
+        - termName (string): e.g., "Interest Cover Ratio".
+        - clauseRef (string): e.g., "Clause 22.1".
+        - value (string): e.g., "4.00:1".
+        - status (string): "LMA STANDARD" or "DEVIATION".
+        - description (string): optional context (e.g., "stepping down to 4.00:1").
+    - eventsOfDefault (array of strings): Key events.
+    - signatures (string): Status summary.
 
 Return ONLY the JSON object.
 `;

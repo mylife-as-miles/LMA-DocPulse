@@ -17,10 +17,8 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
 
         let fullText = '';
 
-        // Limit to first 5 pages to avoid huge tokens and slow processing
-        const maxPages = Math.min(pdf.numPages, 5);
-
-        for (let i = 1; i <= maxPages; i++) {
+        // Extract text from all pages
+        for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
             const pageText = textContent.items
