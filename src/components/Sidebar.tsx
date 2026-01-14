@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { ConfirmationModal } from './ConfirmationModal';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db';
+
 
 interface SidebarProps {
     isOpen: boolean;
@@ -24,6 +27,11 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
+    const user = useLiveQuery(() => db.users.toArray())?.[0];
+    const displayName = user?.name || 'Alex Morgan';
+    const displayTitle = user?.title || 'Senior Analyst';
+    const displayAvatar = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=00FF94&color=000`;
 
     const navItems = [
         { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -153,7 +161,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                         >
                             <div className="relative shrink-0">
                                 <img
-                                    src="https://picsum.photos/100/100"
+                                    src={displayAvatar}
                                     alt="User"
                                     className="h-8 w-8 rounded-full object-cover ring-2 ring-border group-hover:ring-primary transition-all"
                                 />
@@ -161,8 +169,8 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
                             </div>
                             {!isCollapsed && (
                                 <div className="flex flex-col overflow-hidden animate-fade-in">
-                                    <span className="truncate text-xs font-bold text-white font-display">Alex Morgan</span>
-                                    <span className="truncate text-[10px] text-text-muted">Senior Analyst</span>
+                                    <span className="truncate text-xs font-bold text-white font-display">{displayName}</span>
+                                    <span className="truncate text-xs text-text-muted">{displayTitle}</span>
                                 </div>
                             )}
                         </div>
