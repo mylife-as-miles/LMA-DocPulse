@@ -93,7 +93,7 @@ export const PortfolioAnalyticsView = () => {
                     {[
                         { label: 'Total Exposure', value: formatCurrency(totalExposure), change: 'Realtime', icon: DollarSign, color: 'text-primary' },
                         { label: 'Avg. Risk Score', value: avgRiskLabel, change: 'Calculated', icon: Activity, color: 'text-accent-orange' },
-                        { label: 'Performant Loans', value: performantLoans.toString(), change: `${((performantLoans/loans.length)*100).toFixed(0)}%`, icon: TrendingUp, color: 'text-blue-400' },
+                        { label: 'Performant Loans', value: performantLoans.toString(), change: `${((performantLoans / loans.length) * 100).toFixed(0)}%`, icon: TrendingUp, color: 'text-blue-400' },
                         { label: 'Yield', value: 'N/A', change: '-', icon: ArrowUpRight, color: 'text-primary' }, // Hardcoded as N/A
                     ].map((stat, i) => (
                         <div key={i} className="glass-panel p-5 rounded-xl flex flex-col gap-4">
@@ -113,53 +113,57 @@ export const PortfolioAnalyticsView = () => {
 
                 {/* Main Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]">
+                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Exposure Trends</h3>
                         {aggregatedData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={aggregatedData}>
-                                    <defs>
-                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#00FF94" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#00FF94" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                    <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value/1000000).toFixed(0)}M`} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#333' }}
-                                        itemStyle={{ color: '#fff' }}
-                                        formatter={(value: number) => formatCurrency(value)}
-                                    />
-                                    <Area type="monotone" dataKey="value" stroke="#00FF94" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={aggregatedData}>
+                                        <defs>
+                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#00FF94" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#00FF94" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value / 1000000).toFixed(0)}M`} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#18181b', borderColor: '#333' }}
+                                            itemStyle={{ color: '#fff' }}
+                                            formatter={(value: number) => formatCurrency(value)}
+                                        />
+                                        <Area type="monotone" dataKey="value" stroke="#00FF94" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
                         ) : (
-                             <div className="flex-1 flex items-center justify-center text-text-muted">Not enough data for trends</div>
+                            <div className="flex-1 flex items-center justify-center text-text-muted">Not enough data for trends</div>
                         )}
                     </div>
 
-                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]">
+                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Risk Distribution</h3>
                         {aggregatedData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={aggregatedData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                                    <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value/1000000).toFixed(0)}M`} />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#18181b', borderColor: '#333' }}
-                                        cursor={{ fill: '#ffffff10' }}
-                                        formatter={(value: number) => formatCurrency(value)}
-                                    />
-                                    <Legend />
-                                    <Bar dataKey="value" name="Total Exposure" fill="#00FF94" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="risk" name="At Risk" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={aggregatedData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value / 1000000).toFixed(0)}M`} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#18181b', borderColor: '#333' }}
+                                            cursor={{ fill: '#ffffff10' }}
+                                            formatter={(value: number) => formatCurrency(value)}
+                                        />
+                                        <Legend />
+                                        <Bar dataKey="value" name="Total Exposure" fill="#00FF94" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="risk" name="At Risk" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
                         ) : (
-                             <div className="flex-1 flex items-center justify-center text-text-muted">Not enough data for distribution</div>
+                            <div className="flex-1 flex items-center justify-center text-text-muted">Not enough data for distribution</div>
                         )}
                     </div>
                 </div>
