@@ -7,14 +7,34 @@ interface ActivityLogViewProps {
     setView: (view: ViewState) => void;
 }
 
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
+
 export const ActivityLogView = ({ setView }: ActivityLogViewProps) => {
+    const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const docs = useLiveQuery(() => db.docs.toArray()) || [];
+
+    // Synthesize activities from real data
     const activities = [
-        { id: 1, type: 'review', title: 'Reviewed Loan Agreement #LN-2024-001', time: '2 hours ago', user: 'Alex Morgan', icon: FileText, color: 'text-blue-400' },
-        { id: 2, type: 'approve', title: 'Approved Covenant Deviation for Alpha Corp', time: '4 hours ago', user: 'Alex Morgan', icon: CheckCircle2, color: 'text-green-400' },
-        { id: 3, type: 'comment', title: 'Commented on "Financial Covenants" section', time: 'Yesterday at 4:30 PM', user: 'Alex Morgan', icon: MessageSquare, color: 'text-purple-400' },
-        { id: 4, type: 'edit', title: 'Updated risk profile for Gamma Industries', time: 'Yesterday at 2:15 PM', user: 'Alex Morgan', icon: Edit3, color: 'text-amber-400' },
-        { id: 5, type: 'review', title: 'Started analysis of New York Syndication Docs', time: '2 days ago', user: 'Alex Morgan', icon: FileText, color: 'text-blue-400' },
-    ];
+        ...docs.map(d => ({
+            id: `doc-${d.id}`,
+            type: 'upload',
+            title: `Uploaded Document: ${d.name}`,
+            time: d.date,
+            user: 'You',
+            icon: FileText,
+            color: 'text-blue-400'
+        })),
+        ...loans.map(l => ({
+            id: `loan-${l.id}`,
+            type: 'review',
+            title: `Loan Review Processed: ${l.counterparty}`,
+            time: l.date,
+            user: 'System AI',
+            icon: CheckCircle2,
+            color: 'text-green-400'
+        }))
+    ].sort(() => Math.random() - 0.5); // Random sort since we don't have real timestamps for everything yet, simple fallback
 
     return (
         <motion.div
@@ -23,7 +43,7 @@ export const ActivityLogView = ({ setView }: ActivityLogViewProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar"
         >
-             <div className="mx-auto max-w-3xl flex flex-col gap-8 pb-20">
+            <div className="mx-auto max-w-3xl flex flex-col gap-8 pb-20">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
@@ -69,7 +89,7 @@ export const ActivityLogView = ({ setView }: ActivityLogViewProps) => {
                 <div className="flex justify-center pt-4">
                     <button className="text-xs font-bold uppercase tracking-wider text-text-muted hover:text-white transition-colors">Load Older Activity</button>
                 </div>
-             </div>
+            </div>
         </motion.div>
     );
 };
