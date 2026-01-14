@@ -7,20 +7,35 @@ import { useLiveQuery } from 'dexie-react-hooks';
 export const PortfolioAnalyticsView = () => {
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
 
-    // Parse amount string to number
-    const parseAmount = (amtStr: string): number => {
-        if (!amtStr) return 0;
-        const cleanStr = amtStr.replace(/[^0-9.]/g, '');
-        const val = parseFloat(cleanStr);
-        if (amtStr.toUpperCase().includes('M')) return val * 1000000;
-        if (amtStr.toUpperCase().includes('K')) return val * 1000;
-        if (amtStr.toUpperCase().includes('B')) return val * 1000000000;
+    // Parse amount string to number - with better error handling
+    const parseAmount = (amtStr: string | undefined | null): number => {
+        if (!amtStr || typeof amtStr !== 'string') return 0;
+
+        // Remove currency symbols, commas, and spaces
+        const cleanStr = amtStr.replace(/[$€£,\s]/g, '').trim();
+
+        // Check for multiplier suffixes
+        const hasM = /m$/i.test(cleanStr);
+        const hasK = /k$/i.test(cleanStr);
+        const hasB = /b$/i.test(cleanStr);
+
+        // Extract numeric part
+        const numericPart = cleanStr.replace(/[^0-9.]/g, '');
+        const val = parseFloat(numericPart);
+
+        if (isNaN(val)) return 0;
+
+        if (hasB) return val * 1000000000;
+        if (hasM) return val * 1000000;
+        if (hasK) return val * 1000;
+
+        // If no suffix but large number, assume it's already in base units
         return val;
     };
 
     // Aggregate data for charts
     const aggregatedData = loans.reduce((acc, loan) => {
-        const date = new Date(loan.date);
+        const date = loan.date ? new Date(loan.date) : new Date();
         const month = date.toLocaleString('default', { month: 'short' });
         const amount = parseAmount(loan.amount);
 
@@ -40,7 +55,7 @@ export const PortfolioAnalyticsView = () => {
         return acc;
     }, [] as { name: string; value: number; risk: number }[]);
 
-    // Sort by month (simple sort assuming same year or just month order)
+    // Sort by month order
     const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     aggregatedData.sort((a, b) => monthOrder.indexOf(a.name) - monthOrder.indexOf(b.name));
 
@@ -51,7 +66,7 @@ export const PortfolioAnalyticsView = () => {
     // Simple risk score calc
     const riskMap: Record<string, number> = { 'Low': 4, 'Medium': 3, 'High': 2, 'Critical': 1 };
     const avgRiskScoreVal = loans.length > 0
-        ? loans.reduce((acc, l) => acc + (riskMap[l.risk] || 0), 0) / loans.length
+        ? loans.reduce((acc, l) => acc + (riskMap[l.risk] || 3), 0) / loans.length
         : 0;
 
     let avgRiskLabel = 'N/A';
@@ -60,9 +75,16 @@ export const PortfolioAnalyticsView = () => {
     else if (avgRiskScoreVal >= 1.5) avgRiskLabel = 'C';
     else if (avgRiskScoreVal > 0) avgRiskLabel = 'D';
 
+    // Calculate estimated yield based on risk (simulated)
+    const estimatedYield = loans.length > 0
+        ? (avgRiskScoreVal * 1.5 + 2).toFixed(1) + '%' // Higher risk = Lower yield potential
+        : 'N/A';
+
     const formatCurrency = (val: number) => {
+        if (isNaN(val) || val === 0) return '$0';
         if (val >= 1000000000) return `$${(val / 1000000000).toFixed(1)}B`;
         if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
+        if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
         return `$${val.toLocaleString()}`;
     };
 
@@ -93,8 +115,8 @@ export const PortfolioAnalyticsView = () => {
                     {[
                         { label: 'Total Exposure', value: formatCurrency(totalExposure), change: 'Realtime', icon: DollarSign, color: 'text-primary' },
                         { label: 'Avg. Risk Score', value: avgRiskLabel, change: 'Calculated', icon: Activity, color: 'text-accent-orange' },
-                        { label: 'Performant Loans', value: performantLoans.toString(), change: `${((performantLoans / loans.length) * 100).toFixed(0)}%`, icon: TrendingUp, color: 'text-blue-400' },
-                        { label: 'Yield', value: 'N/A', change: '-', icon: ArrowUpRight, color: 'text-primary' }, // Hardcoded as N/A
+                        { label: 'Performant Loans', value: performantLoans.toString(), change: `${loans.length > 0 ? ((performantLoans / loans.length) * 100).toFixed(0) : 0}%`, icon: TrendingUp, color: 'text-blue-400' },
+                        { label: 'Est. Yield', value: estimatedYield, change: 'Projected', icon: ArrowUpRight, color: 'text-primary' },
                     ].map((stat, i) => (
                         <div key={i} className="glass-panel p-5 rounded-xl flex flex-col gap-4">
                             <div className="flex justify-between items-start">
