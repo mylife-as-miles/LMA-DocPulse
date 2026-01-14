@@ -8,11 +8,13 @@ import {
     Image as ImageIcon,
     Bot,
     Info,
-    Lock
+    Lock,
+    Loader2
 } from 'lucide-react';
 import { ViewState, Doc, QueueItem, Loan } from '../types';
 import { db } from '../db';
-import { openai, getLoanAnalysisPrompt } from '../services/openai';
+import { openai, getLoanAnalysisPrompt, hasApiKey } from '../services/openai';
+import { toast } from 'sonner';
 
 interface UploadViewProps {
     setView: (v: ViewState) => void;
@@ -22,6 +24,7 @@ interface UploadViewProps {
 export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
     const [dragActive, setDragActive] = useState(false);
     const [queue, setQueue] = useState<QueueItem[]>([]);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -114,88 +117,100 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
         const readyItems = queue.filter(i => i.status === 'ready');
         if (readyItems.length === 0) return;
 
+        if (!hasApiKey()) {
+            toast.error("OpenAI API Key is missing", {
+                description: "Please configure your API Key in Settings to use the AI features.",
+                duration: 5000,
+                action: {
+                    label: "Settings",
+                    onClick: () => setView('settings')
+                }
+            });
+            return;
+        }
+
+        setIsAnalyzing(true);
         const newLoans: Loan[] = [];
         const newDocs: Doc[] = [];
 
-        // Process each file sequentially to allow for async API calls
-        for (const item of readyItems) {
-            const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
+        try {
+            // Process each file sequentially to allow for async API calls
+            for (const item of readyItems) {
+                const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
 
-            // Read basic content (simulated read of first 1000 chars for text files, or just use name)
-            // In a real app, we'd use pdf.js or similar here.
-            // For now, we rely on the filename and a dummy content placeholder if we can't read it.
-            const contentSnippet = "Content extraction pending...";
+                // Read basic content (simulated read of first 1000 chars for text files, or just use name)
+                const contentSnippet = "Content extraction pending...";
 
-            let extractedData: any = {};
+                let extractedData: any = {};
 
-            try {
-                // Call OpenAI for "Real" Analysis
-                const completion = await openai.chat.completions.create({
-                    model: "gpt-5", // Using the frontier model as requested
-                    messages: [
-                        { role: "user", content: getLoanAnalysisPrompt(item.file.name, contentSnippet) }
-                    ],
-                    response_format: { type: "json_object" }
-                });
+                try {
+                    // Call OpenAI for "Real" Analysis
+                    const completion = await openai.chat.completions.create({
+                        model: "gpt-5", // Using the frontier model as requested
+                        messages: [
+                            { role: "user", content: getLoanAnalysisPrompt(item.file.name, contentSnippet) }
+                        ],
+                        response_format: { type: "json_object" }
+                    });
 
-                const content = completion.choices[0].message.content;
-                if (content) {
-                    extractedData = JSON.parse(content);
+                    const content = completion.choices[0].message.content;
+                    if (content) {
+                        extractedData = JSON.parse(content);
+                    }
+                } catch (error) {
+                    console.error("OpenAI Analysis Failed:", error);
+                    toast.error(`Analysis failed for ${item.file.name}`);
+                    continue;
                 }
-            } catch (error) {
-                console.error("OpenAI Analysis Failed, falling back to simulation:", error);
-                // Fallback to simulation if API key is missing or fails
-                extractedData = {
-                    counterparty: "Unknown Corp",
-                    amount: "$10.0M",
-                    type: "Term Loan",
-                    risk: "Medium",
-                    status: "Review",
-                    deadline: "TBD"
+
+                const randomId = `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+                const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                // Generate entities based on the extracted data
+                const entities = [
+                    extractedData.counterparty || "Unknown",
+                    "LMA Banking Group",
+                    extractedData.amount || "N/A",
+                    todayStr
+                ];
+
+                // Create corresponding Loan record
+                const newLoan: Loan = {
+                    id: randomId,
+                    counterparty: extractedData.counterparty || "Unknown",
+                    amount: extractedData.amount || "$0M",
+                    type: extractedData.type || "General",
+                    status: (extractedData.status === 'Approved' || extractedData.status === 'In Review') ? extractedData.status : 'In Review',
+                    date: todayStr,
+                    risk: (extractedData.risk as any) || "Medium",
+                    deadline: extractedData.deadline || todayStr
                 };
+                newLoans.push(newLoan);
+
+                newDocs.push({
+                    name: item.file.name,
+                    type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
+                    size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
+                    status: newLoan.status === 'Approved' ? 'Analyzed' : 'Review',
+                    date: todayStr,
+                    fileData: item.file,
+                    entities: entities
+                });
             }
 
-            const randomId = `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
-            const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            // Save generated loans to DB
+            if (newLoans.length > 0) {
+                await db.loans.bulkAdd(newLoans);
+            }
 
-            // Generate entities based on the extracted data
-            const entities = [
-                extractedData.counterparty || "Unknown",
-                "LMA Banking Group",
-                extractedData.amount || "N/A",
-                todayStr
-            ];
+            onUploadComplete(newDocs);
 
-            // Create corresponding Loan record
-            const newLoan: Loan = {
-                id: randomId,
-                counterparty: extractedData.counterparty || "Unknown",
-                amount: extractedData.amount || "$0M",
-                type: extractedData.type || "General",
-                status: (extractedData.status === 'Approved' || extractedData.status === 'In Review') ? extractedData.status : 'In Review',
-                date: todayStr,
-                risk: (extractedData.risk as any) || "Medium",
-                deadline: extractedData.deadline || todayStr
-            };
-            newLoans.push(newLoan);
-
-            newDocs.push({
-                name: item.file.name,
-                type: (ext === 'PDF' || ext === 'DOCX' || ext === 'XLSX') ? ext as any : 'File',
-                size: (item.file.size / (1024 * 1024)).toFixed(1) + ' MB',
-                status: newLoan.status === 'Approved' ? 'Analyzed' : 'Review',
-                date: todayStr,
-                fileData: item.file,
-                entities: entities
-            });
+        } catch (error) {
+            console.error("Critical Analysis Error:", error);
+            toast.error("An unexpected error occurred during analysis.");
+        } finally {
+            setIsAnalyzing(false);
         }
-
-        // Save generated loans to DB
-        if (newLoans.length > 0) {
-            await db.loans.bulkAdd(newLoans);
-        }
-
-        onUploadComplete(newDocs);
     };
 
     const readyCount = queue.filter(i => i.status === 'ready').length;
@@ -339,15 +354,19 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                                 </div>
                                 <button
                                     onClick={handleAnalyze}
-                                    disabled={readyCount === 0}
+                                    disabled={readyCount === 0 || isAnalyzing}
                                     className={`w-full group relative flex items-center justify-center gap-2 rounded-lg h-12 font-bold transition-all overflow-hidden
-                    ${readyCount > 0
+                    ${readyCount > 0 && !isAnalyzing
                                             ? 'bg-brand-green hover:bg-[#33ffaa] text-pitch-black shadow-[0_0_20px_rgba(0,255,148,0.3)] hover:shadow-[0_0_30px_rgba(0,255,148,0.5)]'
                                             : 'bg-surface-hover text-gray-500 cursor-not-allowed border border-border-dim'}`}
                                 >
-                                    {readyCount > 0 && <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>}
-                                    <Bot size={20} className="z-10" />
-                                    <span className="z-10">Analyze Documents</span>
+                                    {readyCount > 0 && !isAnalyzing && <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>}
+                                    {isAnalyzing ? (
+                                        <Loader2 size={20} className="z-10 animate-spin" />
+                                    ) : (
+                                        <Bot size={20} className="z-10" />
+                                    )}
+                                    <span className="z-10">{isAnalyzing ? 'Analyzing with AI...' : 'Analyze Documents'}</span>
                                 </button>
                                 <button onClick={() => setQueue([])} className="w-full text-sm text-gray-500 hover:text-white transition-colors">Clear Queue</button>
                             </div>
