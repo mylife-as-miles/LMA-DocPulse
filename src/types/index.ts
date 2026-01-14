@@ -70,6 +70,13 @@ export interface Covenant {
     description?: string; // Additional context like "stepping down to..."
 }
 
+export interface CommercialViability {
+    valueProposition: string;
+    scalabilityPotential: string;
+    efficiencyGains: string;
+    potentialImpact: string;
+}
+
 export interface ReviewData {
     summary: string;
     confidenceScore: number; // 0-100
@@ -79,6 +86,7 @@ export interface ReviewData {
         standard: number;
         deviations: number;
     };
+    commercialViability?: CommercialViability;
     borrowerDetails: BorrowerDetails;
     financialCovenants: Covenant[];
     eventsOfDefault?: string | string[]; // Kept flexible for now

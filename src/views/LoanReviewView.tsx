@@ -15,7 +15,12 @@ import {
     Shield,
     Activity,
     Flag,
-    MoreHorizontal
+    MoreHorizontal,
+    TrendingUp,
+    Target,
+    Zap,
+    Globe,
+    Clock
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
@@ -36,7 +41,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
     // Scroll handling for active section highlighting
     useEffect(() => {
         const handleScroll = () => {
-            const sections = ['summary', 'borrower-details', 'financial-covenants', 'events-of-default', 'signatures'];
+            const sections = ['summary', 'commercial-viability', 'borrower-details', 'financial-covenants', 'events-of-default', 'signatures'];
             for (const section of sections) {
                 const element = document.getElementById(section);
                 if (element) {
@@ -184,13 +189,15 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                         <div className="flex flex-col gap-1 relative w-full">
                             {isSidebarOpen && <div className="absolute left-[29px] top-4 bottom-4 w-px bg-border z-0"></div>}
 
-                            {['Summary', 'Borrower Details', 'Financial Covenants', 'Events of Default', 'Signatures'].map((section, idx) => {
+                            {['Summary', 'Commercial Viability', 'Borrower Details', 'Financial Covenants', 'Events of Default', 'Signatures'].map((section, idx) => {
                                 const sectionId = section.toLowerCase().replace(/ /g, '-');
                                 const isActive = activeSection === sectionId;
 
                                 // Status Colors based on section analysis (mock logic for demo if data missing)
                                 let statusColor = 'bg-primary shadow-[0_0_6px_#00ff9d]';
-                                if (section === 'Financial Covenants' && reviewData?.clauseStats?.deviations > 0) {
+                                if (section === 'Commercial Viability' && !reviewData?.commercialViability) {
+                                    statusColor = 'bg-text-muted';
+                                } else if (section === 'Financial Covenants' && reviewData?.clauseStats?.deviations > 0) {
                                     statusColor = 'bg-accent-orange shadow-[0_0_6px_#f59e0b]';
                                 } else if (section === 'Events of Default') {
                                     statusColor = 'bg-red-500 shadow-[0_0_6px_#ef4444]';
@@ -323,6 +330,36 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                         <div className="text-2xl font-bold text-accent-orange">{reviewData?.clauseStats?.deviations || 5}</div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Commercial Viability Section */}
+                    <section id="commercial-viability" className="scroll-mt-32">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-primary">
+                                <TrendingUp size={14} />
+                            </div>
+                            <h3 className="text-white text-lg font-display font-bold">Commercial Viability</h3>
+                        </div>
+                        <div className="glass-panel border border-border rounded-xl p-6 md:p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[
+                                    { title: 'Value Proposition', value: reviewData?.commercialViability?.valueProposition, icon: Target },
+                                    { title: 'Scalability Potential', value: reviewData?.commercialViability?.scalabilityPotential, icon: Zap },
+                                    { title: 'Efficiency Gains', value: reviewData?.commercialViability?.efficiencyGains, icon: Clock },
+                                    { title: 'Potential Impact', value: reviewData?.commercialViability?.potentialImpact, icon: Globe },
+                                ].map((item, idx) => (
+                                    <div key={idx} className="bg-surface rounded-lg border border-white/5 relative group hover:border-primary/30 transition-colors p-5 overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <item.icon size={48} className="text-white" />
+                                        </div>
+                                        <label className="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-2 block">{item.title}</label>
+                                        <p className="text-white text-sm leading-relaxed relative z-10">
+                                            {item.value || "Analysis pending..."}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </section>
