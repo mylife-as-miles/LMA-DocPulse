@@ -470,7 +470,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             <div className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-full">
                                 <span className="text-text-muted text-xs uppercase tracking-wider">Overall Score</span>
                                 <span className={`text-lg font-bold ${(reviewData?.commercialViability?.overallScore || 0) >= 80 ? 'text-primary' :
-                                        (reviewData?.commercialViability?.overallScore || 0) >= 60 ? 'text-accent-orange' : 'text-red-500'
+                                    (reviewData?.commercialViability?.overallScore || 0) >= 60 ? 'text-accent-orange' : 'text-red-500'
                                     }`}>
                                     {reviewData?.commercialViability?.overallScore || '--'}%
                                 </span>
@@ -493,13 +493,13 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
 
                                     return (
                                         <ViabilityCard
-                                            key={item.key}
                                             itemKey={item.key}
                                             title={item.title}
                                             icon={item.icon}
                                             color={item.color}
                                             text={text}
                                             score={score}
+                                            key={item.key}
                                         />
                                     );
                                 })}
