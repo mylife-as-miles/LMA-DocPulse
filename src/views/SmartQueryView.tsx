@@ -57,7 +57,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 ).join('\n');
 
                 const completion = await openai.chat.completions.create({
-                    model: "gpt-5", // Using frontier model
+                    model: "gpt-4o", // Using frontier model
                     messages: [
                         { role: "user", content: getChatPrompt(query, context) }
                     ]
@@ -204,7 +204,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         </button>
                                         <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Select Model">
                                             <Brain size={16} />
-                                            <span>GPT-5</span>
+                                            <span>GPT-4o</span>
                                         </button>
                                     </div>
                                     <button

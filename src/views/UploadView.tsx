@@ -25,6 +25,7 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
     const [dragActive, setDragActive] = useState(false);
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analyzingProgress, setAnalyzingProgress] = useState<{current: number, total: number} | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -130,12 +131,16 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
         }
 
         setIsAnalyzing(true);
+        setAnalyzingProgress({ current: 0, total: readyItems.length });
         const newLoans: Loan[] = [];
         const newDocs: Doc[] = [];
 
         try {
             // Process each file sequentially to allow for async API calls
-            for (const item of readyItems) {
+            for (let i = 0; i < readyItems.length; i++) {
+                const item = readyItems[i];
+                setAnalyzingProgress({ current: i + 1, total: readyItems.length });
+
                 const ext = item.file.name.split('.').pop()?.toUpperCase() || 'FILE';
 
                 // Read basic content (simulated read of first 1000 chars for text files, or just use name)
@@ -146,11 +151,13 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                 try {
                     // Call OpenAI for "Real" Analysis
                     const completion = await openai.chat.completions.create({
-                        model: "gpt-5", // Using the frontier model as requested
+                        model: "gpt-4o", // Using a stable, existing model
                         messages: [
                             { role: "user", content: getLoanAnalysisPrompt(item.file.name, contentSnippet) }
                         ],
                         response_format: { type: "json_object" }
+                    }, {
+                        timeout: 30000 // 30s timeout per file
                     });
 
                     const content = completion.choices[0].message.content;
@@ -203,13 +210,19 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                 await db.loans.bulkAdd(newLoans);
             }
 
-            onUploadComplete(newDocs);
+            if (newDocs.length > 0) {
+                 toast.success(`Successfully analyzed ${newDocs.length} documents.`);
+                 onUploadComplete(newDocs);
+            } else {
+                 toast.warning("No documents were successfully analyzed.");
+            }
 
         } catch (error) {
             console.error("Critical Analysis Error:", error);
             toast.error("An unexpected error occurred during analysis.");
         } finally {
             setIsAnalyzing(false);
+            setAnalyzingProgress(null);
         }
     };
 
@@ -366,7 +379,12 @@ export const UploadView = ({ setView, onUploadComplete }: UploadViewProps) => {
                                     ) : (
                                         <Bot size={20} className="z-10" />
                                     )}
-                                    <span className="z-10">{isAnalyzing ? 'Analyzing with AI...' : 'Analyze Documents'}</span>
+                                    <span className="z-10">
+                                        {isAnalyzing
+                                            ? `Analyzing ${analyzingProgress ? `${analyzingProgress.current}/${analyzingProgress.total}` : '...'} `
+                                            : 'Analyze Documents'
+                                        }
+                                    </span>
                                 </button>
                                 <button onClick={() => setQueue([])} className="w-full text-sm text-gray-500 hover:text-white transition-colors">Clear Queue</button>
                             </div>
