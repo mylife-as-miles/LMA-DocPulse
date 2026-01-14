@@ -13,6 +13,8 @@ import { SettingsView } from './src/views/SettingsView';
 import { LoanReviewView } from './src/views/LoanReviewView';
 import { ProfileView } from './src/views/ProfileView';
 import { LoanReviewsListView } from './src/views/LoanReviewsListView';
+import { UserOnboarding } from './src/components/UserOnboarding';
+import { AppTutorial } from './src/components/AppTutorial';
 
 // Import new views
 import { FilterView } from './src/views/FilterView';
@@ -138,6 +140,10 @@ export default function App() {
           currentView={currentView}
           setView={setCurrentView}
         />
+
+        {/* Global Components */}
+        <UserOnboarding />
+        <AppTutorial currentView={currentView} />
 
         {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
         {currentView === 'vault' && (

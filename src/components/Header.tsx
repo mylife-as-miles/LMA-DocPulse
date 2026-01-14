@@ -32,7 +32,7 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView 
             </div>
 
             <div className="flex items-center gap-6">
-                <div className="relative hidden w-80 lg:block group">
+                <div id="global-search" className="relative hidden w-80 lg:block group">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
                     <input
                         type="text"

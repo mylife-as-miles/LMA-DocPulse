@@ -52,6 +52,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
 
             {/* Sidebar Container */}
             <aside
+                id="sidebar-nav"
                 className={`
                     fixed lg:static inset-y-0 left-0 z-50
                     flex flex-col border-r border-border bg-background transition-all duration-300 ease-in-out
