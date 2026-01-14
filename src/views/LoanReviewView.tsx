@@ -107,6 +107,54 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
         }
     };
 
+    const handleExportReport = () => {
+        if (!loan || !reviewData) return;
+
+        const escape = (val: any) => `"${(val || '').toString().replace(/"/g, '""')}"`;
+
+        const headers = ["Category", "Item", "Value", "Status", "Notes"];
+        const rows: any[][] = [];
+
+        // Summary
+        rows.push(["Summary", "Loan ID", loan.id, loan.status, ""]);
+        rows.push(["Summary", "Counterparty", loan.counterparty, "", ""]);
+        rows.push(["Summary", "AI Confidence", `${reviewData.confidenceScore || 0}%`, "", ""]);
+        rows.push(["Summary", "Standardization", `${reviewData.standardizationScore || 0}%`, "", ""]);
+
+        // Borrower
+        if (reviewData.borrowerDetails) {
+            rows.push(["Borrower", "Entity Name", reviewData.borrowerDetails.entityName, "", ""]);
+            rows.push(["Borrower", "Jurisdiction", reviewData.borrowerDetails.jurisdiction, "", ""]);
+            rows.push(["Borrower", "Reg Number", reviewData.borrowerDetails.registrationNumber, "", ""]);
+            rows.push(["Borrower", "Legal Address", reviewData.borrowerDetails.legalAddress, "", ""]);
+        }
+
+        // Covenants
+        if (Array.isArray(reviewData.financialCovenants)) {
+            reviewData.financialCovenants.forEach(cov => {
+                rows.push(["Covenant", cov.termName, cov.value, cov.status, cov.description]);
+            });
+        }
+
+        // Build CSV
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(cell => escape(cell)).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `Loan_Report_${loan.id}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.success("Report Exported", { description: "CSV report has been downloaded." });
+    };
+
     return (
         <div className="flex flex-1 overflow-hidden relative h-full">
             {/* Sidebar */}
@@ -196,7 +244,10 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                         <p className="text-text-muted text-sm max-w-2xl">Automated extraction and compliance monitoring against LMA standards. Review flagged deviations before final approval.</p>
                     </div>
                     <div className="flex gap-3">
-                        <button className="flex items-center gap-2 h-10 px-5 rounded bg-surface border border-border text-text-muted hover:text-white hover:border-text-muted transition-all text-sm font-medium">
+                        <button
+                            onClick={handleExportReport}
+                            className="flex items-center gap-2 h-10 px-5 rounded bg-surface border border-border text-text-muted hover:text-white hover:border-text-muted transition-all text-sm font-medium"
+                        >
                             <Download size={18} />
                             Export Report
                         </button>
