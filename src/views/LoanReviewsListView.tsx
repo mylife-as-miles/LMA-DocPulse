@@ -11,8 +11,10 @@ import {
     AlertTriangle,
     FileText,
     ArrowUpRight,
-    Inbox
+    Inbox,
+    Trash2
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { ViewState } from '../types';
 import { useActionFeedback } from '../components/ActionFeedback';
 import { db } from '../db';
@@ -34,6 +36,19 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
         if (setView) setView('loan_review');
     };
 
+    const handleDeleteLoan = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (confirm(`Are you sure you want to delete Loan #${id}?`)) {
+            try {
+                await db.loans.delete(id);
+                toast.success('Loan deleted successfully');
+            } catch (error) {
+                console.error("Failed to delete loan:", error);
+                toast.error('Failed to delete loan');
+            }
+        }
+    };
+
     // Calculate stats
     const totalReviews = loans.length;
     const pendingAction = loans.filter(l => l.status === 'Pending' || l.status === 'In Review').length;
@@ -41,7 +56,7 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
 
     // Status color mapping
     const getStatusColor = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'Approved': return 'text-primary bg-primary/10 border-primary/20';
             case 'In Review': return 'text-accent-orange bg-accent-orange/10 border-accent-orange/20';
             case 'Rejected': return 'text-accent-red bg-accent-red/10 border-accent-red/20';
@@ -51,10 +66,10 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
     };
 
     if (loans.length === 0) {
-         return (
+        return (
             <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
                 <div className="mx-auto max-w-[1600px] flex flex-col gap-8 h-full">
-                     {/* Header & Controls (Simplified) */}
+                    {/* Header & Controls (Simplified) */}
                     <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                         <div className="space-y-2">
                             <h1 className="text-4xl font-display font-bold text-white tracking-tight">Loan Reviews</h1>
@@ -75,7 +90,7 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                     </div>
                 </div>
             </div>
-         );
+        );
     }
 
     return (
@@ -181,6 +196,13 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                                             <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button className="p-2 rounded hover:bg-white/10 text-white transition-colors" title="View Details">
                                                     <ArrowUpRight size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteLoan(e, loan.id)}
+                                                    className="p-2 rounded hover:bg-white/10 text-text-muted hover:text-red-500 transition-colors"
+                                                    title="Delete Loan"
+                                                >
+                                                    <Trash2 size={16} />
                                                 </button>
                                                 <button className="p-2 rounded hover:bg-white/10 text-text-muted hover:text-white transition-colors">
                                                     <MoreHorizontal size={16} />

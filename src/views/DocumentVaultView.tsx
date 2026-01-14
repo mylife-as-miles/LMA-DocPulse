@@ -1,5 +1,7 @@
 import React from 'react';
-import { Plus, Files, TrendingUp, CheckCircle2, Filter, FileText, File as FileIcon, ChevronRight, Inbox } from 'lucide-react';
+import { Plus, Files, TrendingUp, CheckCircle2, Filter, FileText, File as FileIcon, ChevronRight, Inbox, Trash2 } from 'lucide-react';
+import { db } from '../db';
+import { toast } from 'sonner';
 import { ViewState, Doc } from '../types';
 
 interface DocumentVaultViewProps {
@@ -14,6 +16,20 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
         if (doc.id) {
             onSelectDoc(doc.id);
             setView('document_detail');
+        }
+    };
+
+    const handleDeleteDoc = async (e: React.MouseEvent, id?: number) => {
+        e.stopPropagation();
+        if (!id) return;
+        if (confirm('Are you sure you want to delete this document from the vault?')) {
+            try {
+                await db.docs.delete(id);
+                toast.success('Document deleted successfully');
+            } catch (error) {
+                console.error("Failed to delete doc:", error);
+                toast.error('Failed to delete document');
+            }
         }
     };
 
@@ -137,10 +153,17 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
                                             </td>
                                             <td className="px-6 py-4 text-text-muted text-xs">{doc.date}</td>
                                             <td className="px-6 py-4 text-text-muted text-xs font-mono">{doc.size}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => handleDeleteDoc(e, doc.id)}
+                                                    className="p-2 rounded hover:bg-white/10 text-text-muted hover:text-red-500 transition-colors"
+                                                    title="Delete Document"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDocClick(doc); }}
-                                                    className="text-text-muted hover:text-white transition-colors"
+                                                    className="p-2 rounded hover:bg-white/10 text-text-muted hover:text-white transition-colors"
                                                 >
                                                     <ChevronRight size={20} />
                                                 </button>

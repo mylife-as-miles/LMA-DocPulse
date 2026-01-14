@@ -27,7 +27,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
     const [dragActive, setDragActive] = useState(false);
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [analyzingProgress, setAnalyzingProgress] = useState<{current: number, total: number} | null>(null);
+    const [analyzingProgress, setAnalyzingProgress] = useState<{ current: number, total: number } | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -157,7 +157,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                 } else if (ext === 'DOCX') {
                     // DOCX extraction in browser is harder without libraries like mammoth.js
                     // For now, we'll note it.
-                     contentSnippet = "DOCX Content extraction not yet implemented in browser. Infer from filename.";
+                    contentSnippet = "DOCX Content extraction not yet implemented in browser. Infer from filename.";
                 }
 
                 let extractedData: any = {};
@@ -225,19 +225,21 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                 await db.loans.bulkAdd(newLoans);
             }
 
+            // Save documents to DB (Vault)
             if (newDocs.length > 0) {
-                 toast.success(`Successfully analyzed ${newDocs.length} documents.`);
+                await db.docs.bulkAdd(newDocs);
+                toast.success(`Successfully analyzed ${newDocs.length} documents.`);
 
-                 // If we have a selected loan handler and created at least one loan, select the last one and navigate
-                 if (newLoans.length > 0 && onSelectLoan) {
-                     const lastLoan = newLoans[newLoans.length - 1];
-                     onSelectLoan(lastLoan.id);
-                     setView('loan_review');
-                 } else {
-                     onUploadComplete(newDocs);
-                 }
+                // If we have a selected loan handler and created at least one loan, select the last one and navigate
+                if (newLoans.length > 0 && onSelectLoan) {
+                    const lastLoan = newLoans[newLoans.length - 1];
+                    onSelectLoan(lastLoan.id);
+                    setView('loan_review');
+                } else {
+                    onUploadComplete(newDocs);
+                }
             } else {
-                 toast.warning("No documents were successfully analyzed.");
+                toast.warning("No documents were successfully analyzed.");
             }
 
         } catch (error) {
