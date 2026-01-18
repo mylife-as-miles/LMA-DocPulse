@@ -49,17 +49,14 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
         if (user) {
             setFormData({
                 name: user.name || '',
-                title: user.title || 'Senior Credit Analyst',
+                title: user.title || '',
                 email: user.email || '',
-                phone: user.phone || '+44 20 7123 4567',
-                location: user.location || 'London, United Kingdom',
-                bio: user.bio || 'Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance. Specialized in structured finance and leveraging AI tools to streamline documentation review processes.',
-                avatar: user.avatar || 'https://picsum.photos/100/100'
+                phone: user.phone || '',
+                location: user.location || '',
+                bio: user.bio || '',
+                avatar: user.avatar || ''
             });
-            setSkills(user.skills || [
-                'LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling',
-                'Compliance', 'Structured Finance', 'Team Leadership'
-            ]);
+            setSkills(user.skills || []);
         }
     }, [user]);
 
@@ -73,16 +70,16 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
         if (!userId) return;
 
         await saveProfile(async () => {
-             await db.users.update(userId, {
-                 name: formData.name,
-                 title: formData.title,
-                 email: formData.email,
-                 phone: formData.phone,
-                 location: formData.location,
-                 bio: formData.bio,
-                 skills: skills,
-                 avatar: formData.avatar
-             });
+            await db.users.update(userId, {
+                name: formData.name,
+                title: formData.title,
+                email: formData.email,
+                phone: formData.phone,
+                location: formData.location,
+                bio: formData.bio,
+                skills: skills,
+                avatar: formData.avatar
+            });
         });
         setTimeout(() => setView('profile'), 1000);
     };
@@ -105,13 +102,13 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
             exit={{ opacity: 0 }}
             className="flex-1 overflow-y-auto p-0 relative custom-scrollbar bg-background h-full w-full"
         >
-             {/* Hero Background - matching ProfileView */}
-             <div className="h-64 w-full bg-gradient-to-r from-primary/20 via-primary/5 to-background relative overflow-hidden shrink-0">
+            {/* Hero Background - matching ProfileView */}
+            <div className="h-64 w-full bg-gradient-to-r from-primary/20 via-primary/5 to-background relative overflow-hidden shrink-0">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background"></div>
             </div>
 
-             <div className="max-w-4xl mx-auto px-6 -mt-32 relative z-10 pb-20">
+            <div className="max-w-4xl mx-auto px-6 -mt-32 relative z-10 pb-20">
 
                 <div className="flex items-center gap-4 mb-8">
                     <button
@@ -172,7 +169,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                                     className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
                                 />
                             </div>
-                             <div className="space-y-2 group">
+                            <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Briefcase size={14} /> Job Title
                                 </label>
@@ -184,7 +181,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                                     className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
                                 />
                             </div>
-                             <div className="space-y-2 group">
+                            <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Mail size={14} /> Email
                                 </label>
@@ -196,7 +193,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                                     className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
                                 />
                             </div>
-                             <div className="space-y-2 group">
+                            <div className="space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <Phone size={14} /> Phone
                                 </label>
@@ -208,7 +205,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                                     className="w-full bg-surface-dark border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
                                 />
                             </div>
-                             <div className="md:col-span-2 space-y-2 group">
+                            <div className="md:col-span-2 space-y-2 group">
                                 <label className="text-xs font-bold uppercase text-text-muted flex items-center gap-2 group-focus-within:text-primary transition-colors">
                                     <MapPin size={14} /> Location
                                 </label>
@@ -291,7 +288,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                         >
                             Cancel
                         </button>
-                         <button
+                        <button
                             type="submit"
                             className="px-8 py-3 rounded-lg bg-primary text-black font-bold text-sm hover:shadow-glow hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                         >
@@ -299,7 +296,7 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
                         </button>
                     </div>
                 </form>
-             </div>
+            </div>
         </motion.div>
     );
 };
