@@ -55,14 +55,9 @@ export interface Query {
     model: string;
     result?: string;
     bookmarked?: boolean;
-    messages?: Message[]; // Support for multi-turn chat
 }
 
-export interface Message {
-    role: 'user' | 'assistant' | 'system';
-    content: string;
-    timestamp: number;
-}
+
 
 export interface BorrowerDetails {
     entityName: string;

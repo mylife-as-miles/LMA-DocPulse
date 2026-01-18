@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ViewState, Message } from '../types';
+import { ViewState } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     History,
@@ -58,10 +58,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
 
     // State
     const [query, setQuery] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [result, setResult] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [selectedModel, setSelectedModel] = useState({ name: 'GPT-4 Turbo', icon: Sparkles });
-    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+    // const messagesEndRef = React.useRef<HTMLDivElement>(null); // Not needed for single turn usually, unless auto-scroll to result
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
     // Context Selection State
@@ -106,13 +106,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
 
         const textToAnalyze = overrideQuery || query;
         setIsAnalyzing(true);
-        // If not using override, clear input immediately for chat feel
-        if (!overrideQuery) setQuery('');
+        setResult(''); // Clear previous result
 
-        // Add User Message
-        const userMsg: Message = { role: 'user', content: textToAnalyze, timestamp: Date.now() };
-        const newMessages = [...messages, userMsg];
-        setMessages(newMessages);
+        // If override (clicked suggestion), set it as query
+        if (overrideQuery) setQuery(overrideQuery);
 
         // context setup
         let contextContent = '';
@@ -126,63 +123,40 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
             }
         }
 
-        let activeQueryId = currentQueryId;
-
-        // If this is the START of a conversation (no currentQueryId), create the record now
-        if (!activeQueryId) {
-            const id = await db.queries.add({
-                text: textToAnalyze, // Title of the thread is the first prompt
-                timestamp: Date.now(),
-                model: selectedModel.name,
-                result: '', // Legacy support
-                messages: [userMsg],
-                bookmarked: false
-            });
-            activeQueryId = id as number;
-            setCurrentQueryId(activeQueryId);
-        } else {
-            // Update existing thread with user message
-            await db.queries.update(activeQueryId, { messages: newMessages });
-        }
+        // Create new query record immediately
+        const id = await db.queries.add({
+            text: textToAnalyze,
+            timestamp: Date.now(),
+            model: selectedModel.name,
+            result: '',
+            bookmarked: false
+        });
+        setCurrentQueryId(id as number);
 
         triggerAnalyze(async () => {
             try {
                 const systemPrompt = `You are a specialized AI assistant for analyzing loan agreements... ${contextContent}`;
 
-                // Convert our Message[] to OpenAI format
-                const apiMessages = [
-                    { role: "system", content: systemPrompt } as const,
-                    ...newMessages.map(m => ({
-                        role: m.role as "user" | "assistant",
-                        content: m.content
-                    }))
-                ];
-
                 const completion = await openai.chat.completions.create({
-                    messages: apiMessages,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: textToAnalyze }
+                    ],
                     model: "gpt-4-turbo-preview",
                 });
 
                 const content = completion.choices[0].message.content || "No response generated.";
+                setResult(content);
 
-                // Add Assistant Message
-                const assistantMsg: Message = { role: 'assistant', content: content, timestamp: Date.now() };
-                const updatedMessages = [...newMessages, assistantMsg];
-                setMessages(updatedMessages);
-
-                // Save complete thread
-                if (activeQueryId) {
-                    await db.queries.update(activeQueryId, {
-                        messages: updatedMessages,
-                        result: content // Keep updating result for legacy view compatibility if needed
-                    });
+                // Update record with result
+                if (id) {
+                    await db.queries.update(id as number, { result: content });
                 }
 
             } catch (error) {
                 console.error("AI Error:", error);
                 const errorMsg = "Sorry, I couldn't connect to the AI service. Please check your API key or network connection.";
-                const errorAssistantMsg: Message = { role: 'assistant', content: errorMsg, timestamp: Date.now() };
-                setMessages([...newMessages, errorAssistantMsg]);
+                setResult(errorMsg);
             } finally {
                 setIsAnalyzing(false);
             }
@@ -192,30 +166,26 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const handleClearHistory = async () => {
         await db.queries.clear();
         setCurrentQueryId(undefined);
-        setMessages([]);
+        setResult('');
         setQuery('');
     };
 
     const handleExportResult = () => {
-        if (messages.length === 0) return;
+        if (!result) return;
 
-        const content = messages.map(m => `[${new Date(m.timestamp).toLocaleTimeString()}] ${m.role.toUpperCase()}:\n${m.content}\n`).join('\n-------------------\n');
-
+        const content = `Query: ${query}\n\nResult:\n${result}`;
         const blob = new Blob([content], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `chat_history_${Date.now()}.txt`;
+        link.download = `analysis_result_${Date.now()}.txt`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
 
-    // Auto-scroll to bottom of chat
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, isAnalyzing]);
+
 
     const handleSaveQuery = async () => {
         if (currentQueryId) {
@@ -256,18 +226,9 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                     <div
                                         key={item.id}
                                         onClick={() => {
-                                            if (item.messages && item.messages.length > 0) {
-                                                setMessages(item.messages);
-                                            } else {
-                                                // Backward compatibility for old queries
-                                                setMessages([
-                                                    { role: 'user', content: item.text, timestamp: item.timestamp },
-                                                    { role: 'assistant', content: item.result || '', timestamp: item.timestamp + 1000 }
-                                                ]);
-                                            }
-                                            setQuery(''); // Clear input so user can continue chat
+                                            setQuery(item.text);
+                                            setResult(item.result || '');
                                             setCurrentQueryId(item.id);
-                                            // Optional: Close sidebar on mobile if needed, or keep open
                                         }}
                                         className={`group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border cursor-pointer transition-all ${currentQueryId === item.id ? 'bg-surface-highlight border-primary/50' : 'border-transparent hover:border-border'}`}
                                     >
@@ -299,14 +260,8 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                 <div
                                     key={item.id}
                                     onClick={() => {
-                                        if (item.messages && item.messages.length > 0) {
-                                            setMessages(item.messages);
-                                        } else {
-                                            setMessages([
-                                                { role: 'user', content: item.text, timestamp: item.timestamp },
-                                                { role: 'assistant', content: item.result || '', timestamp: item.timestamp + 1000 }
-                                            ]);
-                                        }
+                                        setQuery(item.text);
+                                        setResult(item.result || '');
                                         setCurrentQueryId(item.id);
                                     }}
                                     className={`w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors ${currentQueryId === item.id ? 'ring-2 ring-primary' : ''}`}
@@ -326,9 +281,9 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 <div className="absolute inset-0 bg-[radial-gradient(#222_1px,transparent_1px)] [background-size:20px_20px] opacity-20 pointer-events-none"></div>
 
                 <div className="flex-1 overflow-y-auto z-10 flex flex-col">
-                    {/* Chat Bubbles */}
+                    {/* Main Result Area */}
                     <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 custom-scrollbar flex flex-col gap-6">
-                        {messages.length === 0 ? (
+                        {!result && !isAnalyzing ? (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -393,59 +348,59 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                             </motion.div>
                         ) : (
                             <>
-                                {messages.map((msg, index) => (
+                                {query && (
+                                    <div className="flex justify-end">
+                                        <div className="max-w-[80%] rounded-2xl p-4 bg-primary text-black rounded-tr-none">
+                                            <p className="font-bold text-xs opacity-70 mb-1">QUERY</p>
+                                            <p className="whitespace-pre-wrap leading-relaxed">{query}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(result || isAnalyzing) && (
                                     <motion.div
-                                        key={index}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                        className="flex justify-start w-full"
                                     >
-                                        <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-primary text-black rounded-tr-none' : 'glass-panel text-slate-300 rounded-tl-none border border-white/10'}`}>
-                                            <div className="flex items-center gap-2 mb-2 opacity-70 text-xs">
-                                                {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
-                                                <span className="capitalize">{msg.role}</span>
-                                                <span>•</span>
-                                                <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            </div>
-                                            <div className="prose prose-invert prose-sm max-w-none">
-                                                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-
-                                {/* Action Buttons for Assistant Messages (Latest only or all?) - Showing for latest if it's assistant */}
-                                {messages.length > 0 && messages[messages.length - 1].role === 'assistant' && !isAnalyzing && (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="flex justify-start gap-2 pl-4"
-                                    >
-                                        <button
-                                            onClick={handleExportResult}
-                                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight transition-all text-xs"
-                                        >
-                                            <Download size={14} /> Export Chat
-                                        </button>
-                                        <button
-                                            onClick={handleSaveQuery}
-                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all text-xs ${saveState === 'success' ? 'text-primary' : 'text-text-muted hover:text-white hover:bg-surface-highlight'}`}
-                                        >
-                                            {saveState === 'success' ? <Check size={14} /> : <BookmarkPlus size={14} />}
-                                            {saveState === 'success' ? 'Saved' : 'Save Thread'}
-                                        </button>
-                                    </motion.div>
-                                )}
-
-                                {isAnalyzing && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                                        <div className="glass-panel p-4 rounded-2xl rounded-tl-none border border-white/10 flex items-center gap-3">
-                                            <Loader2 size={18} className="animate-spin text-primary" />
-                                            <span className="text-sm text-text-muted">Analyzing documents...</span>
+                                        <div className="w-full glass-panel p-6 rounded-2xl border border-white/10 relative overflow-hidden">
+                                            {isAnalyzing ? (
+                                                <div className="flex flex-col items-center justify-center py-12">
+                                                    <Loader2 size={32} className="animate-spin text-primary mb-4" />
+                                                    <p className="text-text-muted animate-pulse">Analyzing documents and generating insights...</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex justify-between items-start mb-4 border-b border-white/5 pb-4">
+                                                        <div className="flex items-center gap-2 text-primary">
+                                                            <Sparkles size={18} />
+                                                            <span className="font-bold uppercase tracking-wider text-sm">Analysis Result</span>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={handleExportResult}
+                                                                className="p-2 hover:bg-white/5 rounded-lg text-text-muted hover:text-white transition-colors"
+                                                                title="Export Result"
+                                                            >
+                                                                <Download size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={handleSaveQuery}
+                                                                className={`p-2 hover:bg-white/5 rounded-lg transition-colors ${saveState === 'success' ? 'text-green-500' : 'text-text-muted hover:text-white'}`}
+                                                                title="Save to Vault"
+                                                            >
+                                                                {saveState === 'success' ? <Check size={16} /> : <BookmarkPlus size={16} />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="prose prose-invert prose-lg max-w-none">
+                                                        <p className="whitespace-pre-wrap leading-relaxed text-slate-300">{result}</p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </motion.div>
                                 )}
-                                <div ref={messagesEndRef} />
                             </>
                         )}
                     </div>
