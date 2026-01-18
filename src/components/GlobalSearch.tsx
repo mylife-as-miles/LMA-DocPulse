@@ -108,7 +108,7 @@ export const GlobalSearch = ({ setView, onSelectLoan, onSelectDoc }: GlobalSearc
                     />
 
                     {/* Modal Content */}
-                    <div className="relative w-full max-w-2xl bg-[#0F172A] border border-border/50 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[70vh]">
+                    <div className="relative w-full max-w-2xl bg-[#050505] border border-border/50 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[70vh]">
                         {/* Search Input Header */}
                         <div className="flex items-center gap-4 px-4 py-4 border-b border-border/50 bg-surface/50">
                             <Search className="text-primary" size={24} />

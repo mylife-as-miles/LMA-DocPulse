@@ -31,6 +31,7 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
     const [showFilters, setShowFilters] = useState(false);
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const user = useLiveQuery(() => db.users.toArray())?.[0];
 
     // Filter Logic
     const filteredLoans = loans.filter(loan => {
@@ -152,8 +153,8 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
                                 className={`flex items-center gap-2 h-10 px-4 rounded-lg border transition-all text-sm font-medium ${statusFilter !== 'All'
-                                        ? 'bg-primary/10 border-primary text-primary'
-                                        : 'bg-surface border-border text-text-muted hover:text-white hover:border-text-muted'
+                                    ? 'bg-primary/10 border-primary text-primary'
+                                    : 'bg-surface border-border text-text-muted hover:text-white hover:border-text-muted'
                                     }`}
                             >
                                 <Filter size={16} />
@@ -198,7 +199,7 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                         { label: 'Total Reviews', value: totalReviews.toString(), change: 'Realtime', icon: FileText, color: 'text-blue-400' },
                         { label: 'Pending Action', value: pendingAction.toString(), change: 'Action Req', icon: Clock, color: 'text-accent-orange' },
                         { label: 'Critical Risks', value: criticalRisks.toString(), change: 'Alert', icon: AlertTriangle, color: 'text-accent-red' },
-                        { label: 'Avg. Turnaround', value: '2.4 Days', change: '-8%', icon: CheckCircle2, color: 'text-primary' }, // Hardcoded for now
+                        { label: 'Avg. Turnaround', value: user?.stats?.avgTurnaround || 'N/A', change: '-8%', icon: CheckCircle2, color: 'text-primary' },
                     ].map((stat, i) => (
                         <div key={i} className="glass-panel p-5 rounded-xl border border-border/50 hover:border-border transition-colors group">
                             <div className="flex justify-between items-start mb-4">
@@ -231,7 +232,7 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {loans.map((loan, i) => (
+                                {filteredLoans.map((loan, i) => (
                                     <tr
                                         key={loan.id || i}
                                         className="hover:bg-surface-highlight/30 transition-colors group cursor-pointer"
