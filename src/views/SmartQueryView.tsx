@@ -37,6 +37,7 @@ import { Query } from '../types';
 
 interface SmartQueryViewProps {
     setView?: (view: ViewState) => void;
+    onSelectQuery?: (id: number) => void;
 }
 
 const MODELS = [
@@ -47,7 +48,7 @@ const MODELS = [
     { id: 'gpt-5', name: 'GPT-5', desc: 'Previous intelligent reasoning model for coding and agentic tasks with configurable reasoning effort' }
 ];
 
-export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
+export const SmartQueryView = ({ setView, onSelectQuery }: SmartQueryViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const { trigger: triggerAnalyze } = useActionFeedback('Analysis', { duration: 3000 });
 
@@ -115,6 +116,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
         });
 
         setCurrentQueryId(queryId as number);
+        onSelectQuery?.(queryId as number);
 
         triggerAnalyze(async () => {
             try {
@@ -235,6 +237,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                             setQuery(item.text);
                                             setResult(item.result || null);
                                             setCurrentQueryId(item.id);
+                                            onSelectQuery?.(item.id as number);
                                             // Optional: Close sidebar on mobile if needed, or keep open
                                         }}
                                         className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all"
@@ -270,6 +273,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         setQuery(item.text);
                                         setResult(item.result || null);
                                         setCurrentQueryId(item.id);
+                                        onSelectQuery?.(item.id as number);
                                     }}
                                     className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors"
                                     title={item.text}

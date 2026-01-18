@@ -62,6 +62,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
   const [selectedDocId, setSelectedDocId] = useState<number | undefined>(undefined);
   const [selectedLoanId, setSelectedLoanId] = useState<string | undefined>(undefined);
+  const [selectedQueryId, setSelectedQueryId] = useState<number | undefined>(undefined);
 
   // Replace useState with useLiveQuery for vaultDocs
   const vaultDocs = useLiveQuery(
@@ -165,7 +166,12 @@ export default function App() {
             onSelectLoan={(id) => setSelectedLoanId(id)}
           />
         )}
-        {currentView === 'smart_query' && <SmartQueryView setView={setCurrentView} />}
+        {currentView === 'smart_query' && (
+          <SmartQueryView
+            setView={setCurrentView}
+            onSelectQuery={(id) => setSelectedQueryId(id)}
+          />
+        )}
         {currentView === 'analytics' && <PortfolioAnalyticsView />}
         {currentView === 'compliance' && <ComplianceView />}
         {currentView === 'notifications' && <NotificationsView />}
@@ -198,7 +204,12 @@ export default function App() {
         {currentView === 'activity_log' && <ActivityLogView setView={setCurrentView} />}
         {currentView === 'violations_log' && <ViolationsLogView setView={setCurrentView} />}
         {currentView === 'public_profile' && <PublicProfileView setView={setCurrentView} />}
-        {currentView === 'analytics_result' && <AnalyticsResultView setView={setCurrentView} />}
+        {currentView === 'analytics_result' && (
+          <AnalyticsResultView
+            setView={setCurrentView}
+            queryId={selectedQueryId}
+          />
+        )}
 
       </main>
     </div>

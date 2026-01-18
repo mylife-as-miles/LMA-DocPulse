@@ -59,8 +59,7 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
         skills,
         avatar,
         stats,
-        awards,
-        assignments
+        awards
     } = user;
 
     // Synthesize recent activity
@@ -253,38 +252,6 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                                         );
                                     })}
                                 </div>
-                            </div>
-                        )}
-
-                        {assignments && assignments.length > 0 ? (
-                            <div className="glass-panel p-6 rounded-2xl">
-                                <h3 className="text-lg font-bold text-white mb-6 font-display">Current Assignments</h3>
-                                <div className="space-y-3">
-                                    {assignments.map((project, i) => (
-                                        <div key={i} className="p-3 rounded-lg border border-border bg-surface hover:bg-surface-highlight transition-colors cursor-pointer">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-sm font-medium text-white">{project.title}</span>
-                                                <span className={`w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-emerald-500' : 'bg-orange-500'}`}></span>
-                                            </div>
-                                            <div className="w-full h-1 bg-surface-highlight rounded-full overflow-hidden">
-                                                <div className="h-full bg-primary rounded-full" style={{ width: `${project.progress}%` }}></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="mt-4 pt-4 border-t border-border">
-                                    <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
-                                        + Assign New Project
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="glass-panel p-6 rounded-2xl">
-                                <h3 className="text-lg font-bold text-white mb-6 font-display">Assignments</h3>
-                                <p className="text-text-muted text-sm mb-4">No active assignments.</p>
-                                <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
-                                    + Assign New Project
-                                </button>
                             </div>
                         )}
                     </div>

@@ -9,18 +9,24 @@ import { useActionFeedback } from '../components/ActionFeedback';
 
 interface AnalyticsResultViewProps {
     setView: (view: ViewState) => void;
+    queryId?: number;
 }
 
-export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
+export const AnalyticsResultView = ({ setView, queryId }: AnalyticsResultViewProps) => {
 
     const { trigger: triggerShare, state: shareState } = useActionFeedback('Link Copied', { duration: 2000 });
     const { trigger: triggerExport, state: exportState } = useActionFeedback('Report Exported', { duration: 2000 });
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
-    const queries = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
 
-    // Get latest query or use default
-    const latestQuery = queries.length > 0 ? queries[0] : { text: "Show all loans", result: "Analysis pending..." };
+    // Fetch specific query if ID provided, otherwise get latest
+    const selectedQuery = useLiveQuery(
+        () => queryId ? db.queries.get(queryId) : db.queries.orderBy('timestamp').reverse().first(),
+        [queryId]
+    );
+
+    // Fallback if no query found (e.g. valid ID but deleted, or clean state)
+    const latestQuery = selectedQuery || { text: "Show all loans", result: "Analysis pending..." };
     const queryText = latestQuery.text;
 
     // --- Dynamic Analysis Logic ---
