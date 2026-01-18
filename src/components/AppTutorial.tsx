@@ -1,182 +1,167 @@
 import React, { useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, Step, Styles } from 'react-joyride';
+import Joyride, { CallBackProps, STATUS, Step, TooltipRenderProps, EVENTS } from 'react-joyride';
 import { ViewState } from '../types';
+import { X, ArrowRight, Zap, Target, BookOpen, BarChart3, MessageSquare } from 'lucide-react';
 
 interface AppTutorialProps {
     currentView: ViewState;
 }
 
+// Custom Tooltip Component for maximum customization
+const CustomTooltip = ({
+    continuous,
+    index,
+    step,
+    backProps,
+    closeProps,
+    primaryProps,
+    tooltipProps,
+    isLastStep,
+    size
+}: TooltipRenderProps) => {
+    return (
+        <div {...tooltipProps} className="bg-[#0F172A]/90 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 max-w-sm shadow-[0_0_50px_rgba(0,255,148,0.15)] relative overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-surface-highlight border border-border">
+                            {index === 0 ? <Zap size={16} className="text-primary" /> :
+                                isLastStep ? <Target size={16} className="text-accent-orange" /> :
+                                    <BookOpen size={16} className="text-blue-400" />}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Tip {index + 1} of {size}</span>
+                    </div>
+                    <button {...closeProps} className="text-text-muted hover:text-white transition-colors">
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {step.title && <h3 className="text-lg font-display font-bold text-white mb-2">{step.title}</h3>}
+                <div className="text-sm text-text-muted leading-relaxed mb-6">{step.content}</div>
+
+                <div className="flex justify-between items-center pt-2">
+                    <button {...backProps} className={`text-xs font-bold text-text-muted hover:text-white transition-colors uppercase tracking-wide ${index === 0 ? 'invisible' : ''}`}>
+                        Back
+                    </button>
+                    <button
+                        {...primaryProps}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all shadow-glow"
+                    >
+                        {isLastStep ? 'Finish' : 'Next'} <ArrowRight size={14} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="absolute bottom-0 left-0 h-1 bg-surface-highlight w-full">
+                <div
+                    className="h-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${((index + 1) / size) * 100}%` }}
+                ></div>
+            </div>
+        </div>
+    );
+};
+
 export const AppTutorial = ({ currentView }: AppTutorialProps) => {
     const [run, setRun] = useState(false);
     const [steps, setSteps] = useState<Step[]>([]);
 
-    // Custom Styles for "Advanced & Beautiful" look
-    const tutorialStyles: Styles = {
-        options: {
-            zIndex: 10000,
-            primaryColor: '#00FF94',
-            backgroundColor: '#0F172A',
-            textColor: '#fff',
-            arrowColor: '#0F172A',
-        },
-        tooltip: {
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)',
-            padding: '20px',
-        },
-        buttonNext: {
-            backgroundColor: '#00FF94',
-            color: '#000',
-            fontFamily: 'Replica, sans-serif',
-            fontWeight: 'bold',
-            borderRadius: '6px',
-            boxShadow: '0 0 10px rgba(0, 255, 148, 0.3)',
-        },
-        buttonBack: {
-            color: '#94a3b8',
-            marginRight: 10,
-        },
-        buttonSkip: {
-            color: '#ef4444',
-        },
-        title: {
-            fontFamily: 'Termina, sans-serif',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            marginBottom: '10px',
-            color: '#00FF94',
-        }
-    };
+    useEffect(() => {
+        // Reset and check if we should run for this view - simplified persistence check for demonstration
+        const tutorialKey = `tutorial_seen_v2_${currentView}`; // effective reset with v2 key
+        const hasSeen = localStorage.getItem(tutorialKey);
 
-    // Define steps for each view
-    const getStepsForView = (view: ViewState): Step[] => {
-        const commonSteps: Step[] = [
+        const commonSteps = [
             {
                 target: '#sidebar-nav',
-                content: 'Navigate between different modules like Dashboard, Vault, and Analytics here.',
-                title: 'Navigation',
+                content: 'Navigate between Dashboard, Vault, Analytics, and Compliance modules using this panel.',
+                title: 'System Navigation',
                 placement: 'right',
                 disableBeacon: true,
             },
             {
                 target: '#global-search',
-                content: 'Quickly find loans, documents, or entities across the entire platform.',
+                content: 'Instantly find loans, documents, or covenants across your entire portfolio.',
                 title: 'Global Search',
                 placement: 'bottom',
             },
             {
                 target: '#user-profile-menu',
-                content: 'Manage your profile, settings, and notifications.',
-                title: 'User Menu',
+                content: 'Access your profile, settings, and logout options here.',
+                title: 'User Profile',
                 placement: 'left',
             }
         ];
 
-        switch (view) {
+        let viewSteps: Step[] = [];
+
+        switch (currentView) {
             case 'dashboard':
-                return [
+                viewSteps = [
                     {
                         target: 'body',
-                        content: 'Welcome to LMA DocPulse. This is your command center for loan compliance.',
-                        title: 'Welcome',
+                        content: 'Welcome to your LMA DocPulse Dashboard. Get a bird\'s-eye view of your portfolio performance, risks, and recent updates.',
+                        title: 'Command Center',
                         placement: 'center',
                     },
-                    ...commonSteps,
                     {
                         target: '#dashboard-stats',
-                        content: 'Real-time overview of your portfolio exposure, active loans, and critical alerts.',
-                        title: 'Key Metrics',
+                        content: 'Key performance indicators at a glance: Active Loans, Risk Exposure, and Compliance Score.',
+                        title: 'Active Metrics',
+                        placement: 'bottom',
                     },
                     {
                         target: '#recent-activity-feed',
-                        content: 'Live feed of all system activities, uploads, and automated compliance checks.',
-                        title: 'Activity Feed',
-                    }
-                ];
-
-            case 'vault':
-                return [
-                    {
-                        target: '#document-table',
-                        content: 'Central repository of all loan agreements. Sort, filter, and manage versions.',
-                        title: 'Document Vault',
+                        content: 'Live stream of system events, new uploads, and completed analyses.',
+                        title: 'Live Activity',
+                        placement: 'left',
                     },
+                    ...commonSteps
+                ];
+                break;
+            case 'vault':
+                viewSteps = [
                     {
                         target: '#upload-btn',
-                        content: 'Drag & drop new loan agreements here for AI analysis.',
-                        title: 'Upload Documents',
+                        content: 'Start here by uploading PDF loan agreements for instant AI analysis.',
+                        title: 'Document Ingestion',
+                        placement: 'left',
                     },
                     {
-                        target: '#filter-panel',
-                        content: 'Advanced filtering by counterparty, date, or risk level.',
-                        title: 'Filters',
+                        target: '#document-table',
+                        content: 'Manage your entire document repository with advanced sorting and version control.',
+                        title: 'Repository',
+                        placement: 'top',
                     }
                 ];
-
-            case 'loan_review':
-                return [
-                    {
-                        target: '#loan-header-status',
-                        content: 'Current status of the loan review (e.g., In Review, Approved).',
-                        title: 'Review Status',
-                    },
-                    {
-                        target: '#commercial-viability',
-                        content: 'AI-generated strategic analysis including Value Prop and Risk Mitigation.',
-                        title: 'Commercial Viability',
-                    },
-                    {
-                        target: '#financial-covenants',
-                        content: 'Extracted covenants checked against LMA standards. Toggle "Show PDF Context" to verify.',
-                        title: 'Covenant Monitoring',
-                    },
-                    {
-                        target: '#export-btn',
-                        content: 'Download a comprehensive CSV report of this review.',
-                        title: 'Export Report',
-                    }
-                ];
-
+                break;
             case 'analytics':
-                return [
+                viewSteps = [
                     {
                         target: '#portfolio-exposure-chart',
-                        content: 'Visualize total exposure trends over time.',
-                        title: 'Exposure Analysis',
+                        content: 'Track your total financial exposure over time across different sectors.',
+                        title: 'Exposure Trends',
+                        placement: 'bottom',
                     },
                     {
                         target: '#risk-distribution-chart',
-                        content: 'Breakdown of portfolio by risk category (Low to Critical).',
-                        title: 'Risk Profile',
+                        content: 'Analyze risk concentration within your portfolio to identify vulnerabilities.',
+                        title: 'Risk Heatmap',
+                        placement: 'left',
                     }
                 ];
-
-            case 'smart_query':
-                return [
-                    {
-                        target: '#chat-interface',
-                        content: 'Ask natural language questions about your documents (e.g., "Which loans expire in 2025?").',
-                        title: 'AI Assistant',
-                    }
-                ];
-
+                break;
             default:
-                return [];
+                viewSteps = [];
         }
-    };
 
-    useEffect(() => {
-        // Reset and check if we should run for this view
-        const tutorialKey = `tutorial_seen_${currentView}`;
-        const hasSeen = localStorage.getItem(tutorialKey);
-
-        if (!hasSeen) {
-            const viewSteps = getStepsForView(currentView);
-            if (viewSteps.length > 0) {
-                setSteps(viewSteps);
-                setRun(true);
-            }
+        if (!hasSeen && viewSteps.length > 0) {
+            setSteps(viewSteps);
+            setRun(true);
         } else {
             setRun(false);
         }
@@ -188,7 +173,7 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
-            localStorage.setItem(`tutorial_seen_${currentView}`, 'true');
+            localStorage.setItem(`tutorial_seen_v2_${currentView}`, 'true');
         }
     };
 
@@ -197,12 +182,23 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
             steps={steps}
             run={run}
             continuous
+            scrollToFirstStep
             showProgress
             showSkipButton
-            styles={tutorialStyles}
             callback={handleJoyrideCallback}
+            tooltipComponent={CustomTooltip}
+            styles={{
+                options: {
+                    zIndex: 10000,
+                    arrowColor: '#0F172A',
+                    overlayColor: 'rgba(0, 0, 0, 0.65)',
+                },
+                spotlight: {
+                    borderRadius: '12px',
+                }
+            }}
             disableOverlayClose={true}
-            spotlightPadding={5}
+            spotlightPadding={8}
         />
     );
 };
