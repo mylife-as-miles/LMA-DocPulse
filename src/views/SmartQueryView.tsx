@@ -101,6 +101,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
         <div className="flex flex-1 overflow-hidden relative h-full bg-background">
             {/* Sidebar */}
             <aside
+                id="query-history"
                 className={`hidden md:flex flex-col border-r border-border bg-background/50 backdrop-blur overflow-y-auto shrink-0 z-10 transition-all duration-300 ${isSidebarOpen ? 'w-72' : 'w-20'}`}
             >
                 <div className="flex flex-col gap-6 p-4 h-full">
@@ -150,11 +151,11 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                         </>
                     ) : (
                         <div className="flex flex-col gap-4 mt-4 items-center">
-                             {history.slice(0, 5).map((item) => (
+                            {history.slice(0, 5).map((item) => (
                                 <div key={item.id} className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title={item.text}>
                                     <Search size={16} />
                                 </div>
-                             ))}
+                            ))}
                         </div>
                     )}
                 </div>
@@ -169,7 +170,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                     <div className="max-w-[1100px] mx-auto w-full px-6 md:px-10 py-10 flex flex-col gap-10">
 
                         {/* Hero Header */}
-                        <div className="flex flex-col items-center text-center gap-6 mt-6">
+                        <div id="query-hero" className="flex flex-col items-center text-center gap-6 mt-6">
                             <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-surface-highlight border border-border mb-2">
                                 <div className="bg-center bg-no-repeat bg-cover rounded-xl size-12 bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
                                     <Sparkles className="text-primary" size={24} />
@@ -186,7 +187,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                         </div>
 
                         {/* Search Input */}
-                        <div className="w-full max-w-3xl mx-auto relative group">
+                        <div id="search-container" className="w-full max-w-3xl mx-auto relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
                             <div className="relative bg-[#0A0A0A] rounded-2xl border border-border shadow-2xl overflow-hidden transition-all duration-300 group-focus-within:border-primary/50 group-focus-within:shadow-glow">
                                 <div className="p-1">
@@ -253,6 +254,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         </div>
                                     </div>
                                     <button
+                                        id="analyze-btn"
                                         onClick={handleAnalyze}
                                         disabled={isLoading}
                                         className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -265,7 +267,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                         </div>
 
                         {/* Quick Filters */}
-                        <div className="flex justify-center gap-3 flex-wrap max-w-4xl mx-auto">
+                        <div id="quick-filters" className="flex justify-center gap-3 flex-wrap max-w-4xl mx-auto">
                             <button className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
                                 <AlertTriangle className="text-orange-500" size={16} />
                                 <p className="text-text-muted group-hover:text-white text-sm font-medium">High Risk Loans</p>

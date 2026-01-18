@@ -165,6 +165,42 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
                     ...commonSteps
                 ];
                 break;
+            case 'smart_query':
+                viewSteps = [
+                    {
+                        target: 'body',
+                        content: 'This is your AI-powered analyst. Ask natural language questions about your loan portfolio, risks, or compliance status.',
+                        title: 'Smart Query Analyst',
+                        placement: 'center',
+                        disableBeacon: true,
+                    },
+                    {
+                        target: '#query-hero',
+                        content: 'Start here. The AI is context-aware and has access to all your loan documents and extracted data.',
+                        title: 'Ask Anything',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#search-container',
+                        content: 'Type your question here. You can also filter the scope or select different AI models for specialized analysis.',
+                        title: 'Query Interface',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#quick-filters',
+                        content: 'Not sure what to ask? Use these quick prompts to instantly analyze common risk factors and portfolio metrics.',
+                        title: 'Quick Starters',
+                        placement: 'top',
+                    },
+                    {
+                        target: '#query-history',
+                        content: 'Access your previous investigations here. You can revisit past insights or re-run complex queries.',
+                        title: 'Investigation History',
+                        placement: 'right',
+                    },
+                    ...commonSteps
+                ];
+                break;
             case 'analytics':
                 viewSteps = [
                     {
