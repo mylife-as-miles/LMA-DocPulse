@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ViewState } from '../types';
-import { useActionFeedback } from '../components/ActionFeedback';
 import { db } from '../db';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { exportToCSV } from '../utils/exportUtils';
 
 interface LoanReviewsListViewProps {
     setView?: (view: ViewState) => void;
@@ -26,10 +26,22 @@ interface LoanReviewsListViewProps {
 }
 
 export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListViewProps) => {
-    const [filter, setFilter] = useState('All');
-    const { trigger: triggerExport } = useActionFeedback('Export CSV');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [showFilters, setShowFilters] = useState(false);
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
+
+    // Filter Logic
+    const filteredLoans = loans.filter(loan => {
+        const matchesSearch =
+            loan.counterparty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            loan.id.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesStatus = statusFilter === 'All' || loan.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
 
     const handleLoanClick = (loanId: string) => {
         if (onSelectLoan) onSelectLoan(loanId);
@@ -49,7 +61,28 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
         }
     };
 
-    // Calculate stats
+    const handleExport = () => {
+        if (filteredLoans.length === 0) {
+            toast.error('No loans to export');
+            return;
+        }
+
+        const exportData = filteredLoans.map(({ id, counterparty, amount, type, status, risk, date }) => ({
+            'Loan ID': id,
+            'Counterparty': counterparty,
+            'Amount': amount,
+            'Type': type,
+            'Status': status,
+            'Risk Level': risk,
+            'Date': date
+        }));
+
+        exportToCSV(exportData, `loan_portfolio_${new Date().toISOString().split('T')[0]}.csv`);
+        toast.success('Export started');
+    };
+
+    // Calculate stats based on FILTERED data for responsiveness
+    // (Or keep global? Usually stats reflect global portfolio, but list reflects filter. Let's keep stats global for high-level view)
     const totalReviews = loans.length;
     const pendingAction = loans.filter(l => l.status === 'Pending' || l.status === 'In Review').length;
     const criticalRisks = loans.filter(l => l.risk === 'Critical').length;
@@ -109,18 +142,48 @@ export const LoanReviewsListView = ({ setView, onSelectLoan }: LoanReviewsListVi
                             <input
                                 type="text"
                                 placeholder="Search loans..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 className="h-10 w-64 rounded-lg border border-border bg-surface pl-10 pr-4 text-sm text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
                             />
                         </div>
+
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`flex items-center gap-2 h-10 px-4 rounded-lg border transition-all text-sm font-medium ${statusFilter !== 'All'
+                                        ? 'bg-primary/10 border-primary text-primary'
+                                        : 'bg-surface border-border text-text-muted hover:text-white hover:border-text-muted'
+                                    }`}
+                            >
+                                <Filter size={16} />
+                                {statusFilter === 'All' ? 'Filter' : statusFilter}
+                                <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {showFilters && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowFilters(false)} />
+                                    <div className="absolute right-0 mt-2 w-48 bg-[#0F172A] border border-border rounded-xl shadow-xl z-20 overflow-hidden animate-fade-in py-1">
+                                        {['All', 'Approved', 'Pending', 'In Review', 'Rejected'].map(status => (
+                                            <button
+                                                key={status}
+                                                onClick={() => { setStatusFilter(status); setShowFilters(false); }}
+                                                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-highlight transition-colors flex items-center justify-between ${statusFilter === status ? 'text-primary' : 'text-text-muted'
+                                                    }`}
+                                            >
+                                                {status}
+                                                {statusFilter === status && <CheckCircle2 size={14} />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         <button
-                            onClick={() => setView?.('filter')}
-                            className="flex items-center gap-2 h-10 px-4 rounded-lg bg-surface border border-border text-text-muted hover:text-white hover:border-text-muted transition-all text-sm font-medium"
-                        >
-                            <Filter size={16} />
-                            Filter
-                        </button>
-                        <button
-                            onClick={() => triggerExport()}
+                            onClick={handleExport}
                             className="flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-black transition-all text-sm font-bold shadow-glow hover:shadow-glow-lg hover:-translate-y-0.5"
                         >
                             <Download size={16} />
