@@ -274,6 +274,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
 
                             {/* Dropzone */}
                             <div
+                                id="upload-dropzone"
                                 className={`group relative flex flex-col items-center justify-center rounded-2xl border border-dashed transition-all duration-300 ease-out py-16 px-6 shadow-xl overflow-hidden border-glow
                   ${dragActive
                                         ? 'bg-surface-hover border-brand-green'
@@ -308,7 +309,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
 
                             {/* Queue */}
                             {queue.length > 0 && (
-                                <div className="space-y-4">
+                                <div id="upload-queue" className="space-y-4">
                                     <h3 className="text-white text-lg font-display font-medium flex items-center gap-2">
                                         Upload Queue <span className="text-xs bg-surface-hover text-gray-400 px-2 py-0.5 rounded-full border border-border-dim">{queue.length}</span>
                                     </h3>
@@ -373,7 +374,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
 
                         {/* Sidebar Area */}
                         <div className="lg:col-span-4 space-y-6">
-                            <div className="p-6 rounded-2xl bg-surface-card border border-border-dim shadow-xl flex flex-col gap-6 sticky top-6">
+                            <div id="upload-summary" className="p-6 rounded-2xl bg-surface-card border border-border-dim shadow-xl flex flex-col gap-6 sticky top-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-white text-lg font-display font-medium">Summary</h3>
                                     {readyCount > 0 && (
@@ -391,6 +392,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                                     </div>
                                 </div>
                                 <button
+                                    id="analyze-btn"
                                     onClick={handleAnalyze}
                                     disabled={readyCount === 0 || isAnalyzing}
                                     className={`w-full group relative flex items-center justify-center gap-2 rounded-lg h-12 font-bold transition-all overflow-hidden
@@ -414,7 +416,7 @@ export const UploadView = ({ setView, onUploadComplete, onSelectLoan }: UploadVi
                                 <button onClick={() => setQueue([])} className="w-full text-sm text-gray-500 hover:text-white transition-colors">Clear Queue</button>
                             </div>
 
-                            <div className="p-6 rounded-2xl bg-gradient-to-br from-surface-card to-surface-hover border border-border-dim">
+                            <div id="upload-tips" className="p-6 rounded-2xl bg-gradient-to-br from-surface-card to-surface-hover border border-border-dim">
                                 <h4 className="text-white text-sm font-bold flex items-center gap-2 mb-4">
                                     <Info size={16} className="text-brand-green" />
                                     Best Practices

@@ -218,6 +218,36 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
                     }
                 ];
                 break;
+            case 'upload':
+                viewSteps = [
+                    {
+                        target: 'body',
+                        content: 'Welcome to the Upload Center! Here you can upload loan agreements for AI-powered analysis and clause extraction.',
+                        title: 'Upload Center',
+                        placement: 'center',
+                        disableBeacon: true,
+                    },
+                    {
+                        target: '#upload-dropzone',
+                        content: 'Drag and drop PDF or DOCX files here, or click to browse. Our AI will extract clauses, covenants, and events of default.',
+                        title: 'Drop Zone',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#upload-summary',
+                        content: 'This panel shows file count and estimated analysis time. Files are processed using GPT-4 for accurate extraction.',
+                        title: 'Analysis Summary',
+                        placement: 'left',
+                    },
+                    {
+                        target: '#upload-tips',
+                        content: 'Follow these best practices for optimal AI extraction: use legible PDFs (300+ DPI), avoid encrypted files, and upload complete agreements.',
+                        title: 'Best Practices',
+                        placement: 'left',
+                    },
+                    ...commonSteps
+                ];
+                break;
             default:
                 viewSteps = [];
         }
