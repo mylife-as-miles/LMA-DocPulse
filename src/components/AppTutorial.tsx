@@ -199,10 +199,40 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
                 viewSteps = [
                     {
                         target: 'body',
-                        content: 'The Compliance Center helps you maintain regulatory standards and identify violations across your portfolio.',
+                        content: 'Welcome to the Compliance Center! Monitor regulatory adherence and portfolio risk factors in real-time.',
                         title: 'Compliance Hub',
                         placement: 'center',
                         disableBeacon: true,
+                    },
+                    {
+                        target: '#compliance-score',
+                        content: 'Your overall compliance score is calculated from loan risks, violations, and regulatory status. Track trends vs last month.',
+                        title: 'Compliance Score',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#compliance-stats',
+                        content: 'Quick stats: Critical issues needing attention, documents pending review, and successfully analyzed documents.',
+                        title: 'Key Metrics',
+                        placement: 'left',
+                    },
+                    {
+                        target: '#risk-heatmap',
+                        content: 'Visual breakdown of your portfolio by risk level. Quickly identify concentrations of high-risk loans.',
+                        title: 'Risk Heatmap',
+                        placement: 'top',
+                    },
+                    {
+                        target: '#violations-panel',
+                        content: 'Active violations from loans and covenants. Click "Fix" to resolve issues and reduce risk levels.',
+                        title: 'Critical Violations',
+                        placement: 'right',
+                    },
+                    {
+                        target: '#analyzed-panel',
+                        content: 'Recently analyzed documents that passed compliance checks. Click to view full details.',
+                        title: 'Recently Analyzed',
+                        placement: 'left',
                     },
                     ...commonSteps
                 ];

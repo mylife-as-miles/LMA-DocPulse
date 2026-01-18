@@ -111,7 +111,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
 
                 {/* Compliance Score Hero */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="glass-panel p-6 rounded-2xl md:col-span-2 relative overflow-hidden flex flex-col justify-between min-h-[280px]">
+                    <div id="compliance-score" className="glass-panel p-6 rounded-2xl md:col-span-2 relative overflow-hidden flex flex-col justify-between min-h-[280px]">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
 
                         <div className="flex justify-between items-start relative z-10">
@@ -149,7 +149,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center gap-6">
+                    <div id="compliance-stats" className="glass-panel p-6 rounded-2xl flex flex-col justify-center gap-6">
                         {[
                             { label: 'Critical Issues', value: criticalIssuesCount.toString(), color: 'text-red-500', icon: AlertOctagon },
                             { label: 'Pending Reviews', value: pendingReviewsCount.toString(), color: 'text-accent-orange', icon: Activity },
@@ -169,7 +169,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                 </div>
 
                 {/* Risk Heatmap Section */}
-                <div className="glass-panel p-8 rounded-2xl border border-white/5 relative bg-gradient-to-b from-white/[0.02] to-transparent">
+                <div id="risk-heatmap" className="glass-panel p-8 rounded-2xl border border-white/5 relative bg-gradient-to-b from-white/[0.02] to-transparent">
                     <div className="flex justify-between items-center mb-6">
                         <div>
                             <h3 className="text-lg font-bold text-white">Portfolio Risk Heatmap</h3>
@@ -181,7 +181,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Critical Violations */}
-                    <div className="glass-panel p-0 rounded-2xl overflow-hidden flex flex-col">
+                    <div id="violations-panel" className="glass-panel p-0 rounded-2xl overflow-hidden flex flex-col">
                         <div className="p-6 border-b border-border/50 flex justify-between items-center bg-red-500/5">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <ShieldAlert size={18} className="text-red-500" />
@@ -238,7 +238,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                     </div>
 
                     {/* Recently Analyzed (proxy for Cleared) */}
-                    <div className="glass-panel p-0 rounded-2xl overflow-hidden flex flex-col">
+                    <div id="analyzed-panel" className="glass-panel p-0 rounded-2xl overflow-hidden flex flex-col">
                         <div className="p-6 border-b border-border/50 flex justify-between items-center bg-primary/5">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <CheckCircle size={18} className="text-primary" />
