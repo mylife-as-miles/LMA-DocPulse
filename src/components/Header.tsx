@@ -8,9 +8,10 @@ interface HeaderProps {
     onNotificationClick?: () => void;
     currentView: ViewState;
     setView: (view: ViewState) => void;
+    selectedLoanId?: string;
 }
 
-export const Header = ({ onMenuClick, onNotificationClick, currentView, setView }: HeaderProps) => {
+export const Header = ({ onMenuClick, onNotificationClick, currentView, setView, selectedLoanId }: HeaderProps) => {
     return (
         <header className="flex h-20 items-center justify-between px-6 lg:px-8 z-20 border-b border-border/30 lg:border-none shrink-0">
             <div className="flex items-center gap-4 lg:hidden">
@@ -27,7 +28,7 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView 
                         <p className="text-xs text-text-muted">Welcome back, here's what's happening today.</p>
                     </div>
                 ) : (
-                    <Breadcrumbs currentView={currentView} setView={setView} />
+                    <Breadcrumbs currentView={currentView} setView={setView} selectedLoanId={selectedLoanId} />
                 )}
             </div>
 

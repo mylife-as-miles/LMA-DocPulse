@@ -364,21 +364,15 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                 {/* Header */}
                 <div className="px-10 py-6 sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-white/5 flex flex-wrap justify-between items-end gap-6 mb-8">
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-3 text-text-muted text-xs uppercase tracking-wider font-display">
-                            <span onClick={() => setView && setView('dashboard')} className="cursor-pointer hover:text-white">Dashboard</span>
-                            <span>/</span>
-                            <span onClick={() => setView && setView('loan_reviews')} className="cursor-pointer hover:text-white">Loan Reviews</span>
-                            <span>/</span>
-                            <span className="text-primary">REF #{loan.id}</span>
-
-                            <span id="loan-header-status" className={`ml-2 px-2 py-0.5 rounded text-[10px] font-bold border ${loan.status === 'Approved' ? 'bg-primary/10 text-primary border-primary/20' :
-                                    loan.status === 'Review Required' ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/20' :
-                                        'bg-white/5 text-white border-white/10'
+                        <h1 className="text-white text-3xl font-display font-bold tracking-tight">
+                            Loan Agreement <span className="text-text-muted font-light">#{loan.id}</span>
+                            <span id="loan-header-status" className={`ml-4 px-2 py-0.5 rounded text-sm align-middle font-bold border ${loan.status === 'Approved' ? 'bg-primary/10 text-primary border-primary/20' :
+                                loan.status === 'Review Required' ? 'bg-accent-orange/10 text-accent-orange border-accent-orange/20' :
+                                    'bg-white/5 text-white border-white/10'
                                 }`}>
                                 {loan.status}
                             </span>
-                        </div>
-                        <h1 className="text-white text-3xl font-display font-bold tracking-tight">Loan Agreement <span className="text-text-muted font-light">#{loan.id}</span></h1>
+                        </h1>
                         <p className="text-text-muted text-sm max-w-2xl">Automated extraction and compliance monitoring against LMA standards. Review flagged deviations before final approval.</p>
                     </div>
                     <div className="flex gap-3">

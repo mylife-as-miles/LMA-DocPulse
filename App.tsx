@@ -139,6 +139,7 @@ export default function App() {
           onNotificationClick={() => setCurrentView('notifications')}
           currentView={currentView}
           setView={setCurrentView}
+          selectedLoanId={selectedLoanId}
         />
 
         {/* Global Components */}

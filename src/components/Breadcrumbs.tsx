@@ -5,9 +5,10 @@ import { ViewState } from '../types';
 interface BreadcrumbsProps {
     currentView: ViewState;
     setView: (view: ViewState) => void;
+    selectedLoanId?: string;
 }
 
-export const Breadcrumbs = ({ currentView, setView }: BreadcrumbsProps) => {
+export const Breadcrumbs = ({ currentView, setView, selectedLoanId }: BreadcrumbsProps) => {
     const getPath = (view: ViewState) => {
         switch (view) {
             case 'dashboard': return [];
@@ -20,7 +21,7 @@ export const Breadcrumbs = ({ currentView, setView }: BreadcrumbsProps) => {
             case 'settings': return [{ label: 'Settings', id: 'settings' }];
             case 'profile': return [{ label: 'Profile', id: 'profile' }];
             case 'loan_reviews': return [{ label: 'Loan Reviews', id: 'loan_reviews' }];
-            case 'loan_review': return [{ label: 'Loan Reviews', id: 'loan_reviews' }, { label: 'Ref #10294', id: 'loan_review' }]; // Mock ID for now
+            case 'loan_review': return [{ label: 'Loan Reviews', id: 'loan_reviews' }, { label: `REF #${selectedLoanId || 'Unknown'}`, id: 'loan_review' }];
             default: return [];
         }
     };
