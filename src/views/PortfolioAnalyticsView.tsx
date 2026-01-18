@@ -111,7 +111,7 @@ export const PortfolioAnalyticsView = () => {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div id="analytics-stats-grid" className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
                         { label: 'Total Exposure', value: formatCurrency(totalExposure), change: 'Realtime', icon: DollarSign, color: 'text-primary' },
                         { label: 'Avg. Risk Score', value: avgRiskLabel, change: 'Calculated', icon: Activity, color: 'text-accent-orange' },
@@ -135,7 +135,7 @@ export const PortfolioAnalyticsView = () => {
 
                 {/* Main Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
+                    <div id="exposure-trends-chart" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Exposure Trends</h3>
                         {aggregatedData.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
@@ -164,7 +164,7 @@ export const PortfolioAnalyticsView = () => {
                         )}
                     </div>
 
-                    <div className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
+                    <div id="risk-distribution-chart-container" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
                         <h3 className="text-lg font-bold text-white mb-6">Risk Distribution</h3>
                         {aggregatedData.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, minHeight: 0 }}>

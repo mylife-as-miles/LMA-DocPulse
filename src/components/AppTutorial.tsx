@@ -142,15 +142,21 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
             case 'analytics':
                 viewSteps = [
                     {
-                        target: '#portfolio-exposure-chart',
-                        content: 'Track your total financial exposure over time across different sectors.',
-                        title: 'Exposure Trends',
+                        target: '#analytics-stats-grid',
+                        content: 'Monitor real-time portfolio health with key metrics including Total Exposure, Average Risk Score, and Estimated Yield projections.',
+                        title: 'Portfolio Health',
                         placement: 'bottom',
                     },
                     {
-                        target: '#risk-distribution-chart',
-                        content: 'Analyze risk concentration within your portfolio to identify vulnerabilities.',
-                        title: 'Risk Heatmap',
+                        target: '#exposure-trends-chart',
+                        content: 'Track your financial exposure trends over time. This dynamic chart visualizes liquidity allocation and historical growth.',
+                        title: 'Exposure Trends',
+                        placement: 'right',
+                    },
+                    {
+                        target: '#risk-distribution-chart-container',
+                        content: 'Identify risk concentrations. This breakdown highlights the proportion of capital allocated across different risk categories (Low to Critical).',
+                        title: 'Risk Allocation',
                         placement: 'left',
                     }
                 ];
