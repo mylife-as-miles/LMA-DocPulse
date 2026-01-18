@@ -72,6 +72,7 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
                         <p className="text-xs text-text-muted mt-1">Manage and analyze your legal documents.</p>
                     </div>
                     <button
+                        id="upload-btn"
                         onClick={() => setView('upload')}
                         className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-black hover:shadow-glow-sm transition-all"
                     >
@@ -81,7 +82,7 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
                 </div>
 
                 {/* Stats - Using GLOBAL docs size as metrics typically reflect total system state */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div id="vault-stats" className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div className="glass-panel rounded-2xl p-5 flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-text-muted">Total Documents</p>
@@ -114,11 +115,11 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
                 </div>
 
                 {/* Main List */}
-                <div className="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1 min-h-[500px]">
+                <div id="document-table" className="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1 min-h-[500px]">
                     <div className="border-b border-border px-6 py-5 flex items-center justify-between bg-surface/30 gap-4">
                         <h3 className="text-lg font-display font-bold text-white hidden md:block">Recent Files</h3>
 
-                        <div className="flex-1 max-w-md relative group">
+                        <div id="vault-search" className="flex-1 max-w-md relative group">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-white transition-colors" size={16} />
                             <input
                                 type="text"
@@ -163,6 +164,7 @@ export const DocumentVaultView = ({ setView, docs, onSelectDoc }: DocumentVaultV
                             )}
 
                             <button
+                                id="vault-export"
                                 onClick={handleExport}
                                 className="flex items-center gap-1.5 rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/10 transition-all"
                             >

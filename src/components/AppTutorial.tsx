@@ -126,17 +126,43 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
             case 'vault':
                 viewSteps = [
                     {
+                        target: 'body',
+                        content: 'Welcome to the Document Vault! This is your central repository for all loan agreements and legal documents.',
+                        title: 'Document Vault',
+                        placement: 'center',
+                        disableBeacon: true,
+                    },
+                    {
                         target: '#upload-btn',
-                        content: 'Start here by uploading PDF loan agreements for instant AI analysis.',
-                        title: 'Document Ingestion',
+                        content: 'Click here to upload new PDF loan agreements. Our AI will automatically extract clauses, covenants, and events of default.',
+                        title: 'Upload Documents',
+                        placement: 'left',
+                    },
+                    {
+                        target: '#vault-stats',
+                        content: 'Quick overview of your document repository: total documents, analyzed count, and storage usage.',
+                        title: 'Vault Statistics',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#vault-search',
+                        content: 'Search through all your documents by name. Results update in real-time as you type.',
+                        title: 'Document Search',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#vault-export',
+                        content: 'Export your document list to CSV for reporting or integration with other systems.',
+                        title: 'Export Data',
                         placement: 'left',
                     },
                     {
                         target: '#document-table',
-                        content: 'Manage your entire document repository with advanced sorting and version control.',
-                        title: 'Repository',
+                        content: 'Click any document to view details and run analysis. You can also delete documents or open them for full review.',
+                        title: 'Document Repository',
                         placement: 'top',
-                    }
+                    },
+                    ...commonSteps
                 ];
                 break;
             case 'analytics':
