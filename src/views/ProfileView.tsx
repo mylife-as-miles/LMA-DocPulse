@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, Award, CheckCircle, TrendingUp, Clock, FileText } from 'lucide-react';
+import { Mail, Phone, MapPin, Award, CheckCircle, TrendingUp, Clock, FileText, UserPlus } from 'lucide-react';
 import { ViewState } from '../types';
 import { useActionFeedback } from '../components/ActionFeedback';
 import { db, User } from '../db';
@@ -26,21 +26,36 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
         [userId]
     );
 
-    if (!user && !userId) {
-         // Fallback or loading if no user logged in (though app architecture implies login)
-         // But for visual continuity we can keep rendering something or a loader.
-         // Let's rely on the structure but maybe show generic info if data missing
+    if (!user) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                <div className="w-20 h-20 rounded-full bg-surface-highlight flex items-center justify-center mb-6 border border-white/5">
+                    <UserPlus size={40} className="text-text-muted" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2 font-display">No Profile Found</h2>
+                <p className="text-text-muted max-w-md mb-8">
+                    It looks like you haven't set up your profile yet. Create one to showcase your skills and track your achievements.
+                </p>
+                <button
+                    onClick={() => setView?.('edit_profile')}
+                    className="px-8 py-3 bg-primary hover:bg-primary-hover text-black font-bold rounded-full transition-all shadow-glow hover:scale-105"
+                >
+                    Create Profile
+                </button>
+            </div>
+        );
     }
 
-    const displayName = user?.name || "User";
-    const displayTitle = user?.title || "Senior Credit Analyst";
-    const displayEmail = user?.email || "user@example.com";
-    const displayPhone = user?.phone || "+44 20 7123 4567";
-    const displayLocation = user?.location || "London, UK";
-    const displayBio = user?.bio || "Dedicated Senior Credit Analyst with over 8 years of experience in syndicated loans and LMA compliance. Specialized in structured finance and leveraging AI tools to streamline documentation review processes. Consistently maintaining high accuracy rates while managing high-volume portfolios.";
-    const displaySkills = user?.skills || ['LMA Documentation', 'Credit Risk Analysis', 'Financial Modeling', 'Compliance', 'Structured Finance', 'Team Leadership', 'Regulatory Reporting'];
-    const displayAvatar = user?.avatar || "https://picsum.photos/100/100";
-
+    const {
+        name,
+        title,
+        email,
+        phone,
+        location,
+        bio,
+        skills,
+        avatar
+    } = user;
 
     return (
         <div className="flex-1 overflow-y-auto p-0 relative custom-scrollbar">
@@ -56,7 +71,7 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                     <div className="relative">
                         <div className="w-32 h-32 rounded-2xl p-1 bg-gradient-to-br from-primary to-transparent shadow-glow">
                             <img
-                                src={displayAvatar}
+                                src={avatar || "https://picsum.photos/100/100"}
                                 alt="Profile"
                                 className="w-full h-full object-cover rounded-xl border-4 border-black"
                             />
@@ -68,18 +83,24 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                     </div>
 
                     <div className="flex-1 space-y-2">
-                        <h1 className="text-3xl md:text-4xl font-display font-bold text-white">{displayName}</h1>
-                        <p className="text-lg text-primary font-medium">{displayTitle}</p>
+                        <h1 className="text-3xl md:text-4xl font-display font-bold text-white">{name}</h1>
+                        <p className="text-lg text-primary font-medium">{title || 'N/A'}</p>
                         <div className="flex flex-wrap gap-4 pt-2">
-                            <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <Mail size={14} /> {displayEmail}
-                            </span>
-                            <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <Phone size={14} /> {displayPhone}
-                            </span>
-                            <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
-                                <MapPin size={14} /> {displayLocation}
-                            </span>
+                            {email && (
+                                <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
+                                    <Mail size={14} /> {email}
+                                </span>
+                            )}
+                            {phone && (
+                                <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
+                                    <Phone size={14} /> {phone}
+                                </span>
+                            )}
+                            {location && (
+                                <span className="flex items-center gap-2 text-text-muted text-sm bg-surface-highlight/50 px-3 py-1.5 rounded-full border border-border">
+                                    <MapPin size={14} /> {location}
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -122,24 +143,28 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - About & Skills */}
                     <div className="space-y-8 lg:col-span-2">
-                        <section className="glass-panel p-6 rounded-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                            <h3 className="text-lg font-bold text-white mb-4 font-display">About Me</h3>
-                            <p className="text-text-muted leading-relaxed">
-                                {displayBio}
-                            </p>
-                        </section>
+                        {bio && (
+                            <section className="glass-panel p-6 rounded-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                <h3 className="text-lg font-bold text-white mb-4 font-display">About Me</h3>
+                                <p className="text-text-muted leading-relaxed">
+                                    {bio}
+                                </p>
+                            </section>
+                        )}
 
-                        <section className="glass-panel p-6 rounded-2xl">
-                            <h3 className="text-lg font-bold text-white mb-6 font-display">Expertise & Skills</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {displaySkills.map((skill, i) => (
-                                    <span key={i} className="px-3 py-1.5 rounded-full bg-surface-highlight border border-border text-sm text-slate-300 hover:text-white hover:border-primary/50 transition-colors cursor-default">
-                                        {skill}
-                                    </span>
-                                ))}
-                            </div>
-                        </section>
+                        {skills && skills.length > 0 && (
+                            <section className="glass-panel p-6 rounded-2xl">
+                                <h3 className="text-lg font-bold text-white mb-6 font-display">Expertise & Skills</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {skills.map((skill, i) => (
+                                        <span key={i} className="px-3 py-1.5 rounded-full bg-surface-highlight border border-border text-sm text-slate-300 hover:text-white hover:border-primary/50 transition-colors cursor-default">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         <section className="glass-panel p-6 rounded-2xl">
                             <div className="flex justify-between items-center mb-6">
