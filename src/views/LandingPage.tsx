@@ -16,6 +16,7 @@ import {
 import { ViewState } from '../types';
 import { layouts } from '../components/AbstractBankUIs';
 import { ScanningFeature } from '../components/ScanningFeature';
+import { ModernDealTeamSimulation } from '../components/ModernDealTeamSimulation';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -137,8 +138,8 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
 
             {/* Hero Section */}
             <section ref={heroRef} className="relative h-screen min-h-[800px] w-full flex items-center justify-center overflow-hidden">
-                 {/* Flashing Background UI */}
-                 <div className="absolute inset-0 z-0">
+                {/* Flashing Background UI */}
+                <div className="absolute inset-0 z-0">
                     {layouts.map((Layout, index) => (
                         <div
                             key={index}
@@ -210,38 +211,8 @@ export const LandingPage = ({ setView }: LandingPageProps) => {
                         <p className="text-lg text-text-muted">Everything you need to manage syndicated loans with confidence. From extraction to ongoing monitoring.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: <Zap size={32} />,
-                                title: "Instant Extraction",
-                                desc: "Upload complex LMA agreements and extract key terms in seconds, not hours. 99% accuracy driven by LLMs.",
-                                color: "text-primary"
-                            },
-                            {
-                                icon: <Shield size={32} />,
-                                title: "Automated Compliance",
-                                desc: "Automatically cross-reference financial covenants against quarterly reports. Get alerted to deviations instantly.",
-                                color: "text-accent-blue"
-                            },
-                            {
-                                icon: <BarChart3 size={32} />,
-                                title: "Portfolio Analytics",
-                                desc: "Visualize exposure, track covenant headroom, and generate aggregate reports across your entire loan book.",
-                                color: "text-accent-orange"
-                            }
-                        ].map((feature, i) => (
-                            <div key={i} className="feature-card group p-8 rounded-2xl bg-surface border border-border hover:border-primary/50 transition-all hover:bg-surface-highlight">
-                                <div className={`w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center ${feature.color} mb-6 group-hover:scale-110 transition-transform`}>
-                                    {feature.icon}
-                                </div>
-                                <h3 className="text-2xl font-display font-bold text-white mb-4">{feature.title}</h3>
-                                <p className="text-text-muted leading-relaxed">{feature.desc}</p>
-                                <div className="mt-8 flex items-center gap-2 text-sm font-bold text-white opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                                    Learn more <ChevronRight size={16} />
-                                </div>
-                            </div>
-                        ))}
+                    <div className="w-full">
+                        <ModernDealTeamSimulation />
                     </div>
                 </div>
             </section>
