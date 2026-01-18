@@ -71,8 +71,8 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
     const [steps, setSteps] = useState<Step[]>([]);
 
     useEffect(() => {
-        // Reset and check if we should run for this view - simplified persistence check for demonstration
-        const tutorialKey = `tutorial_seen_v3_${currentView}`; // effective reset with v3 key
+        // Reset and check if we should run for this view - v4 resets tutorials
+        const tutorialKey = `tutorial_seen_v4_${currentView}`;
         const hasSeen = localStorage.getItem(tutorialKey);
 
         const commonSteps = [
@@ -142,22 +142,53 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
             case 'analytics':
                 viewSteps = [
                     {
+                        target: 'body',
+                        content: 'Welcome to Portfolio Analytics! This is your data command center for deep portfolio insights.',
+                        title: 'Analytics Overview',
+                        placement: 'center',
+                        disableBeacon: true,
+                    },
+                    {
                         target: '#analytics-stats-grid',
-                        content: 'Monitor real-time portfolio health with key metrics including Total Exposure, Average Risk Score, and Estimated Yield projections.',
-                        title: 'Portfolio Health',
+                        content: 'Monitor real-time portfolio health with key metrics including Total Exposure, Average Risk Score, Performant Loans, and Estimated Yield projections.',
+                        title: 'Portfolio Health Metrics',
                         placement: 'bottom',
                     },
                     {
                         target: '#exposure-trends-chart',
-                        content: 'Track your financial exposure trends over time. This dynamic chart visualizes liquidity allocation and historical growth.',
+                        content: 'Track your financial exposure trends over time. This dynamic chart visualizes liquidity allocation and historical growth patterns across months.',
                         title: 'Exposure Trends',
                         placement: 'right',
                     },
                     {
                         target: '#risk-distribution-chart-container',
-                        content: 'Identify risk concentrations. This breakdown highlights the proportion of capital allocated across different risk categories (Low to Critical).',
-                        title: 'Risk Allocation',
+                        content: 'Identify risk concentrations at a glance. The green bars show total exposure while red bars highlight capital at risk. Use this to spot portfolio imbalances.',
+                        title: 'Risk Distribution Analysis',
                         placement: 'left',
+                    },
+                    ...commonSteps
+                ];
+                break;
+            case 'compliance':
+                viewSteps = [
+                    {
+                        target: 'body',
+                        content: 'The Compliance Center helps you maintain regulatory standards and identify violations across your portfolio.',
+                        title: 'Compliance Hub',
+                        placement: 'center',
+                        disableBeacon: true,
+                    },
+                    ...commonSteps
+                ];
+                break;
+            case 'loan_review':
+                viewSteps = [
+                    {
+                        target: 'body',
+                        content: 'This is the Loan Review workspace. Analyze extracted data, review covenants, and approve or flag issues.',
+                        title: 'Loan Analysis',
+                        placement: 'center',
+                        disableBeacon: true,
                     }
                 ];
                 break;
@@ -179,7 +210,7 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
-            localStorage.setItem(`tutorial_seen_v3_${currentView}`, 'true');
+            localStorage.setItem(`tutorial_seen_v4_${currentView}`, 'true');
         }
     };
 
