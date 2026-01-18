@@ -36,7 +36,54 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
     const pendingReviewsCount = docs.filter(d => d.status === 'Review' || d.status === 'Pending').length;
     const analyzedCount = docs.filter(d => d.status === 'Analyzed').length;
 
-    const criticalAlerts = alerts.filter(a => a.type === 'critical');
+    const criticalDbAlerts = alerts.filter(a => a.type === 'critical');
+
+    // Generate dynamic violations from loan data
+    const loanViolations = React.useMemo(() => {
+        const violations: Array<{ id?: number; title: string; subtitle: string; type: 'critical' | 'warning'; loanId?: string }> = [];
+
+        // Add violations for critical risk loans
+        loans.filter(l => l.risk === 'Critical').forEach(loan => {
+            violations.push({
+                title: 'Critical Covenant Breach',
+                subtitle: `${loan.id} • ${loan.counterparty}`,
+                type: 'critical',
+                loanId: loan.id
+            });
+        });
+
+        // Add violations for high risk loans
+        loans.filter(l => l.risk === 'High').forEach(loan => {
+            violations.push({
+                title: 'High Risk Exposure',
+                subtitle: `${loan.id} • ${loan.type}`,
+                type: 'critical',
+                loanId: loan.id
+            });
+        });
+
+        // Add violations for loans with events of default
+        loans.forEach(loan => {
+            if (loan.reviewData?.eventsOfDefault) {
+                const activeDefaults = loan.reviewData.eventsOfDefault.filter((eod: any) =>
+                    typeof eod !== 'string' && eod.status === 'Active'
+                );
+                activeDefaults.forEach((eod: any) => {
+                    violations.push({
+                        title: `Active Default: ${eod.type}`,
+                        subtitle: `${loan.id} • ${eod.clauseRef || 'Unknown Clause'}`,
+                        type: 'critical',
+                        loanId: loan.id
+                    });
+                });
+            }
+        });
+
+        return violations;
+    }, [loans]);
+
+    // Combine database alerts with dynamic violations
+    const criticalAlerts = [...criticalDbAlerts, ...loanViolations].slice(0, 8);
 
     // Use Analyzed docs as "Recently Cleared" proxy for demo
     const recentlyAnalyzed = docs.filter(d => d.status === 'Analyzed').sort((a, b) => b.id! - a.id!).slice(0, 5);
@@ -162,11 +209,19 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                                         <button
                                             onClick={async (e) => {
                                                 e.stopPropagation();
+                                                // Handle database alerts
                                                 if (alert.id) {
                                                     await db.alerts.delete(alert.id);
-                                                    triggerFeedback('Issue Resolved', 'compliance_fix'); // Using existing hook trigger just for visual if needed, else direct toast
-                                                    toast.success('Violation resolved successfully', {
+                                                    toast.success('Violation resolved', {
                                                         description: `${alert.title} has been addressed.`
+                                                    });
+                                                }
+                                                // Handle loan-based violations
+                                                if ((alert as any).loanId) {
+                                                    const loanId = (alert as any).loanId;
+                                                    await db.loans.update(loanId, { risk: 'Low' });
+                                                    toast.success('Risk mitigated', {
+                                                        description: `${loanId} risk level reduced to Low.`
                                                     });
                                                 }
                                             }}
