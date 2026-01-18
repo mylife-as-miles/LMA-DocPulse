@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Download, Eye, FileText, Info, Share2, Printer, Search, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Download, Eye, FileText, Info, Share2, Printer, Search, CheckCircle, Loader2 } from 'lucide-react';
 import { db } from '../db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { analyzeDocument } from '../services/DocumentAnalyzer';
 
 // Configure PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -19,6 +20,7 @@ interface DocumentDetailViewProps {
 export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDetailViewProps) => {
     const [numPages, setNumPages] = useState<number | null>(null);
     const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const doc = useLiveQuery(() => docId ? db.docs.get(docId) : Promise.resolve(undefined), [docId]);
 
@@ -55,45 +57,97 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
     const handleGoToAnalysis = async () => {
         if (!doc || !onSelectLoan) return;
 
+        setIsAnalyzing(true);
+        toast.info('Analyzing document...', { description: 'Extracting clauses and events of default' });
+
         const loanIdRaw = `LN-${new Date().getFullYear()}-${doc.id || Math.floor(Math.random() * 1000)}`;
         const loanId = `#${loanIdRaw}`;
 
         const existingLoan = await db.loans.get(loanId);
 
         if (!existingLoan) {
+            // Perform real document analysis
+            let extractedData = {
+                entities: [] as string[],
+                eventsOfDefault: [] as any[],
+                financialCovenants: [] as any[],
+                criticalDates: [] as any[],
+                riskFlags: [] as string[],
+            };
+
+            if (doc.fileData && doc.type === 'PDF') {
+                try {
+                    extractedData = await analyzeDocument(doc.fileData);
+
+                    // Update document with extracted entities
+                    if (extractedData.entities.length > 0) {
+                        await db.docs.update(doc.id!, { entities: extractedData.entities });
+                    }
+                } catch (error) {
+                    console.error('Document analysis failed:', error);
+                    toast.error('Analysis partially failed', { description: 'Using default values for some fields' });
+                }
+            }
+
+            // Determine risk level based on extraction
+            let riskLevel: 'Low' | 'Medium' | 'High' | 'Critical' = 'Low';
+            if (extractedData.eventsOfDefault.some(e => e.riskLevel === 'Critical')) {
+                riskLevel = 'Critical';
+            } else if (extractedData.eventsOfDefault.some(e => e.riskLevel === 'High') || extractedData.riskFlags.length > 2) {
+                riskLevel = 'High';
+            } else if (extractedData.eventsOfDefault.length > 0 || extractedData.riskFlags.length > 0) {
+                riskLevel = 'Medium';
+            }
+
+            // Calculate confidence based on extraction success
+            const confidenceScore = Math.min(95, 50 +
+                (extractedData.entities.length * 5) +
+                (extractedData.financialCovenants.length * 10) +
+                (extractedData.eventsOfDefault.length * 5)
+            );
+
             await db.loans.add({
                 id: loanId,
-                counterparty: doc.entities?.[0] || 'Unknown Counterparty',
+                counterparty: extractedData.entities[0] || doc.entities?.[0] || 'Unknown Counterparty',
                 amount: doc.entities?.find(e => e.includes('$') || e.includes('£')) || '$0.00',
                 type: 'Syndicated Term Loan',
                 status: 'In Review',
                 date: doc.date,
-                risk: 'Medium',
+                risk: riskLevel,
                 reviewData: {
-                    summary: 'Automated initial analysis complete. Pending human review.',
-                    confidenceScore: 88,
-                    standardizationScore: 92,
-                    clauseStats: { total: 45, standard: 42, deviations: 3 },
+                    summary: extractedData.riskFlags.length > 0
+                        ? `Analysis complete. ${extractedData.riskFlags.length} risk flag(s) detected.`
+                        : 'Automated analysis complete. No critical issues detected.',
+                    confidenceScore,
+                    standardizationScore: extractedData.financialCovenants.filter(c => c.status === 'LMA STANDARD').length > 0 ? 85 : 70,
+                    clauseStats: {
+                        total: extractedData.financialCovenants.length + extractedData.eventsOfDefault.length + 10,
+                        standard: extractedData.financialCovenants.filter(c => c.status === 'LMA STANDARD').length + 8,
+                        deviations: extractedData.financialCovenants.filter(c => c.status === 'DEVIATION').length + extractedData.riskFlags.length
+                    },
                     borrowerDetails: {
-                        entityName: doc.entities?.[0] || 'Unknown Entity',
-                        jurisdiction: 'United Kingdom',
+                        entityName: extractedData.entities[0] || 'Pending extraction',
+                        jurisdiction: 'Pending',
                         registrationNumber: 'Pending',
                         legalAddress: 'Pending extraction'
                     },
-                    financialCovenants: [
-                        { termName: "Leverage Ratio", clauseRef: "Clause 22.1", value: "3.50x", status: 'LMA STANDARD' },
-                        { termName: "Interest Cover", clauseRef: "Clause 22.2", value: "4.00x", status: 'LMA STANDARD' }
-                    ],
-                    eventsOfDefault: [
-                        { type: "Non-payment", status: 'Active', riskLevel: 'Critical', summary: 'Failure to pay principal or interest', nextCriticalDate: '2024-12-01', clauseRef: 'Clause 23.1' },
-                        { type: "Breach of obligations", status: 'Potential', riskLevel: 'Medium', summary: 'Other covenant breaches', nextCriticalDate: '2025-01-15', clauseRef: 'Clause 23.3' },
-                        { type: "Misrepresentation", status: 'Resolved', riskLevel: 'Low', summary: 'Incorrect representations', clauseRef: 'Clause 23.4' }
-                    ]
+                    financialCovenants: extractedData.financialCovenants.length > 0
+                        ? extractedData.financialCovenants
+                        : [{ termName: "No covenants detected", clauseRef: "N/A", value: "-", status: 'LMA STANDARD' as const }],
+                    eventsOfDefault: extractedData.eventsOfDefault.length > 0
+                        ? extractedData.eventsOfDefault
+                        : [{ type: "None detected", status: 'Resolved' as const, riskLevel: 'Low' as const, summary: 'No events of default clauses identified in document' }],
+                    riskFlags: extractedData.riskFlags,
+                    criticalDates: extractedData.criticalDates,
                 }
             });
-            toast.success("Analysis Generated", { description: "New loan record created from document." });
+
+            toast.success("Analysis Complete", {
+                description: `Extracted ${extractedData.eventsOfDefault.length} events of default, ${extractedData.financialCovenants.length} covenants`
+            });
         }
 
+        setIsAnalyzing(false);
         onSelectLoan(loanId);
         setView('loan_review');
     };

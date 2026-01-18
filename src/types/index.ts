@@ -107,6 +107,8 @@ export interface ReviewData {
         nextCriticalDate?: string;
         clauseRef?: string;
     }[];
+    riskFlags?: string[];
+    criticalDates?: { type: string; date: string }[];
     signatures?: string | any;
 }
 
