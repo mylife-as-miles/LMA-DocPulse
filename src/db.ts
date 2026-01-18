@@ -36,6 +36,16 @@ export interface ChartData {
   score: number;
 }
 
+export interface Notification {
+  id?: number;
+  title: string;
+  message: string;
+  type: 'info' | 'alert' | 'success' | 'warning';
+  timestamp: string;
+  read: boolean;
+  link?: string;
+}
+
 export class AppDatabase extends Dexie {
   users!: Table<User>;
   docs!: Table<Doc, number>; // Primary key is number (auto-incremented)
@@ -43,16 +53,18 @@ export class AppDatabase extends Dexie {
   loans!: Table<Loan, string>; // Primary key is ID string
   alerts!: Table<Alert, number>;
   queries!: Table<Query, number>;
+  notifications!: Table<Notification, number>;
 
   constructor() {
     super('LMA_DocPulse_DB');
-    this.version(3).stores({
+    this.version(4).stores({
       users: '++id, email',
       docs: '++id, name, type, status, date',
       chartData: '++id, month',
       loans: 'id, counterparty, risk, status, type',
       alerts: '++id, type',
-      queries: '++id, timestamp'
+      queries: '++id, timestamp',
+      notifications: '++id, type, read, timestamp'
     });
   }
 }
@@ -61,6 +73,5 @@ export const db = new AppDatabase();
 
 // Initialize DB
 export const initDB = async () => {
-  // Mock data population removed as per requirements.
-  // The database will start empty or preserve existing user data.
+  // Check if notifications need seeding or leave empty
 };
