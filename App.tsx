@@ -104,6 +104,26 @@ export default function App() {
 
 
 
+  // If landing page, render full screen without sidebar/header
+  if (currentView === 'landing') {
+    return (
+      <div className="min-h-screen w-full bg-background text-text-main font-sans selection:bg-primary selection:text-black">
+        <Toaster position="top-right" theme="dark" richColors />
+        <LandingPage setView={setCurrentView} />
+      </div>
+    );
+  }
+
+  // If auth page, render full screen without sidebar/header
+  if (currentView === 'auth') {
+    return (
+      <div className="min-h-screen w-full bg-background text-text-main font-sans selection:bg-primary selection:text-black">
+        <Toaster position="top-right" theme="dark" richColors />
+        <AuthView setView={setCurrentView} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-text-main font-sans selection:bg-primary selection:text-black">
       <Toaster position="top-right" theme="dark" richColors />
@@ -128,8 +148,6 @@ export default function App() {
         <UserOnboarding />
         <AppTutorial currentView={currentView} />
 
-        {currentView === 'landing' && <LandingPage setView={setCurrentView} />}
-        {currentView === 'auth' && <AuthView setView={setCurrentView} />}
         {currentView === 'dashboard' && <DashboardView setView={setCurrentView} />}
         {currentView === 'vault' && (
           <DocumentVaultView
