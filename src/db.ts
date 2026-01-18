@@ -71,7 +71,47 @@ export class AppDatabase extends Dexie {
 
 export const db = new AppDatabase();
 
+import { LOANS_DATA, INITIAL_ALERTS } from './data/mockData';
+
 // Initialize DB
 export const initDB = async () => {
-  // Check if notifications need seeding or leave empty
+  // Check and seed Loans
+  const loansCount = await db.loans.count();
+  if (loansCount === 0) {
+    await db.loans.bulkAdd(LOANS_DATA);
+    console.log("Seeded Loans");
+  }
+
+  // Check and seed Alerts
+  const alertsCount = await db.alerts.count();
+  if (alertsCount === 0) {
+    await db.alerts.bulkAdd(INITIAL_ALERTS);
+    console.log("Seeded Alerts");
+  }
+
+  // Check and seed User (for Profile & Stats)
+  const usersCount = await db.users.count();
+  if (usersCount === 0) {
+    await db.users.add({
+      email: 'alex.morgan@lmadocpulse.com',
+      password: 'password123',
+      name: 'Alex Morgan',
+      title: 'Senior Credit Analyst',
+      location: 'New York, USA',
+      bio: 'Specializing in syndicated loans and LMA compliance with over 10 years of experience in structured finance.',
+      skills: ['LMA Standards', 'Credit Risk', 'Financial Modeling', 'Legal Frameworks'],
+      stats: {
+        loansReviewed: 142,
+        approvalRate: 87,
+        avgTurnaround: '2.4 Days',
+        performance: 'Top 5%'
+      },
+      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=256&h=256',
+      awards: [
+        { title: 'Analyst of the Year', year: '2025', icon: 'Award' },
+        { title: 'Deal Closer', year: '2024', icon: 'Briefcase' }
+      ]
+    });
+    console.log("Seeded User Profile");
+  }
 };
