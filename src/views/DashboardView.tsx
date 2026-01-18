@@ -150,6 +150,33 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
         return colors[index];
     };
 
+    const handleExport = () => {
+        if (!displayChartData || displayChartData.length === 0) {
+            triggerExport(); // Fallback to just feedback if no data
+            return;
+        }
+
+        // CSV Header
+        let csvContent = "data:text/csv;charset=utf-8,Month,Compliance Score\n";
+
+        // CSV Rows
+        displayChartData.forEach(row => {
+            csvContent += `${row.month},${row.score}\n`;
+        });
+
+        // Create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "compliance_trend_export.csv");
+        document.body.appendChild(link);
+
+        link.click();
+        document.body.removeChild(link);
+
+        triggerExport(); // Show success feedback
+    };
+
     return (
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
             <div className="mx-auto max-w-[1600px] flex flex-col gap-6">
@@ -205,7 +232,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                                     Last 6M
                                 </button>
                                 <button
-                                    onClick={() => triggerExport()}
+                                    onClick={handleExport}
                                     className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-black hover:shadow-glow-sm transition-all"
                                 >
                                     Export
