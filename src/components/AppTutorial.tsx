@@ -7,7 +7,64 @@ interface AppTutorialProps {
     currentView: ViewState;
 }
 
-// ... (keep tooltip component same)
+// Custom Tooltip Component for maximum customization
+const CustomTooltip = ({
+    continuous,
+    index,
+    step,
+    backProps,
+    closeProps,
+    primaryProps,
+    tooltipProps,
+    isLastStep,
+    size
+}: TooltipRenderProps) => {
+    return (
+        <div {...tooltipProps} className="bg-[#141416]/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 max-w-sm shadow-[0_0_50px_rgba(0,255,157,0.15)] relative overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-surface-highlight border border-border">
+                            {index === 0 ? <Zap size={16} className="text-primary" /> :
+                                isLastStep ? <Target size={16} className="text-accent-orange" /> :
+                                    <BookOpen size={16} className="text-blue-400" />}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Tip {index + 1} of {size}</span>
+                    </div>
+                    <button {...closeProps} className="text-text-muted hover:text-white transition-colors">
+                        <X size={16} />
+                    </button>
+                </div>
+
+                {step.title && <h3 className="text-lg font-display font-bold text-white mb-2">{step.title}</h3>}
+                <div className="text-sm text-text-muted leading-relaxed mb-6">{step.content}</div>
+
+                <div className="flex justify-between items-center pt-2">
+                    <button {...backProps} className={`text-xs font-bold text-text-muted hover:text-white transition-colors uppercase tracking-wide ${index === 0 ? 'invisible' : ''}`}>
+                        Back
+                    </button>
+                    <button
+                        {...primaryProps}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all shadow-glow"
+                    >
+                        {isLastStep ? 'Finish' : 'Next'} <ArrowRight size={14} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="absolute bottom-0 left-0 h-1 bg-surface-highlight w-full">
+                <div
+                    className="h-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${((index + 1) / size) * 100}%` }}
+                ></div>
+            </div>
+        </div>
+    );
+};
 
 export const AppTutorial = ({ currentView }: AppTutorialProps) => {
     const [run, setRun] = useState(false);

@@ -135,10 +135,10 @@ export const PortfolioAnalyticsView = () => {
 
                 {/* Main Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div id="exposure-trends-chart" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
+                    <div id="exposure-trends-chart" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px', minWidth: 0 }}>
                         <h3 className="text-lg font-bold text-white mb-6">Exposure Trends</h3>
                         {aggregatedData.length > 0 ? (
-                            <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                            <div style={{ width: '100%', flex: 1, minHeight: 0, minWidth: 0 }}>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <AreaChart data={aggregatedData}>
                                         <defs>
@@ -164,10 +164,10 @@ export const PortfolioAnalyticsView = () => {
                         )}
                     </div>
 
-                    <div id="risk-distribution-chart-container" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px' }}>
+                    <div id="risk-distribution-chart-container" className="glass-panel p-6 rounded-xl flex flex-col h-[400px]" style={{ width: '100%', minHeight: '400px', minWidth: 0 }}>
                         <h3 className="text-lg font-bold text-white mb-6">Risk Distribution</h3>
                         {aggregatedData.length > 0 ? (
-                            <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
+                            <div style={{ width: '100%', flex: 1, minHeight: 0, minWidth: 0 }}>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={aggregatedData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
