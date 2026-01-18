@@ -139,7 +139,7 @@ export const PortfolioAnalyticsView = () => {
                         <h3 className="text-lg font-bold text-white mb-6">Exposure Trends</h3>
                         {aggregatedData.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height={300}>
                                     <AreaChart data={aggregatedData}>
                                         <defs>
                                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -168,7 +168,7 @@ export const PortfolioAnalyticsView = () => {
                         <h3 className="text-lg font-bold text-white mb-6">Risk Distribution</h3>
                         {aggregatedData.length > 0 ? (
                             <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={aggregatedData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                                         <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />

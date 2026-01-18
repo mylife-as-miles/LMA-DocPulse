@@ -190,6 +190,7 @@ export default function App() {
           <DocumentDetailView
             setView={setCurrentView}
             docId={selectedDocId}
+            onSelectLoan={(id) => setSelectedLoanId(id)}
           />
         )}
         {currentView === 'edit_profile' && <EditProfileView setView={setCurrentView} />}

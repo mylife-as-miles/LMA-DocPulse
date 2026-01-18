@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Download, Eye, FileText, Info, Share2, Printer, Search } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
@@ -10,174 +11,113 @@ import { Document, Page, pdfjs } from 'react-pdf';
 // Configure PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// ... imports
+
 interface DocumentDetailViewProps {
     setView: (view: ViewState) => void;
     docId?: number;
+    onSelectLoan?: (id: string) => void;
 }
 
-export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) => {
-    const { trigger: triggerDownload } = useActionFeedback('Download');
-    const { trigger: triggerShare } = useActionFeedback('Share');
+export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDetailViewProps) => {
+    // ... hooks
 
-    const doc = useLiveQuery(() => docId ? db.docs.get(docId) : Promise.resolve(undefined), [docId]);
-    const [numPages, setNumPages] = useState<number | null>(null);
-    const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const handleGoToAnalysis = async () => {
+        if (!doc || !onSelectLoan) return;
 
-    useEffect(() => {
-        if (doc && doc.fileData) {
-            const url = URL.createObjectURL(doc.fileData);
-            setFileUrl(url);
-            return () => URL.revokeObjectURL(url);
+        // Check if a loan already exists for this document (mock logic: check by matching generated ID or similar)
+        // For this demo, we'll try to find a loan that matches the doc name OR create a new one.
+        const loanIdRaw = `LN-${new Date().getFullYear()}-${doc.id || Math.floor(Math.random() * 1000)}`;
+        const loanId = `#${loanIdRaw}`;
+
+        const existingLoan = await db.loans.get(loanId);
+
+        if (!existingLoan) {
+            // Create a new loan record from the document
+            await db.loans.add({
+                id: loanId,
+                counterparty: doc.entities?.[0] || 'Unknown Counterparty',
+                amount: doc.entities?.find(e => e.includes('$') || e.includes('£')) || '$0.00',
+                type: 'Syndicated Term Loan', // Default for demo
+                status: 'In Review',
+                date: doc.date,
+                risk: 'Medium', // Initial assessment
+                reviewData: {
+                    summary: 'Automated initial analysis complete. pending human review.',
+                    confidenceScore: 88,
+                    standardizationScore: 92,
+                    clauseStats: { total: 45, standard: 42, deviations: 3 },
+                    borrowerDetails: {
+                        entityName: doc.entities?.[0] || 'Unknown Entity',
+                        jurisdiction: 'United Kingdom',
+                        registrationNumber: 'Pending',
+                        legalAddress: 'Pending extraction'
+                    },
+                    financialCovenants: [
+                        { termName: "Leverage Ratio", clauseRef: "Clause 22.1", value: "3.50x", status: 'LMA STANDARD' },
+                        { termName: "Interest Cover", clauseRef: "Clause 22.2", value: "4.00x", status: 'LMA STANDARD' }
+                    ]
+                }
+            });
+            toast.success("Analysis Generated", { description: "New loan record created from document." });
         }
-    }, [doc]);
 
-    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-        setNumPages(numPages);
+        onSelectLoan(loanId);
+        setView('loan_review');
     };
 
-    const handleApprove = async () => {
-        if (doc && doc.id) {
-            await db.docs.update(doc.id, { status: 'Analyzed' });
-        }
-    };
-
-    const handleDownload = () => {
-        if (fileUrl && doc) {
-            triggerDownload();
-            const link = document.createElement('a');
-            link.href = fileUrl;
-            link.download = doc.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
-
-    const handleShare = async () => {
-        triggerShare();
-        if (navigator.share && doc) {
-            try {
-                await navigator.share({
-                    title: doc.name,
-                    text: 'Shared from DocPulse',
-                    url: window.location.href, // Or generate a specific link if we had a backend
-                });
-            } catch (error) {
-                console.log('Error sharing:', error);
-            }
-        } else {
-             // Fallback
-             alert('Share feature not supported on this browser or context.');
-        }
-    };
-
-    const handlePrint = () => {
-        if (fileUrl) {
-            const printWindow = window.open(fileUrl);
-            if (printWindow) {
-                printWindow.print();
-            }
-        }
-    };
-
-    if (!doc) {
-        return <div className="flex items-center justify-center h-full text-white">Loading...</div>;
-    }
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="flex-1 flex flex-col h-full overflow-hidden bg-background"
-        >
-            {/* Header */}
-            <header className="h-16 border-b border-border bg-surface/50 backdrop-blur px-6 flex items-center justify-between shrink-0 z-10">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setView('vault')}
-                        className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-red-500/10 flex items-center justify-center text-red-500">
-                            <FileText size={20} />
-                        </div>
-                        <div>
-                            <h1 className="text-white font-bold text-sm leading-tight">{doc.name}</h1>
-                            <p className="text-xs text-text-muted">Uploaded {doc.date} • {doc.size}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                     <button
-                        onClick={handleShare}
-                        className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Share"
-                    >
-                        <Share2 size={18} />
-                    </button>
-                    <button
-                        onClick={handleDownload}
-                        className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Download"
-                    >
-                        <Download size={18} />
-                    </button>
-                     <button
-                        onClick={handlePrint}
-                        className="p-2 rounded-lg hover:bg-surface-highlight text-text-muted hover:text-white transition-colors" title="Print"
-                    >
-                        <Printer size={18} />
-                    </button>
+    // ... render
+// ...
                     <div className="h-6 w-px bg-border mx-2"></div>
                     <button
-                        onClick={() => setView('loan_review')}
+                        onClick={handleGoToAnalysis}
                         className="px-4 py-2 bg-primary text-black text-xs font-bold rounded-lg hover:bg-primary-hover shadow-glow transition-all"
                     >
                         Go to Analysis
                     </button>
-                </div>
-            </header>
+                </div >
+            </header >
+    // ...
 
-            {/* Content Container */}
-            <div className="flex-1 flex overflow-hidden relative">
-                {/* PDF Viewer */}
-                <div className="flex-1 bg-[#1a1a1a] p-8 overflow-y-auto flex justify-center custom-scrollbar">
-                    <div className="w-full max-w-4xl bg-white min-h-[1000px] shadow-2xl mb-8 relative group text-slate-800">
-                         {doc.type === 'PDF' && fileUrl ? (
-                            <Document
-                                file={fileUrl}
-                                onLoadSuccess={onDocumentLoadSuccess}
-                                className="flex flex-col items-center"
-                            >
-                                <Page
-                                    pageNumber={1}
-                                    width={800} // Fixed width for consistency
-                                    className="mb-4 shadow-sm"
-                                />
-                                {numPages && numPages > 1 && (
-                                    <p className="text-gray-500 text-sm mt-4">Showing page 1 of {numPages}</p>
-                                )}
-                            </Document>
-                         ) : doc.type === 'DOCX' ? (
-                             <div className="p-10 flex flex-col items-center justify-center h-full">
-                                 <FileText size={64} className="text-blue-500 mb-4" />
-                                 <h2 className="text-xl font-bold">DOCX Preview Not Supported</h2>
-                                 <p className="text-slate-500 mt-2">Please download the file to view its contents.</p>
-                                 <button onClick={handleDownload} className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Download File</button>
-                             </div>
-                         ) : (
-                             <div className="p-10 flex flex-col items-center justify-center h-full">
-                                <FileText size={64} className="text-slate-400 mb-4" />
-                                <h2 className="text-xl font-bold">Preview Not Available</h2>
-                                <p className="text-slate-500 mt-2">No preview available for this file type.</p>
-                             </div>
-                         )}
+    {/* Content Container */ }
+    < div className = "flex-1 flex overflow-hidden relative" >
+        {/* PDF Viewer */ }
+        < div className = "flex-1 bg-[#1a1a1a] p-8 overflow-y-auto flex justify-center custom-scrollbar" >
+            <div className="w-full max-w-4xl bg-white min-h-[1000px] shadow-2xl mb-8 relative group text-slate-800">
+                {doc.type === 'PDF' && fileUrl ? (
+                    <Document
+                        file={fileUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        className="flex flex-col items-center"
+                    >
+                        <Page
+                            pageNumber={1}
+                            width={800} // Fixed width for consistency
+                            className="mb-4 shadow-sm"
+                        />
+                        {numPages && numPages > 1 && (
+                            <p className="text-gray-500 text-sm mt-4">Showing page 1 of {numPages}</p>
+                        )}
+                    </Document>
+                ) : doc.type === 'DOCX' ? (
+                    <div className="p-10 flex flex-col items-center justify-center h-full">
+                        <FileText size={64} className="text-blue-500 mb-4" />
+                        <h2 className="text-xl font-bold">DOCX Preview Not Supported</h2>
+                        <p className="text-slate-500 mt-2">Please download the file to view its contents.</p>
+                        <button onClick={handleDownload} className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Download File</button>
                     </div>
-                </div>
+                ) : (
+                    <div className="p-10 flex flex-col items-center justify-center h-full">
+                        <FileText size={64} className="text-slate-400 mb-4" />
+                        <h2 className="text-xl font-bold">Preview Not Available</h2>
+                        <p className="text-slate-500 mt-2">No preview available for this file type.</p>
+                    </div>
+                )}
+            </div>
+                </div >
 
-                {/* Info Sidebar */}
-                <div className="w-80 border-l border-border bg-surface shrink-0 flex flex-col">
+    {/* Info Sidebar */ }
+    < div className = "w-80 border-l border-border bg-surface shrink-0 flex flex-col" >
                     <div className="p-4 border-b border-border">
                         <h3 className="text-sm font-bold text-white flex items-center gap-2">
                             <Info size={16} className="text-primary" /> Document Info
@@ -232,8 +172,8 @@ export const DocumentDetailView = ({ setView, docId }: DocumentDetailViewProps) 
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </motion.div>
+                </div >
+            </div >
+        </motion.div >
     );
 };

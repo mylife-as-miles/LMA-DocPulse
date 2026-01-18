@@ -2,6 +2,7 @@ import React from 'react';
 import { RiskHeatmap } from '../components/RiskHeatmap';
 import { ShieldAlert, CheckCircle, TrendingUp, AlertOctagon, Activity, FileText } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
+import { toast } from 'sonner';
 import { ViewState } from '../types';
 import { db } from '../db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -11,7 +12,7 @@ interface ComplianceViewProps {
 }
 
 export const ComplianceView = ({ setView }: ComplianceViewProps) => {
-    const { trigger: fixIssue } = useActionFeedback('Auto-Remediation');
+    const { trigger: triggerFeedback } = useActionFeedback('Auto-Remediation');
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
     const docs = useLiveQuery(() => db.docs.toArray()) || [];
@@ -38,17 +39,17 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
     const criticalAlerts = alerts.filter(a => a.type === 'critical');
 
     // Use Analyzed docs as "Recently Cleared" proxy for demo
-    const recentlyAnalyzed = docs.filter(d => d.status === 'Analyzed').sort((a,b) => b.id! - a.id!).slice(0, 5);
+    const recentlyAnalyzed = docs.filter(d => d.status === 'Analyzed').sort((a, b) => b.id! - a.id!).slice(0, 5);
 
     if (loans.length === 0 && docs.length === 0) {
         return (
-             <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern">
-                 <div className="mx-auto max-w-[1600px] flex flex-col items-center justify-center h-full text-center py-20">
-                     <ShieldAlert size={64} className="text-text-muted mb-6" />
-                     <h2 className="text-2xl font-bold text-white">No Compliance Data</h2>
-                     <p className="text-text-muted mt-2">Upload documents or add loans to generate compliance insights.</p>
-                 </div>
-             </div>
+            <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar bg-pattern">
+                <div className="mx-auto max-w-[1600px] flex flex-col items-center justify-center h-full text-center py-20">
+                    <ShieldAlert size={64} className="text-text-muted mb-6" />
+                    <h2 className="text-2xl font-bold text-white">No Compliance Data</h2>
+                    <p className="text-text-muted mt-2">Upload documents or add loans to generate compliance insights.</p>
+                </div>
+            </div>
         );
     }
 
@@ -75,8 +76,8 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                             </div>
                             <span className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border
                                 ${currentScore >= 90 ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' :
-                                  currentScore >= 70 ? 'text-accent-orange bg-accent-orange/10 border-accent-orange/20' :
-                                  'text-red-500 bg-red-500/10 border-red-500/20'}`}>
+                                    currentScore >= 70 ? 'text-accent-orange bg-accent-orange/10 border-accent-orange/20' :
+                                        'text-red-500 bg-red-500/10 border-red-500/20'}`}>
                                 {currentScore >= 90 ? 'Excellent' : currentScore >= 70 ? 'Good' : 'Poor'}
                             </span>
                         </div>
@@ -159,7 +160,16 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
                                             <p className="text-xs text-text-muted mt-1">{alert.subtitle}</p>
                                         </div>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); fixIssue(); }}
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (alert.id) {
+                                                    await db.alerts.delete(alert.id);
+                                                    triggerFeedback('Issue Resolved', 'compliance_fix'); // Using existing hook trigger just for visual if needed, else direct toast
+                                                    toast.success('Violation resolved successfully', {
+                                                        description: `${alert.title} has been addressed.`
+                                                    });
+                                                }
+                                            }}
                                             className="px-3 py-1.5 text-xs font-bold text-white bg-red-600 rounded-lg hover:bg-red-500 shadow-lg shadow-red-900/20 transition-all opacity-0 group-hover:opacity-100"
                                         >
                                             Fix
