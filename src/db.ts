@@ -12,12 +12,28 @@ export interface User {
   bio?: string;
   skills?: string[];
   avatar?: string;
+  stats?: {
+    loansReviewed: number;
+    approvalRate: number;
+    avgTurnaround: string;
+    performance: string;
+  };
+  awards?: Array<{
+    title: string;
+    year: string;
+    icon: string; // Storing icon name string to map to Lucide icon component in view
+  }>;
+  assignments?: Array<{
+    title: string;
+    progress: number;
+    status: string;
+  }>;
 }
 
 export interface ChartData {
-    id?: number;
-    month: string;
-    score: number;
+  id?: number;
+  month: string;
+  score: number;
 }
 
 export class AppDatabase extends Dexie {
@@ -45,6 +61,6 @@ export const db = new AppDatabase();
 
 // Initialize DB
 export const initDB = async () => {
-    // Mock data population removed as per requirements.
-    // The database will start empty or preserve existing user data.
+  // Mock data population removed as per requirements.
+  // The database will start empty or preserve existing user data.
 };

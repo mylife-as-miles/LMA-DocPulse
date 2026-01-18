@@ -26,6 +26,9 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
         [userId]
     );
 
+    const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const docs = useLiveQuery(() => db.docs.toArray()) || [];
+
     if (!user) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -54,8 +57,37 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
         location,
         bio,
         skills,
-        avatar
+        avatar,
+        stats,
+        awards,
+        assignments
     } = user;
+
+    // Synthesize recent activity
+    const activities = [
+        ...docs.map(d => ({
+            id: `doc-${d.id}`,
+            title: `Uploaded ${d.name}`,
+            time: d.date,
+            desc: `Document type: ${d.type}`,
+            color: 'text-blue-400'
+        })),
+        ...loans.map(l => ({
+            id: `loan-${l.id}`,
+            title: `Loan Review: ${l.counterparty}`,
+            time: l.date,
+            desc: `Status: ${l.status}`,
+            color: 'text-green-400'
+        }))
+    ].sort(() => Math.random() - 0.5).slice(0, 3); // Mock sort/limit
+
+    const iconMap: Record<string, any> = {
+        'Award': Award,
+        'TrendingUp': TrendingUp,
+        'CheckCircle': CheckCircle,
+        'FileText': FileText,
+        'Clock': Clock
+    };
 
     return (
         <div className="flex-1 overflow-y-auto p-0 relative custom-scrollbar">
@@ -121,24 +153,26 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[
-                        { label: 'Loans Reviewed', value: '1,248', icon: FileText, color: 'text-primary' },
-                        { label: 'Approval Rate', value: '94.2%', icon: CheckCircle, color: 'text-accent-orange' },
-                        { label: 'Avg. Turnaround', value: '4.5h', icon: Clock, color: 'text-blue-400' },
-                        { label: 'Performance', value: 'Top 5%', icon: TrendingUp, color: 'text-primary' },
-                    ].map((stat, i) => (
-                        <div key={i} className="glass-panel p-5 rounded-xl group hover:border-primary/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-2 rounded-lg bg-surface-highlight ${stat.color} group-hover:scale-110 transition-transform`}>
-                                    <stat.icon size={20} />
+                {stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {[
+                            { label: 'Loans Reviewed', value: stats.loansReviewed, icon: FileText, color: 'text-primary' },
+                            { label: 'Approval Rate', value: `${stats.approvalRate}%`, icon: CheckCircle, color: 'text-accent-orange' },
+                            { label: 'Avg. Turnaround', value: stats.avgTurnaround, icon: Clock, color: 'text-blue-400' },
+                            { label: 'Performance', value: stats.performance, icon: TrendingUp, color: 'text-primary' },
+                        ].map((stat, i) => (
+                            <div key={i} className="glass-panel p-5 rounded-xl group hover:border-primary/30 transition-all">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`p-2 rounded-lg bg-surface-highlight ${stat.color} group-hover:scale-110 transition-transform`}>
+                                        <stat.icon size={20} />
+                                    </div>
                                 </div>
+                                <h3 className="text-text-muted text-xs font-bold uppercase tracking-wider">{stat.label}</h3>
+                                <p className="text-2xl font-display font-bold text-white mt-1">{stat.value}</p>
                             </div>
-                            <h3 className="text-text-muted text-xs font-bold uppercase tracking-wider">{stat.label}</h3>
-                            <p className="text-2xl font-display font-bold text-white mt-1">{stat.value}</p>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - About & Skills */}
@@ -176,75 +210,87 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                                     View All
                                 </button>
                             </div>
-                            <div className="space-y-6">
-                                {[
-                                    { title: 'Approved Loan #10294', time: '2 hours ago', desc: 'Cleared all covenant deviations for Acme Global.' },
-                                    { title: 'Updated Compliance Policy', time: '1 day ago', desc: 'Revised internal risk threshold for manufacturing sector.' },
-                                    { title: 'Review Completed', time: '1 day ago', desc: 'Project Beta documentation analysis finalized.' },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex gap-4 group">
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-2 h-2 rounded-full bg-primary shadow-glow-sm group-hover:scale-125 transition-transform"></div>
-                                            {i !== 2 && <div className="w-px h-full bg-border mt-2"></div>}
+                            {activities.length > 0 ? (
+                                <div className="space-y-6">
+                                    {activities.map((item, i) => (
+                                        <div key={i} className="flex gap-4 group">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-2 h-2 rounded-full bg-primary shadow-glow-sm group-hover:scale-125 transition-transform"></div>
+                                                {i !== activities.length - 1 && <div className="w-px h-full bg-border mt-2"></div>}
+                                            </div>
+                                            <div className="pb-2">
+                                                <h4 className="text-white font-medium text-sm group-hover:text-primary transition-colors">{item.title}</h4>
+                                                <p className="text-text-muted text-xs mt-1">{item.desc}</p>
+                                                <span className="text-[10px] text-slate-500 mt-2 block">{item.time}</span>
+                                            </div>
                                         </div>
-                                        <div className="pb-2">
-                                            <h4 className="text-white font-medium text-sm group-hover:text-primary transition-colors">{item.title}</h4>
-                                            <p className="text-text-muted text-xs mt-1">{item.desc}</p>
-                                            <span className="text-[10px] text-slate-500 mt-2 block">{item.time}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-text-muted text-sm italic">No recent activity found.</p>
+                            )}
                         </section>
                     </div>
 
                     {/* Right Column - Achievements & assignments */}
                     <div className="space-y-8">
-                        <div className="glass-panel p-6 rounded-2xl">
-                            <h3 className="text-lg font-bold text-white mb-6 font-display">Awards</h3>
-                            <div className="space-y-4">
-                                {[
-                                    { title: 'Analyst of the Year', year: '2025', icon: Award },
-                                    { title: 'Top Performer Q3', year: '2024', icon: TrendingUp },
-                                    { title: 'Innovation Award', year: '2023', icon: Award },
-                                ].map((award, i) => (
-                                    <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-surface-highlight/30 border border-transparent hover:border-primary/30 transition-all">
-                                        <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-transparent text-primary">
-                                            <award.icon size={20} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-white font-bold text-sm">{award.title}</h4>
-                                            <p className="text-text-muted text-xs">{award.year}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                        {awards && awards.length > 0 && (
+                            <div className="glass-panel p-6 rounded-2xl">
+                                <h3 className="text-lg font-bold text-white mb-6 font-display">Awards</h3>
+                                <div className="space-y-4">
+                                    {awards.map((award, i) => {
+                                        const Icon = iconMap[award.icon] || Award;
+                                        return (
+                                            <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-surface-highlight/30 border border-transparent hover:border-primary/30 transition-all">
+                                                <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-transparent text-primary">
+                                                    <Icon size={20} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-bold text-sm">{award.title}</h4>
+                                                    <p className="text-text-muted text-xs">{award.year}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="glass-panel p-6 rounded-2xl">
-                            <h3 className="text-lg font-bold text-white mb-6 font-display">Current Assignments</h3>
-                            <div className="space-y-3">
-                                {['Project Alpha', 'Global Logistics Expansion', 'Tech Synergies Merger'].map((project, i) => (
-                                    <div key={i} className="p-3 rounded-lg border border-border bg-surface hover:bg-surface-highlight transition-colors cursor-pointer">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-sm font-medium text-white">{project}</span>
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        {assignments && assignments.length > 0 ? (
+                            <div className="glass-panel p-6 rounded-2xl">
+                                <h3 className="text-lg font-bold text-white mb-6 font-display">Current Assignments</h3>
+                                <div className="space-y-3">
+                                    {assignments.map((project, i) => (
+                                        <div key={i} className="p-3 rounded-lg border border-border bg-surface hover:bg-surface-highlight transition-colors cursor-pointer">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-medium text-white">{project.title}</span>
+                                                <span className={`w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-emerald-500' : 'bg-orange-500'}`}></span>
+                                            </div>
+                                            <div className="w-full h-1 bg-surface-highlight rounded-full overflow-hidden">
+                                                <div className="h-full bg-primary rounded-full" style={{ width: `${project.progress}%` }}></div>
+                                            </div>
                                         </div>
-                                        <div className="w-full h-1 bg-surface-highlight rounded-full overflow-hidden">
-                                            <div className="h-full bg-primary rounded-full" style={{ width: `${60 + (i * 15)}%` }}></div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-border">
+                                    <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
+                                        + Assign New Project
+                                    </button>
+                                </div>
                             </div>
-                            <div className="mt-4 pt-4 border-t border-border">
+                        ) : (
+                            <div className="glass-panel p-6 rounded-2xl">
+                                <h3 className="text-lg font-bold text-white mb-6 font-display">Assignments</h3>
+                                <p className="text-text-muted text-sm mb-4">No active assignments.</p>
                                 <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
                                     + Assign New Project
                                 </button>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
