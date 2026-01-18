@@ -102,10 +102,11 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
         setResult(null);
 
         // Save query to history
-        await db.queries.add({
+        const queryId = await db.queries.add({
             text: textToAnalyze,
             timestamp: Date.now(),
-            model: selectedModel.name
+            model: selectedModel.name,
+            result: '' // Initial empty result
         });
 
         triggerAnalyze(async () => {
@@ -145,11 +146,18 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                     ]
                 });
 
-                const content = completion.choices[0].message.content;
+                const content = completion.choices[0].message.content || "No response generated.";
                 setResult(content);
+
+                // Update history with result
+                await db.queries.update(queryId, { result: content });
+
             } catch (error) {
                 console.error("OpenAI Chat Failed:", error);
-                setResult("Sorry, I couldn't connect to the AI service. Please check your API key or network connection.");
+                const errorMsg = "Sorry, I couldn't connect to the AI service. Please check your API key or network connection.";
+                setResult(errorMsg);
+                // Optionally update DB with error or delete failed query
+                await db.queries.update(queryId, { result: errorMsg });
             } finally {
                 setIsLoading(false);
             }
@@ -189,7 +197,15 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                             <div className="flex flex-col gap-4">
                                 <p className="text-xs font-bold text-text-muted uppercase tracking-widest px-2">Recent</p>
                                 {history.map((item) => (
-                                    <div key={item.id} className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all">
+                                    <div
+                                        key={item.id}
+                                        onClick={() => {
+                                            setQuery(item.text);
+                                            setResult(item.result || null);
+                                            // Optional: Close sidebar on mobile if needed, or keep open
+                                        }}
+                                        className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all"
+                                    >
                                         <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
                                         <div className="flex flex-col gap-1">
                                             <p className="text-white text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">"{item.text}"</p>
@@ -215,7 +231,15 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                     ) : (
                         <div className="flex flex-col gap-4 mt-4 items-center">
                             {history.slice(0, 5).map((item) => (
-                                <div key={item.id} className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors" title={item.text}>
+                                <div
+                                    key={item.id}
+                                    onClick={() => {
+                                        setQuery(item.text);
+                                        setResult(item.result || null);
+                                    }}
+                                    className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors"
+                                    title={item.text}
+                                >
                                     <Search size={16} />
                                 </div>
                             ))}

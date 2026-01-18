@@ -53,6 +53,7 @@ export interface Query {
     text: string;
     timestamp: number;
     model: string;
+    result?: string;
 }
 
 export interface BorrowerDetails {
