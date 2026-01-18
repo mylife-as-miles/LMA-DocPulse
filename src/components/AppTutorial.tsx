@@ -345,6 +345,48 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
                     ...commonSteps
                 ];
                 break;
+            case 'document_detail':
+                viewSteps = [
+                    {
+                        target: 'body',
+                        content: 'This is the Document Detail view. Review the full document content, extracted metadata, and analysis options.',
+                        title: 'Document Overview',
+                        placement: 'center' as Placement,
+                        disableBeacon: true,
+                    },
+                    {
+                        target: '#doc-viewer-container',
+                        content: 'View the original document here. You can scroll through all pages of PDFs.',
+                        title: 'Document Viewer',
+                        placement: 'right' as Placement,
+                    },
+                    {
+                        target: '#doc-info-sidebar',
+                        content: 'This sidebar displays key extracted metadata, including entities found, key dates, and document status.',
+                        title: 'Extracted Metadata',
+                        placement: 'left' as Placement,
+                    },
+                    {
+                        target: '#doc-status-badge',
+                        content: 'Check the current analysis status. You can manually mark documents as analyzed if needed.',
+                        title: 'Status Indicator',
+                        placement: 'left' as Placement,
+                    },
+                    {
+                        target: '#doc-detail-actions',
+                        content: 'Download the original file or click "Go to Analysis" to extract clauses and view risk factors.',
+                        title: 'Actions',
+                        placement: 'bottom' as Placement,
+                    },
+                    {
+                        target: '#doc-detail-back',
+                        content: 'Navigate back to the vault when you are done.',
+                        title: 'Navigation',
+                        placement: 'bottom' as Placement,
+                    },
+                    ...commonSteps
+                ];
+                break;
             default:
                 viewSteps = [];
         }

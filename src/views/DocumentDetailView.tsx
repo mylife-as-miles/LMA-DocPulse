@@ -170,6 +170,7 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
             <header className="h-14 border-b border-border flex items-center justify-between px-6 bg-surface shrink-0">
                 <div className="flex items-center gap-4">
                     <button
+                        id="doc-detail-back"
                         onClick={() => setView('vault')}
                         className="flex items-center gap-2 text-text-muted hover:text-white transition-colors"
                     >
@@ -179,7 +180,7 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
                     <div className="h-6 w-px bg-border"></div>
                     <h1 className="text-white font-bold truncate max-w-md">{doc.name}</h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div id="doc-detail-actions" className="flex items-center gap-2">
                     <button onClick={handleDownload} className="p-2 rounded hover:bg-white/5 text-text-muted hover:text-white transition-colors">
                         <Download size={18} />
                     </button>
@@ -196,7 +197,7 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
             {/* Content Container */}
             <div className="flex-1 flex overflow-hidden relative">
                 {/* PDF Viewer */}
-                <div className="flex-1 bg-[#1a1a1a] p-8 overflow-y-auto flex justify-center custom-scrollbar">
+                <div id="doc-viewer-container" className="flex-1 bg-[#1a1a1a] p-8 overflow-y-auto flex justify-center custom-scrollbar">
                     <div className="w-full max-w-4xl bg-white min-h-[1000px] shadow-2xl mb-8 relative group text-slate-800">
                         {doc.type === 'PDF' && fileUrl ? (
                             <Document
@@ -231,7 +232,7 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
                 </div>
 
                 {/* Info Sidebar */}
-                <div className="w-80 border-l border-border bg-surface shrink-0 flex flex-col">
+                <div id="doc-info-sidebar" className="w-80 border-l border-border bg-surface shrink-0 flex flex-col">
                     <div className="p-4 border-b border-border">
                         <h3 className="text-sm font-bold text-white flex items-center gap-2">
                             <Info size={16} className="text-primary" /> Document Info
@@ -240,7 +241,7 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
                     <div className="p-4 space-y-6 flex-1 overflow-y-auto">
                         <div className="space-y-2">
                             <p className="text-xs font-bold text-text-muted uppercase">Status</p>
-                            <div className="flex flex-col gap-2">
+                            <div id="doc-status-badge" className="flex flex-col gap-2">
                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border w-fit
                                     ${doc.status === 'Analyzed' ? 'text-primary bg-primary/10 border-primary/20' :
                                         doc.status === 'Review' ? 'text-accent-orange bg-accent-orange/10 border-accent-orange/20' :
