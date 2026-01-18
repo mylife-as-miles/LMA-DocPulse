@@ -99,7 +99,14 @@ export interface ReviewData {
     commercialViability?: CommercialViability;
     borrowerDetails: BorrowerDetails;
     financialCovenants: Covenant[];
-    eventsOfDefault?: string | string[]; // Kept flexible for now
+    eventsOfDefault?: {
+        type: string;
+        status: 'Active' | 'Resolved' | 'Potential';
+        riskLevel: 'Low' | 'Medium' | 'High' | 'Critical';
+        summary: string;
+        nextCriticalDate?: string;
+        clauseRef?: string;
+    }[];
     signatures?: string | any;
 }
 

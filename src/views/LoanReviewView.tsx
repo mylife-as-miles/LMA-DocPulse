@@ -653,18 +653,62 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                                                 <span className="text-primary text-[10px] font-bold uppercase tracking-wider">Source: {covenant.clauseRef}</span>
                                                                 <span className="text-text-muted text-[10px]">• Page {Math.floor(Math.random() * 20) + 1}</span>
                                                             </div>
-                                                            <p className="text-white/80 text-sm leading-relaxed font-mono">
-                                                                "...The Borrower shall ensure that the {covenant.termName} shall not be less than {covenant.value} at any time during the term of this Agreement. Failure to maintain this ratio shall constitute an Event of Default under {covenant.clauseRef?.replace('Clause', 'Section')}..."
-                                                            </p>
+
+                                                            {/* Editable Extraction Text */}
+                                                            {activeSection === `edit-covenant-${idx}` ? (
+                                                                <div className="space-y-3">
+                                                                    <textarea
+                                                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white font-mono text-sm resize-none focus:outline-none focus:border-primary/50 min-h-[100px]"
+                                                                        defaultValue={`...The Borrower shall ensure that the ${covenant.termName} shall not be less than ${covenant.value} at any time during the term of this Agreement. Failure to maintain this ratio shall constitute an Event of Default under ${covenant.clauseRef?.replace('Clause', 'Section')}...`}
+                                                                    />
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button
+                                                                            onClick={() => setActiveSection('')}
+                                                                            className="px-3 py-1.5 text-xs text-text-muted hover:text-white border border-border rounded-lg hover:border-white/30 transition-colors"
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setActiveSection('');
+                                                                                toast.success('Extraction Updated', { description: 'The covenant clause text has been modified.' });
+                                                                            }}
+                                                                            className="px-3 py-1.5 text-xs bg-primary text-black font-bold rounded-lg hover:bg-primary-hover transition-colors"
+                                                                        >
+                                                                            Save Changes
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-white/80 text-sm leading-relaxed font-mono">
+                                                                    "...The Borrower shall ensure that the {covenant.termName} shall not be less than {covenant.value} at any time during the term of this Agreement. Failure to maintain this ratio shall constitute an Event of Default under {covenant.clauseRef?.replace('Clause', 'Section')}..."
+                                                                </p>
+                                                            )}
+
                                                             <div className="flex items-center gap-4 mt-3">
-                                                                <button className="text-primary text-xs hover:underline flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (setView) {
+                                                                            // Mock finding a doc ID - in real app would link from loan data
+                                                                            setView('document_detail');
+                                                                            // We'd ideally pass the page number too
+                                                                            toast.info('Opening Document', { description: `Navigating to ${covenant.clauseRef}` });
+                                                                        }
+                                                                    }}
+                                                                    className="text-primary text-xs hover:underline flex items-center gap-1"
+                                                                >
                                                                     <FileText size={12} />
                                                                     View in PDF
                                                                 </button>
-                                                                <button className="text-text-muted text-xs hover:text-white flex items-center gap-1">
-                                                                    <Edit size={12} />
-                                                                    Edit Extraction
-                                                                </button>
+                                                                {!activeSection.startsWith('edit-covenant') && (
+                                                                    <button
+                                                                        onClick={() => setActiveSection(`edit-covenant-${idx}`)}
+                                                                        className="text-text-muted text-xs hover:text-white flex items-center gap-1"
+                                                                    >
+                                                                        <Edit size={12} />
+                                                                        Edit Extraction
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>

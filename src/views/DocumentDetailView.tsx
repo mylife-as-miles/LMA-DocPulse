@@ -56,6 +56,11 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
                     financialCovenants: [
                         { termName: "Leverage Ratio", clauseRef: "Clause 22.1", value: "3.50x", status: 'LMA STANDARD' },
                         { termName: "Interest Cover", clauseRef: "Clause 22.2", value: "4.00x", status: 'LMA STANDARD' }
+                    ],
+                    eventsOfDefault: [
+                        { type: "Non-payment", status: 'Active', riskLevel: 'Critical', summary: 'Failure to pay principal or interest', nextCriticalDate: '2024-12-01', clauseRef: 'Clause 23.1' },
+                        { type: "Breach of obligations", status: 'Potential', riskLevel: 'Medium', summary: 'Other covenant breaches', nextCriticalDate: '2025-01-15', clauseRef: 'Clause 23.3' },
+                        { type: "Misrepresentation", status: 'Resolved', riskLevel: 'Low', summary: 'Incorrect representations', clauseRef: 'Clause 23.4' }
                     ]
                 }
             });
