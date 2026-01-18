@@ -294,6 +294,9 @@ lma-docpulse/
 
 ### Prerequisites
 
+> [!IMPORTANT]
+> **Node.js is Required**: You generally need to install [Node.js](https://nodejs.org/) (LTS version) to run this project. If you see errors like `'npm' is not recognized`, it means Node.js is not installed or not in your system PATH.
+
 | Requirement | Version | Download |
 |-------------|---------|----------|
 | Node.js | 18.x or higher | [nodejs.org](https://nodejs.org) |
