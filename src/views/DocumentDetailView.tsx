@@ -175,8 +175,9 @@ export const DocumentDetailView = ({ setView, docId, onSelectLoan }: DocumentDet
                                     <span className="text-white font-mono">-</span>
                                 </div> */}
                             </div>
+                            </div>
                         </div>
-                    </div>
+                    </div >
                 </div >
             </div >
         </motion.div >

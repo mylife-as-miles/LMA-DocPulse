@@ -626,10 +626,27 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                             <div className="col-span-2 flex justify-end gap-2">
                                                 {covenant.status === 'DEVIATION' ? (
                                                     <>
-                                                        <button className="h-8 px-3 rounded bg-primary text-black text-xs font-bold hover:bg-primary-hover transition-colors">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!loan || !loan.reviewData) return;
+                                                                const newCovenants = [...loan.reviewData.financialCovenants];
+                                                                newCovenants[idx] = { ...newCovenants[idx], status: 'LMA STANDARD' };
+                                                                await db.loans.update(loan.id, {
+                                                                    'reviewData.financialCovenants': newCovenants
+                                                                });
+                                                                toast.success('Deviation Accepted', { description: `${covenant.termName} marked as standard.` });
+                                                            }}
+                                                            className="h-8 px-3 rounded bg-primary text-black text-xs font-bold hover:bg-primary-hover transition-colors"
+                                                        >
                                                             Accept
                                                         </button>
-                                                        <button className="h-8 px-3 rounded border border-border text-text-muted text-xs hover:text-white hover:border-white transition-colors">
+                                                        <button
+                                                            onClick={() => {
+                                                                triggerFeedback('Issue Flagged', 'risk_flag');
+                                                                toast.warning('Violation Flagged', { description: 'Compliance team notified.' });
+                                                            }}
+                                                            className="h-8 px-3 rounded border border-border text-text-muted text-xs hover:text-white hover:border-white transition-colors"
+                                                        >
                                                             Flag Issue
                                                         </button>
                                                     </>
