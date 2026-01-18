@@ -56,15 +56,20 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
     const history = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
 
-    const handleAnalyze = async () => {
-        if (!query.trim()) return;
+    const handleAnalyze = async (overrideQuery?: string) => {
+        const textToAnalyze = overrideQuery || query;
+        if (!textToAnalyze.trim()) return;
+
+        if (overrideQuery) {
+            setQuery(overrideQuery);
+        }
 
         setIsLoading(true);
         setResult(null);
 
         // Save query to history
         await db.queries.add({
-            text: query,
+            text: textToAnalyze,
             timestamp: Date.now(),
             model: selectedModel.name
         });
@@ -78,7 +83,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4o", // Forcing gpt-4o for stability as gpt-5 is not publicly available yet, but UI shows selection.
                     messages: [
-                        { role: "user", content: getChatPrompt(query, context) }
+                        { role: "user", content: getChatPrompt(textToAnalyze, context) }
                     ]
                 });
 
@@ -255,7 +260,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                     </div>
                                     <button
                                         id="analyze-btn"
-                                        onClick={handleAnalyze}
+                                        onClick={() => handleAnalyze()}
                                         disabled={isLoading}
                                         className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
@@ -268,19 +273,19 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
 
                         {/* Quick Filters */}
                         <div id="quick-filters" className="flex justify-center gap-3 flex-wrap max-w-4xl mx-auto">
-                            <button className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                            <button onClick={() => handleAnalyze("Show me all high risk loans in my portfolio.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
                                 <AlertTriangle className="text-orange-500" size={16} />
                                 <p className="text-text-muted group-hover:text-white text-sm font-medium">High Risk Loans</p>
                             </button>
-                            <button className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                            <button onClick={() => handleAnalyze("List all loans maturing in Q4 of this year.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
                                 <Calendar className="text-blue-400" size={16} />
                                 <p className="text-text-muted group-hover:text-white text-sm font-medium">Q4 Maturities</p>
                             </button>
-                            <button className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                            <button onClick={() => handleAnalyze("What are the current compliance gaps and violations?")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
                                 <ShieldAlert className="text-red-400" size={16} />
                                 <p className="text-text-muted group-hover:text-white text-sm font-medium">Compliance Gaps</p>
                             </button>
-                            <button className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                            <button onClick={() => handleAnalyze("Show me all loans with a principal amount greater than $1,000,000.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
                                 <DollarSign className="text-primary" size={16} />
                                 <p className="text-text-muted group-hover:text-white text-sm font-medium">Loans {'>'} $1M</p>
                             </button>
