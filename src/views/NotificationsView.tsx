@@ -94,6 +94,11 @@ export const NotificationsView = () => {
         }
     };
 
+    const handleMarkAllRead = async () => {
+        // Only update real notifications that track read status
+        await db.notifications.toCollection().modify({ read: true });
+    };
+
     return (
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 custom-scrollbar">
             <div className="mx-auto max-w-3xl flex flex-col gap-6 pb-20">
@@ -103,7 +108,12 @@ export const NotificationsView = () => {
                         <p className="text-text-muted">Stay updated with latest alerts and system messages.</p>
                     </div>
                     {unifiedNotifications.length > 0 && (
-                        <button className="text-primary text-sm font-medium hover:text-white transition-colors">Mark all as read</button>
+                        <button
+                            onClick={handleMarkAllRead}
+                            className="text-primary text-sm font-medium hover:text-white transition-colors"
+                        >
+                            Mark all as read
+                        </button>
                     )}
                 </div>
 
@@ -113,13 +123,13 @@ export const NotificationsView = () => {
                             const Icon = getIcon(notif.type);
                             const styles = getStyles(notif.type);
                             return (
-                                <div key={i} className="glass-panel p-4 rounded-xl flex gap-4 hover:border-primary/30 transition-colors cursor-pointer group">
+                                <div key={i} className={`glass-panel p-4 rounded-xl flex gap-4 hover:border-primary/30 transition-colors cursor-pointer group ${notif.read ? 'opacity-70' : 'border-primary/20'}`}>
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${styles.bg} ${styles.color}`}>
                                         <Icon size={20} />
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start">
-                                            <h4 className="text-white font-medium group-hover:text-primary transition-colors">{notif.title}</h4>
+                                            <h4 className={`text-white font-medium group-hover:text-primary transition-colors ${!notif.read ? 'font-bold' : ''}`}>{notif.title} {!notif.read && <span className="inline-block w-2 h-2 bg-primary rounded-full ml-2 align-middle"></span>}</h4>
                                             <span className="text-xs text-text-muted flex items-center gap-1">
                                                 <Clock size={12} /> {getRelativeTime(notif.time)}
                                             </span>

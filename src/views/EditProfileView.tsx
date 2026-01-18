@@ -95,6 +95,29 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
         setSkills(skills.filter(s => s !== skillToRemove));
     };
 
+    // Ref for file input
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setFormData(prev => ({ ...prev, avatar: base64String }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const triggerFileUpload = () => {
+        fileInputRef.current?.click();
+    };
+
+    const removeAvatar = () => {
+        setFormData(prev => ({ ...prev, avatar: '' }));
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -130,25 +153,43 @@ export const EditProfileView = ({ setView }: EditProfileViewProps) => {
 
                         {/* Avatar Upload */}
                         <div className="flex items-center gap-8 pb-8 border-b border-border/50">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-2xl p-1 bg-gradient-to-br from-primary to-transparent shadow-glow">
                                     <img
-                                        src={formData.avatar}
+                                        src={formData.avatar || "https://picsum.photos/100/100"}
                                         alt="Current Avatar"
                                         className="w-full h-full object-cover rounded-xl border-2 border-black"
                                     />
                                 </div>
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <div
+                                    onClick={triggerFileUpload}
+                                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                >
                                     <span className="text-xs font-bold text-white">Change</span>
                                 </div>
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-white mb-2">Profile Picture</h3>
                                 <div className="flex gap-3">
-                                    <button type="button" className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg text-sm font-bold text-primary hover:bg-primary/20 transition-colors">
+                                    <button
+                                        type="button"
+                                        onClick={triggerFileUpload}
+                                        className="px-4 py-2 bg-primary/10 border border-primary/20 rounded-lg text-sm font-bold text-primary hover:bg-primary/20 transition-colors"
+                                    >
                                         Upload New
                                     </button>
-                                    <button type="button" className="px-4 py-2 bg-transparent border border-border rounded-lg text-sm font-bold text-text-muted hover:text-white hover:border-white/30 transition-colors">
+                                    <button
+                                        type="button"
+                                        onClick={removeAvatar}
+                                        className="px-4 py-2 bg-transparent border border-border rounded-lg text-sm font-bold text-text-muted hover:text-white hover:border-white/30 transition-colors"
+                                    >
                                         Remove
                                     </button>
                                 </div>
