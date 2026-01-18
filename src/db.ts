@@ -71,7 +71,7 @@ export class AppDatabase extends Dexie {
 
 export const db = new AppDatabase();
 
-import { LOANS_DATA, INITIAL_ALERTS } from './data/mockData';
+import { LOANS_DATA } from './data/mockData';
 
 // Initialize DB
 export const initDB = async () => {
@@ -82,12 +82,7 @@ export const initDB = async () => {
     console.log("Seeded Loans");
   }
 
-  // Check and seed Alerts
-  const alertsCount = await db.alerts.count();
-  if (alertsCount === 0) {
-    await db.alerts.bulkAdd(INITIAL_ALERTS);
-    console.log("Seeded Alerts");
-  }
+  // Alerts are now generated dynamically from real data - no seeding needed
 
   // Check and seed User (for Profile & Stats)
   const usersCount = await db.users.count();
