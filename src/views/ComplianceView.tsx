@@ -64,7 +64,7 @@ export const ComplianceView = ({ setView }: ComplianceViewProps) => {
 
         // Add violations for loans with events of default
         loans.forEach(loan => {
-            if (loan.reviewData?.eventsOfDefault) {
+            if (loan.reviewData?.eventsOfDefault && Array.isArray(loan.reviewData.eventsOfDefault)) {
                 const activeDefaults = loan.reviewData.eventsOfDefault.filter((eod: any) =>
                     typeof eod !== 'string' && eod.status === 'Active'
                 );
