@@ -29,9 +29,9 @@ export const Sidebar = ({ isOpen, setIsOpen, currentView, setView }: SidebarProp
     const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
     const user = useLiveQuery(() => db.users.toArray())?.[0];
-    const displayName = user?.name || 'Alex Morgan';
-    const displayTitle = user?.title || 'Senior Analyst';
-    const displayAvatar = user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=00FF94&color=000`;
+    const displayName = user?.name || 'New User';
+    const displayTitle = user?.title || 'Set up your profile';
+    const displayAvatar = user?.avatar || `https://ui-avatars.com/api/?name=U&background=333&color=666`;
 
     const navItems = [
         { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },

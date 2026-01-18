@@ -71,42 +71,13 @@ export class AppDatabase extends Dexie {
 
 export const db = new AppDatabase();
 
-import { LOANS_DATA } from './data/mockData';
+// No mock data seeding - application starts completely empty
+// All data comes from user uploads and interactions
 
-// Initialize DB
+// Initialize DB - reserved for future initialization logic
 export const initDB = async () => {
-  // Check and seed Loans
-  const loansCount = await db.loans.count();
-  if (loansCount === 0) {
-    await db.loans.bulkAdd(LOANS_DATA);
-    console.log("Seeded Loans");
-  }
-
-  // Alerts are now generated dynamically from real data - no seeding needed
-
-  // Check and seed User (for Profile & Stats)
-  const usersCount = await db.users.count();
-  if (usersCount === 0) {
-    await db.users.add({
-      email: 'alex.morgan@lmadocpulse.com',
-      password: 'password123',
-      name: 'Alex Morgan',
-      title: 'Senior Credit Analyst',
-      location: 'New York, USA',
-      bio: 'Specializing in syndicated loans and LMA compliance with over 10 years of experience in structured finance.',
-      skills: ['LMA Standards', 'Credit Risk', 'Financial Modeling', 'Legal Frameworks'],
-      stats: {
-        loansReviewed: 142,
-        approvalRate: 87,
-        avgTurnaround: '2.4 Days',
-        performance: 'Top 5%'
-      },
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=256&h=256',
-      awards: [
-        { title: 'Analyst of the Year', year: '2025', icon: 'Award' },
-        { title: 'Deal Closer', year: '2024', icon: 'Briefcase' }
-      ]
-    });
-    console.log("Seeded User Profile");
-  }
+  // Database is ready - no seeding needed
+  // Users create their own profile via UserOnboarding
+  // Loans/documents are created via uploads and AI analysis
+  console.log("Database initialized (no seed data)");
 };
