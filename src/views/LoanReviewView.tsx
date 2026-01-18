@@ -292,6 +292,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
         <div className="flex flex-1 overflow-hidden relative h-full">
             {/* Sidebar */}
             <aside
+                id="review-sidebar"
                 className={`
                     flex-none flex flex-col justify-between border-r border-border bg-background transition-all duration-300 overflow-y-auto z-10 shrink-0
                     ${isSidebarOpen ? 'w-72' : 'w-16 items-center'}
@@ -389,6 +390,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             Export Report
                         </button>
                         <button
+                            id="approve-btn"
                             onClick={handleApproveAll}
                             className="flex items-center gap-2 h-10 px-6 rounded bg-primary hover:bg-primary-hover text-black transition-all text-sm font-bold shadow-glow border border-transparent hover:scale-105 active:scale-95"
                         >
@@ -404,7 +406,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                     <section id="summary" className="scroll-mt-32">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* AI Confidence Card */}
-                            <div className="glass-panel border border-border rounded-xl p-6 flex items-center gap-6 relative overflow-hidden group">
+                            <div id="confidence-card" className="glass-panel border border-border rounded-xl p-6 flex items-center gap-6 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Activity size={64} className="text-primary" />
                                 </div>
@@ -428,7 +430,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             </div>
 
                             {/* Standardization Score Card */}
-                            <div className="glass-panel border border-border rounded-xl p-6 flex items-center gap-6 relative overflow-hidden group">
+                            <div id="standardization-card" className="glass-panel border border-border rounded-xl p-6 flex items-center gap-6 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Shield size={64} className="text-accent-orange" />
                                 </div>
@@ -443,7 +445,7 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                             </div>
 
                             {/* Clauses Stats Card */}
-                            <div className="glass-panel border border-border rounded-xl p-6 flex flex-col justify-center relative overflow-hidden">
+                            <div id="clauses-card" className="glass-panel border border-border rounded-xl p-6 flex flex-col justify-center relative overflow-hidden">
                                 <div className="flex justify-between items-center text-center">
                                     <div>
                                         <div className="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-2">Clauses</div>
@@ -779,12 +781,12 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                         <div className="col-span-2">
                                             {typeof eod !== 'string' && eod.riskLevel ? (
                                                 <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border ${eod.riskLevel === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                        eod.riskLevel === 'High' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                                                            eod.riskLevel === 'Medium' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
-                                                                'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                                    eod.riskLevel === 'High' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                                                        eod.riskLevel === 'Medium' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                                            'bg-blue-500/10 text-blue-500 border-blue-500/20'
                                                     }`}>
                                                     <div className={`w-1.5 h-1.5 rounded-full ${eod.riskLevel === 'Critical' ? 'bg-red-500 animate-pulse' :
-                                                            eod.riskLevel === 'High' ? 'bg-orange-500' : 'bg-blue-500'
+                                                        eod.riskLevel === 'High' ? 'bg-orange-500' : 'bg-blue-500'
                                                         }`}></div>
                                                     {eod.riskLevel}
                                                 </span>
@@ -795,8 +797,8 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                                         <div className="col-span-2">
                                             {typeof eod !== 'string' && eod.status ? (
                                                 <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold ${eod.status === 'Active' ? 'bg-red-500/10 text-red-400' :
-                                                        eod.status === 'Potential' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                            'bg-green-500/10 text-green-400'
+                                                    eod.status === 'Potential' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                        'bg-green-500/10 text-green-400'
                                                     }`}>
                                                     {eod.status}
                                                 </span>

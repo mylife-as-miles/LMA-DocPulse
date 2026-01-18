@@ -241,11 +241,42 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
                 viewSteps = [
                     {
                         target: 'body',
-                        content: 'This is the Loan Review workspace. Analyze extracted data, review covenants, and approve or flag issues.',
-                        title: 'Loan Analysis',
+                        content: 'This is the Loan Review workspace. Here you can analyze extracted data, review covenants against LMA standards, and approve or flag issues.',
+                        title: 'Loan Review Workspace',
                         placement: 'center',
                         disableBeacon: true,
-                    }
+                    },
+                    {
+                        target: '#review-sidebar',
+                        content: 'Navigate between different sections of the agreement. Indicators show the status of each section (Standard, Deviation, or Critical).',
+                        title: 'Document Navigation',
+                        placement: 'right',
+                    },
+                    {
+                        target: '#confidence-card',
+                        content: 'This score represents our AI\'s confidence in the extracted data accuracy. High scores indicate reliable extraction.',
+                        title: 'AI Confidence Score',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#standardization-card',
+                        content: 'Measures how closely the agreement adheres to LMA standards. Lower scores may require more manual review.',
+                        title: 'LMA Standardization',
+                        placement: 'bottom',
+                    },
+                    {
+                        target: '#events-of-default',
+                        content: 'Review critical triggers for default. Active defaults are highlighted in red and require immediate attention.',
+                        title: 'Events of Default',
+                        placement: 'top',
+                    },
+                    {
+                        target: '#approve-btn',
+                        content: 'Once you have reviewed all sections and resolved any flags, click here to approve the loan agreement.',
+                        title: 'Final Approval',
+                        placement: 'left',
+                    },
+                    ...commonSteps
                 ];
                 break;
             case 'upload':
