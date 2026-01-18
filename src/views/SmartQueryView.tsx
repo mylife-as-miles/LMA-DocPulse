@@ -24,6 +24,10 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    X,
+    Check,
+    File,
+    Database,
 } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
 import { openai, getChatPrompt } from '../services/openai';
@@ -53,8 +57,38 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [selectedModel, setSelectedModel] = useState(MODELS[0]);
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
+    // Context Selection State
+    const [isContextModalOpen, setIsContextModalOpen] = useState(false);
+    const [contextTab, setContextTab] = useState<'loans' | 'docs'>('loans');
+    const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
+
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const docs = useLiveQuery(() => db.docs.toArray()) || [];
     const history = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
+
+    // Helper to handle selection
+    const toggleSelection = (id: string) => {
+        setSelectedContextIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const selectAll = (type: 'loans' | 'docs') => {
+        const ids = type === 'loans'
+            ? loans.map(l => l.id)
+            : docs.map(d => d.id!.toString());
+
+        // If all currently visible are selected, deselect them. Otherwise select all.
+        const allVisibleSelected = ids.every(id => selectedContextIds.includes(id));
+
+        if (allVisibleSelected) {
+            setSelectedContextIds(prev => prev.filter(id => !ids.includes(id)));
+        } else {
+            // Add any that aren't already selected
+            const newIds = ids.filter(id => !selectedContextIds.includes(id));
+            setSelectedContextIds(prev => [...prev, ...newIds]);
+        }
+    };
 
     const handleAnalyze = async (overrideQuery?: string) => {
         const textToAnalyze = overrideQuery || query;
@@ -76,9 +110,33 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
 
         triggerAnalyze(async () => {
             try {
-                const context = loans.map(l =>
-                    `- Loan ${l.id} (${l.type}) with ${l.counterparty}: ${l.amount}, Risk: ${l.risk}, Status: ${l.status}, Deadline: ${l.deadline}`
-                ).join('\n');
+                // Build Context based on selection
+                let context = "";
+
+                // 1. Add Loans
+                const activeLoans = selectedContextIds.length === 0
+                    ? loans
+                    : loans.filter(l => selectedContextIds.includes(l.id));
+
+                if (activeLoans.length > 0) {
+                    context += "=== LOAN PORTFOLIO DATA ===\n";
+                    context += activeLoans.map(l =>
+                        `- Loan ${l.id} (${l.type}) with ${l.counterparty}: ${l.amount}, Risk: ${l.risk}, Status: ${l.status}, Deadline: ${l.deadline}`
+                    ).join('\n');
+                    context += "\n\n";
+                }
+
+                // 2. Add Documents
+                const activeDocs = selectedContextIds.length === 0
+                    ? docs
+                    : docs.filter(d => d.id && selectedContextIds.includes(d.id.toString()));
+
+                if (activeDocs.length > 0) {
+                    context += "=== AVAILABLE DOCUMENTS ===\n";
+                    context += activeDocs.map(d =>
+                        `- ${d.name} (${d.type}): Status ${d.status}, Date: ${d.date}, Entities: ${d.entities?.join(', ') || 'None'}`
+                    ).join('\n');
+                }
 
                 const completion = await openai.chat.completions.create({
                     model: "gpt-4o", // Forcing gpt-4o for stability as gpt-5 is not publicly available yet, but UI shows selection.
@@ -212,9 +270,13 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                 </div>
                                 <div className="flex justify-between items-center px-4 py-3 bg-surface-highlight/30 border-t border-white/5">
                                     <div className="flex gap-2">
-                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-colors text-xs font-mono border border-transparent hover:border-white/10" title="Attach Document">
+                                        <button
+                                            onClick={() => setIsContextModalOpen(true)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-xs font-mono border ${selectedContextIds.length > 0 ? 'bg-primary/20 text-primary border-primary/30' : 'text-text-muted hover:text-white hover:bg-white/5 border-transparent hover:border-white/10'}`}
+                                            title="Attach Document"
+                                        >
                                             <Paperclip size={16} />
-                                            <span>Context</span>
+                                            <span>Context {selectedContextIds.length > 0 ? `(${selectedContextIds.length})` : '(All)'}</span>
                                         </button>
                                         <button
                                             onClick={() => setView?.('filter')}
@@ -352,6 +414,120 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                     </div>
                 </div>
             </main>
+            {/* Context Selection Modal */}
+            {isContextModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className="w-full max-w-2xl bg-[#09090b] border border-border rounded-xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+                        <div className="p-4 border-b border-border flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Database size={18} className="text-primary" /> Analysis Context
+                                </h3>
+                                <p className="text-xs text-text-muted">Select specific items to focus the AI analysis</p>
+                            </div>
+                            <button onClick={() => setIsContextModalOpen(false)} className="text-text-muted hover:text-white transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex border-b border-border">
+                            <button
+                                onClick={() => setContextTab('loans')}
+                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${contextTab === 'loans' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-text-muted hover:text-white hover:bg-white/5'}`}
+                            >
+                                Active Loans ({loans.length})
+                            </button>
+                            <button
+                                onClick={() => setContextTab('docs')}
+                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${contextTab === 'docs' ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-text-muted hover:text-white hover:bg-white/5'}`}
+                            >
+                                Documents ({docs.length})
+                            </button>
+                        </div>
+
+                        <div className="p-2 border-b border-border bg-surface-highlight/30 flex justify-between items-center">
+                            <span className="text-xs text-text-muted px-2">
+                                {selectedContextIds.length} items selected
+                            </span>
+                            <button
+                                onClick={() => selectAll(contextTab)}
+                                className="text-xs text-primary hover:text-primary-hover px-2 py-1 hover:bg-primary/10 rounded transition-colors"
+                            >
+                                Toggle All {contextTab === 'loans' ? 'Loans' : 'Documents'}
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                            {contextTab === 'loans' ? (
+                                <div className="space-y-1">
+                                    {loans.map(loan => (
+                                        <div
+                                            key={loan.id}
+                                            onClick={() => toggleSelection(loan.id)}
+                                            className={`p-3 rounded-lg border cursor-pointer flex items-center gap-3 transition-all ${selectedContextIds.includes(loan.id) ? 'bg-primary/10 border-primary/30' : 'bg-transparent border-transparent hover:bg-white/5'}`}
+                                        >
+                                            <div className={`size-5 rounded border flex items-center justify-center shrink-0 ${selectedContextIds.includes(loan.id) ? 'bg-primary border-primary text-black' : 'border-text-muted'}`}>
+                                                {selectedContextIds.includes(loan.id) && <Check size={14} strokeWidth={3} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <p className={`text-sm font-medium truncate ${selectedContextIds.includes(loan.id) ? 'text-primary' : 'text-white'}`}>
+                                                        {loan.counterparty}
+                                                    </p>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${loan.risk === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-surface-highlight border-border text-text-muted'}`}>
+                                                        {loan.risk}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-text-muted truncate">{loan.id} • {loan.amount} • {loan.type}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {loans.length === 0 && <p className="text-center text-text-muted py-8 text-sm">No loans found</p>}
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    {docs.map(doc => (
+                                        <div
+                                            key={doc.id}
+                                            onClick={() => doc.id && toggleSelection(doc.id.toString())}
+                                            className={`p-3 rounded-lg border cursor-pointer flex items-center gap-3 transition-all ${doc.id && selectedContextIds.includes(doc.id.toString()) ? 'bg-primary/10 border-primary/30' : 'bg-transparent border-transparent hover:bg-white/5'}`}
+                                        >
+                                            <div className={`size-5 rounded border flex items-center justify-center shrink-0 ${doc.id && selectedContextIds.includes(doc.id.toString()) ? 'bg-primary border-primary text-black' : 'border-text-muted'}`}>
+                                                {doc.id && selectedContextIds.includes(doc.id.toString()) && <Check size={14} strokeWidth={3} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <p className={`text-sm font-medium truncate ${doc.id && selectedContextIds.includes(doc.id.toString()) ? 'text-primary' : 'text-white'}`}>
+                                                        {doc.name}
+                                                    </p>
+                                                    <span className="text-[10px] text-text-muted">{doc.type}</span>
+                                                </div>
+                                                <p className="text-xs text-text-muted truncate">Uploaded {doc.date}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {docs.length === 0 && <p className="text-center text-text-muted py-8 text-sm">No documents found</p>}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-border bg-surface flex justify-end gap-2">
+                            <button
+                                onClick={() => setSelectedContextIds([])}
+                                className="px-4 py-2 rounded-lg text-sm text-text-muted hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                                Clear Selection
+                            </button>
+                            <button
+                                onClick={() => setIsContextModalOpen(false)}
+                                className="px-6 py-2 rounded-lg bg-primary text-black text-sm font-bold hover:bg-primary-hover shadow-glow"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
