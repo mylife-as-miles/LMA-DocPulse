@@ -57,8 +57,6 @@ export interface Query {
     bookmarked?: boolean;
 }
 
-
-
 export interface BorrowerDetails {
     entityName: string;
     jurisdiction: string;

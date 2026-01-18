@@ -12,11 +12,6 @@ interface ProfileViewProps {
 export const ProfileView = ({ setView }: ProfileViewProps) => {
     const { trigger: shareProfile } = useActionFeedback('Share Profile');
     const [userId, setUserId] = useState<number | undefined>(undefined);
-    const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
-    const [newAssignment, setNewAssignment] = useState({ title: '', status: 'active', progress: 0 });
-    const { trigger: triggerSave } = useActionFeedback('Assignment Added');
-
-
 
     useEffect(() => {
         const storedUser = localStorage.getItem('currentUser');
@@ -30,20 +25,6 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
         () => (userId ? db.users.get(userId) : Promise.resolve(undefined)),
         [userId]
     );
-
-    const handleAddAssignment = async () => {
-        if (!userId || !newAssignment.title || !user) return;
-
-        const updatedAssignments = [
-            ...(user.assignments || []),
-            newAssignment
-        ];
-
-        await db.users.update(userId, { assignments: updatedAssignments });
-        triggerSave();
-        setIsAssignmentModalOpen(false);
-        setNewAssignment({ title: '', status: 'active', progress: 0 });
-    };
 
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
     const docs = useLiveQuery(() => db.docs.toArray()) || [];
@@ -292,10 +273,7 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                                     ))}
                                 </div>
                                 <div className="mt-4 pt-4 border-t border-border">
-                                    <button
-                                        onClick={() => setIsAssignmentModalOpen(true)}
-                                        className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all"
-                                    >
+                                    <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
                                         + Assign New Project
                                     </button>
                                 </div>
@@ -304,10 +282,7 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                             <div className="glass-panel p-6 rounded-2xl">
                                 <h3 className="text-lg font-bold text-white mb-6 font-display">Assignments</h3>
                                 <p className="text-text-muted text-sm mb-4">No active assignments.</p>
-                                <button
-                                    onClick={() => setIsAssignmentModalOpen(true)}
-                                    className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all"
-                                >
+                                <button className="w-full py-2 rounded-lg border border-dashed border-border text-text-muted text-sm hover:text-white hover:border-primary transition-all">
                                     + Assign New Project
                                 </button>
                             </div>
@@ -315,69 +290,6 @@ export const ProfileView = ({ setView }: ProfileViewProps) => {
                     </div>
                 </div>
             </div>
-
-            {/* Add Assignment Modal */}
-            {isAssignmentModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="w-full max-w-md bg-[#09090b] border border-border rounded-xl shadow-2xl overflow-hidden">
-                        <div className="p-6 border-b border-border">
-                            <h3 className="text-xl font-bold text-white font-display">New Assignment</h3>
-                            <p className="text-text-muted text-sm mt-1">Add a new project to your workspace.</p>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Project Title</label>
-                                <input
-                                    type="text"
-                                    value={newAssignment.title}
-                                    onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
-                                    className="w-full px-4 py-2 bg-surface border border-border rounded-lg text-white focus:outline-none focus:border-primary/50 transition-colors placeholder:text-text-muted/50"
-                                    placeholder="e.g. Q3 Portfolio Review"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Status</label>
-                                <select
-                                    value={newAssignment.status}
-                                    onChange={(e) => setNewAssignment({ ...newAssignment, status: e.target.value })}
-                                    className="w-full px-4 py-2 bg-surface border border-border rounded-lg text-white focus:outline-none focus:border-primary/50 transition-colors"
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-muted mb-1.5">Progress ({newAssignment.progress}%)</label>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={newAssignment.progress}
-                                    onChange={(e) => setNewAssignment({ ...newAssignment, progress: parseInt(e.target.value) })}
-                                    className="w-full accent-primary"
-                                />
-                            </div>
-                        </div>
-                        <div className="p-4 border-t border-border bg-surface flex justify-end gap-3">
-                            <button
-                                onClick={() => setIsAssignmentModalOpen(false)}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-white transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAddAssignment}
-                                disabled={!newAssignment.title}
-                                className="px-6 py-2 rounded-lg bg-primary text-black text-sm font-bold hover:bg-primary-hover shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Create Assignment
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

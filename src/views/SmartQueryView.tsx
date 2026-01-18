@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ViewState } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     History,
     Bookmark,
@@ -29,10 +28,6 @@ import {
     Check,
     File,
     Database,
-    User,
-    Bot,
-    AlertCircle,
-    Loader2,
 } from 'lucide-react';
 import { useActionFeedback } from '../components/ActionFeedback';
 import { openai, getChatPrompt } from '../services/openai';
@@ -56,12 +51,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const { trigger: triggerAnalyze } = useActionFeedback('Analysis', { duration: 3000 });
 
-    // State
     const [query, setQuery] = useState('');
-    const [result, setResult] = useState('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [selectedModel, setSelectedModel] = useState({ name: 'GPT-4 Turbo', icon: Sparkles });
-    // const messagesEndRef = React.useRef<HTMLDivElement>(null); // Not needed for single turn usually, unless auto-scroll to result
+    const [result, setResult] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedModel, setSelectedModel] = useState(MODELS[0]);
     const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
 
     // Context Selection State
@@ -102,63 +95,78 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     };
 
     const handleAnalyze = async (overrideQuery?: string) => {
-        if (!query.trim() && !overrideQuery) return;
-
         const textToAnalyze = overrideQuery || query;
-        setIsAnalyzing(true);
-        setResult(''); // Clear previous result
+        if (!textToAnalyze.trim()) return;
 
-        // If override (clicked suggestion), set it as query
-        if (overrideQuery) setQuery(overrideQuery);
-
-        // context setup
-        let contextContent = '';
-        if (selectedContextIds.length > 0) {
-            if (contextTab === 'loans') {
-                const relevantLoans = loans.filter(l => selectedContextIds.includes(l.id?.toString() || ''));
-                contextContent = `Context: Analysis is limited to the following loans: ${JSON.stringify(relevantLoans)}. `;
-            } else {
-                const relevantDocs = docs.filter(d => selectedContextIds.includes(d.id?.toString() || ''));
-                contextContent = `Context: Analysis is limited to the following documents: ${relevantDocs.map(d => d.name).join(', ')}. `;
-            }
+        if (overrideQuery) {
+            setQuery(overrideQuery);
         }
 
-        // Create new query record immediately
-        const id = await db.queries.add({
+        setIsLoading(true);
+        setResult(null);
+
+        // Save query to history
+        const queryId = await db.queries.add({
             text: textToAnalyze,
             timestamp: Date.now(),
             model: selectedModel.name,
-            result: '',
+            result: '', // Initial empty result
             bookmarked: false
         });
-        setCurrentQueryId(id as number);
+
+        setCurrentQueryId(queryId as number);
 
         triggerAnalyze(async () => {
             try {
-                const systemPrompt = `You are a specialized AI assistant for analyzing loan agreements... ${contextContent}`;
+                // Build Context based on selection
+                let context = "";
+
+                // 1. Add Loans
+                const activeLoans = selectedContextIds.length === 0
+                    ? loans
+                    : loans.filter(l => selectedContextIds.includes(l.id));
+
+                if (activeLoans.length > 0) {
+                    context += "=== LOAN PORTFOLIO DATA ===\n";
+                    context += activeLoans.map(l =>
+                        `- Loan ${l.id} (${l.type}) with ${l.counterparty}: ${l.amount}, Risk: ${l.risk}, Status: ${l.status}, Deadline: ${l.deadline}`
+                    ).join('\n');
+                    context += "\n\n";
+                }
+
+                // 2. Add Documents
+                const activeDocs = selectedContextIds.length === 0
+                    ? docs
+                    : docs.filter(d => d.id && selectedContextIds.includes(d.id.toString()));
+
+                if (activeDocs.length > 0) {
+                    context += "=== AVAILABLE DOCUMENTS ===\n";
+                    context += activeDocs.map(d =>
+                        `- ${d.name} (${d.type}): Status ${d.status}, Date: ${d.date}, Entities: ${d.entities?.join(', ') || 'None'}`
+                    ).join('\n');
+                }
 
                 const completion = await openai.chat.completions.create({
+                    model: "gpt-4o", // Forcing gpt-4o for stability as gpt-5 is not publicly available yet, but UI shows selection.
                     messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: textToAnalyze }
-                    ],
-                    model: "gpt-4-turbo-preview",
+                        { role: "user", content: getChatPrompt(textToAnalyze, context) }
+                    ]
                 });
 
                 const content = completion.choices[0].message.content || "No response generated.";
                 setResult(content);
 
-                // Update record with result
-                if (id) {
-                    await db.queries.update(id as number, { result: content });
-                }
+                // Update history with result
+                await db.queries.update(queryId, { result: content });
 
             } catch (error) {
-                console.error("AI Error:", error);
+                console.error("OpenAI Chat Failed:", error);
                 const errorMsg = "Sorry, I couldn't connect to the AI service. Please check your API key or network connection.";
                 setResult(errorMsg);
+                // Optionally update DB with error or delete failed query
+                await db.queries.update(queryId, { result: errorMsg });
             } finally {
-                setIsAnalyzing(false);
+                setIsLoading(false);
             }
         });
     };
@@ -166,14 +174,14 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const handleClearHistory = async () => {
         await db.queries.clear();
         setCurrentQueryId(undefined);
-        setResult('');
+        setResult(null);
         setQuery('');
     };
 
     const handleExportResult = () => {
-        if (!result) return;
+        if (!result || !query) return;
 
-        const content = `Query: ${query}\n\nResult:\n${result}`;
+        const content = `Query: ${query}\n\nDate: ${new Date().toLocaleString()}\nModel: ${selectedModel.name}\n\n=== RESULT ===\n\n${result}`;
         const blob = new Blob([content], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -184,8 +192,6 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
-
-
 
     const handleSaveQuery = async () => {
         if (currentQueryId) {
@@ -227,10 +233,11 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         key={item.id}
                                         onClick={() => {
                                             setQuery(item.text);
-                                            setResult(item.result || '');
+                                            setResult(item.result || null);
                                             setCurrentQueryId(item.id);
+                                            // Optional: Close sidebar on mobile if needed, or keep open
                                         }}
-                                        className={`group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border cursor-pointer transition-all ${currentQueryId === item.id ? 'bg-surface-highlight border-primary/50' : 'border-transparent hover:border-border'}`}
+                                        className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all"
                                     >
                                         <Search className="text-text-muted mt-0.5 group-hover:text-primary transition-colors shrink-0" size={18} />
                                         <div className="flex flex-col gap-1">
@@ -261,10 +268,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                     key={item.id}
                                     onClick={() => {
                                         setQuery(item.text);
-                                        setResult(item.result || '');
+                                        setResult(item.result || null);
                                         setCurrentQueryId(item.id);
                                     }}
-                                    className={`w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors ${currentQueryId === item.id ? 'ring-2 ring-primary' : ''}`}
+                                    className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors"
                                     title={item.text}
                                 >
                                     <Search size={16} />
@@ -280,133 +287,27 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                 {/* Background Pattern */}
                 <div className="absolute inset-0 bg-[radial-gradient(#222_1px,transparent_1px)] [background-size:20px_20px] opacity-20 pointer-events-none"></div>
 
-                <div className="flex-1 overflow-y-auto z-10 flex flex-col">
-                    {/* Main Result Area */}
-                    <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-6 custom-scrollbar flex flex-col gap-6">
-                        {!result && !isAnalyzing ? (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex-1 flex flex-col items-center justify-center text-center text-text-muted mt-20"
-                            >
-                                <Sparkles size={48} className="text-primary mb-6 opacity-50" />
-                                <h3 className="text-2xl font-bold text-white mb-2">How can I help you today?</h3>
-                                <p className="max-w-md mx-auto">
-                                    Analyze anything about your loan documents, covenants, compliance, or market trends.
-                                </p>
+                <div className="flex-1 overflow-y-auto z-10">
+                    <div className="max-w-[1100px] mx-auto w-full px-6 md:px-10 py-10 flex flex-col gap-10">
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-12 w-full max-w-2xl">
-                                    <button
-                                        onClick={() => handleAnalyze("Identify high risk loans in the portfolio")}
-                                        className="p-4 rounded-xl bg-surface border border-border hover:border-primary/50 hover:bg-surface-highlight transition-all text-left group"
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-2 rounded-lg bg-red-500/10 text-red-500 group-hover:bg-red-500/20">
-                                                <AlertCircle size={18} />
-                                            </div>
-                                            <span className="font-bold text-white">High Risk Loans</span>
-                                        </div>
-                                        <p className="text-sm text-text-muted">Analyze portfolio for critical risk factors</p>
-                                    </button>
-                                    <button
-                                        onClick={() => handleAnalyze("Show upcoming maturities for Q4")}
-                                        className="p-4 rounded-xl bg-surface border border-border hover:border-primary/50 hover:bg-surface-highlight transition-all text-left group"
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20">
-                                                <Calendar size={18} />
-                                            </div>
-                                            <span className="font-bold text-white">Q4 Maturities</span>
-                                        </div>
-                                        <p className="text-sm text-text-muted">List loans maturing in the next quarter</p>
-                                    </button>
-                                    <button
-                                        onClick={() => handleAnalyze("Summarize key compliance gaps across all documents")}
-                                        className="p-4 rounded-xl bg-surface border border-border hover:border-primary/50 hover:bg-surface-highlight transition-all text-left group"
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20">
-                                                <ShieldAlert size={18} />
-                                            </div>
-                                            <span className="font-bold text-white">Compliance Gaps</span>
-                                        </div>
-                                        <p className="text-sm text-text-muted">Identify missing documents or covenants</p>
-                                    </button>
-                                    <button
-                                        onClick={() => handleAnalyze("List all loans with exposure greater than $100M")}
-                                        className="p-4 rounded-xl bg-surface border border-border hover:border-primary/50 hover:bg-surface-highlight transition-all text-left group"
-                                    >
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="p-2 rounded-lg bg-green-500/10 text-green-500 group-hover:bg-green-500/20">
-                                                <DollarSign size={18} />
-                                            </div>
-                                            <span className="font-bold text-white">Loans {'>'} $100M</span>
-                                        </div>
-                                        <p className="text-sm text-text-muted">Filter based on exposure thresholds</p>
-                                    </button>
+                        {/* Hero Header */}
+                        <div id="query-hero" className="flex flex-col items-center text-center gap-6 mt-6">
+                            <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-surface-highlight border border-border mb-2">
+                                <div className="bg-center bg-no-repeat bg-cover rounded-xl size-12 bg-gradient-to-br from-primary/20 to-blue-500/20 flex items-center justify-center">
+                                    <Sparkles className="text-primary" size={24} />
                                 </div>
-                            </motion.div>
-                        ) : (
-                            <>
-                                {query && (
-                                    <div className="flex justify-end">
-                                        <div className="max-w-[80%] rounded-2xl p-4 bg-primary text-black rounded-tr-none">
-                                            <p className="font-bold text-xs opacity-70 mb-1">QUERY</p>
-                                            <p className="whitespace-pre-wrap leading-relaxed">{query}</p>
-                                        </div>
-                                    </div>
-                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-white">
+                                    What would you like to <span className="text-primary">know?</span>
+                                </h1>
+                                <p className="text-text-muted text-lg font-light max-w-2xl mx-auto">
+                                    Analyze your loan portfolio using natural language. Just ask.
+                                </p>
+                            </div>
+                        </div>
 
-                                {(result || isAnalyzing) && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="flex justify-start w-full"
-                                    >
-                                        <div className="w-full glass-panel p-6 rounded-2xl border border-white/10 relative overflow-hidden">
-                                            {isAnalyzing ? (
-                                                <div className="flex flex-col items-center justify-center py-12">
-                                                    <Loader2 size={32} className="animate-spin text-primary mb-4" />
-                                                    <p className="text-text-muted animate-pulse">Analyzing documents and generating insights...</p>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div className="flex justify-between items-start mb-4 border-b border-white/5 pb-4">
-                                                        <div className="flex items-center gap-2 text-primary">
-                                                            <Sparkles size={18} />
-                                                            <span className="font-bold uppercase tracking-wider text-sm">Analysis Result</span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={handleExportResult}
-                                                                className="p-2 hover:bg-white/5 rounded-lg text-text-muted hover:text-white transition-colors"
-                                                                title="Export Result"
-                                                            >
-                                                                <Download size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={handleSaveQuery}
-                                                                className={`p-2 hover:bg-white/5 rounded-lg transition-colors ${saveState === 'success' ? 'text-green-500' : 'text-text-muted hover:text-white'}`}
-                                                                title="Save to Vault"
-                                                            >
-                                                                {saveState === 'success' ? <Check size={16} /> : <BookmarkPlus size={16} />}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="prose prose-invert prose-lg max-w-none">
-                                                        <p className="whitespace-pre-wrap leading-relaxed text-slate-300">{result}</p>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    {/* Input Area (Sticky Bottom) */}
-                    <div className="p-4 lg:p-6 border-t border-white/5 bg-background/80 backdrop-blur-xl">
+                        {/* Search Input */}
                         <div id="search-container" className="w-full max-w-3xl mx-auto relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
                             <div className="relative bg-[#0A0A0A] rounded-2xl border border-border shadow-2xl overflow-hidden transition-all duration-300 group-focus-within:border-primary/50 group-focus-within:shadow-glow">
@@ -463,12 +364,12 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                                             <button
                                                                 key={model.id}
                                                                 onClick={() => {
-                                                                    setSelectedModel({ ...model, icon: Sparkles });
+                                                                    setSelectedModel(model);
                                                                     setIsModelMenuOpen(false);
                                                                 }}
-                                                                className={`text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group flex flex-col gap-0.5 ${selectedModel.name === model.name ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'}`}
+                                                                className={`text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group flex flex-col gap-0.5 ${selectedModel.id === model.id ? 'bg-primary/10 border border-primary/20' : 'border border-transparent'}`}
                                                             >
-                                                                <span className={`text-sm font-medium ${selectedModel.name === model.name ? 'text-primary' : 'text-white group-hover:text-primary'}`}>{model.name}</span>
+                                                                <span className={`text-sm font-medium ${selectedModel.id === model.id ? 'text-primary' : 'text-white group-hover:text-primary'}`}>{model.name}</span>
                                                                 <span className="text-[10px] text-text-muted leading-tight">{model.desc}</span>
                                                             </button>
                                                         ))}
@@ -480,18 +381,105 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                     <button
                                         id="analyze-btn"
                                         onClick={() => handleAnalyze()}
-                                        disabled={isAnalyzing}
-                                        className={`p-3 rounded-xl transition-all shadow-glow ${query.trim() || isAnalyzing ? 'bg-primary text-black hover:bg-primary-hover hover:scale-105 active:scale-95' : 'bg-surface-highlight text-text-muted cursor-not-allowed'}`}
+                                        disabled={isLoading}
+                                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-black px-6 py-2 rounded-lg font-display font-bold text-sm transition-all shadow-glow hover:shadow-glow transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {isAnalyzing ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
+                                        <Sparkles size={16} />
+                                        <span>{isLoading ? 'Thinking...' : 'Analyze'}</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Quick Filters */}
+                        <div id="quick-filters" className="flex justify-center gap-3 flex-wrap max-w-4xl mx-auto">
+                            <button onClick={() => handleAnalyze("Show me all high risk loans in my portfolio.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                                <AlertTriangle className="text-orange-500" size={16} />
+                                <p className="text-text-muted group-hover:text-white text-sm font-medium">High Risk Loans</p>
+                            </button>
+                            <button onClick={() => handleAnalyze("List all loans maturing in Q4 of this year.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                                <Calendar className="text-blue-400" size={16} />
+                                <p className="text-text-muted group-hover:text-white text-sm font-medium">Q4 Maturities</p>
+                            </button>
+                            <button onClick={() => handleAnalyze("What are the current compliance gaps and violations?")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                                <ShieldAlert className="text-red-400" size={16} />
+                                <p className="text-text-muted group-hover:text-white text-sm font-medium">Compliance Gaps</p>
+                            </button>
+                            <button onClick={() => handleAnalyze("Show me all loans with a principal amount greater than $1,000,000.")} className="group flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full border border-border bg-surface-highlight hover:border-primary hover:bg-surface-highlight/80 px-4 transition-all">
+                                <DollarSign className="text-primary" size={16} />
+                                <p className="text-text-muted group-hover:text-white text-sm font-medium">Loans {'>'} $1M</p>
+                            </button>
+                        </div>
+
+                        {/* Results Section */}
+                        {result && (
+                            <div className="flex flex-col gap-6 animate-fade-in-up mt-8 border-t border-border pt-10">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-display font-bold text-white flex items-center gap-3">
+                                        <span className="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                            <Search size={18} />
+                                        </span>
+                                        <span>Result</span>
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleExportResult}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono"
+                                            title="Export Result"
+                                        >
+                                            <Download size={16} />
+                                            <span className="hidden sm:inline">Export</span>
+                                        </button>
+                                        <button
+                                            onClick={handleSaveQuery}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs font-mono border border-transparent ${saveState === 'success' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white hover:bg-surface-highlight hover:border-border'}`}
+                                            title="Save Query"
+                                        >
+                                            {saveState === 'success' ? <Check size={16} /> : <BookmarkPlus size={16} />}
+                                            <span className="hidden sm:inline">{saveState === 'success' ? 'Saved' : 'Save'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="relative overflow-hidden bg-gradient-to-br from-surface-highlight to-surface-dark border border-border rounded-2xl p-1">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+                                    <div className="bg-surface-dark/50 backdrop-blur-sm rounded-xl p-6 flex flex-col md:flex-row gap-6 items-start">
+                                        <div className="p-3 bg-surface-highlight rounded-xl border border-white/5 shrink-0 shadow-lg">
+                                            <Sparkles className="text-primary animate-pulse" size={24} />
+                                        </div>
+                                        <div className="flex-1 space-y-4">
+                                            <div className="prose prose-invert max-w-none">
+                                                <p className="text-lg text-white font-light leading-relaxed whitespace-pre-wrap">
+                                                    {result}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-4 pt-2">
+                                                <button
+                                                    onClick={() => setView?.('analytics_result')}
+                                                    className="text-xs font-mono uppercase tracking-wider text-primary hover:text-white transition-colors flex items-center gap-2 group"
+                                                >
+                                                    View Analytics <ArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setView?.('filter')}
+                                                    className="text-xs font-mono uppercase tracking-wider text-text-muted hover:text-white transition-colors flex items-center gap-2"
+                                                >
+                                                    Refine Search <Filter size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-row md:flex-col gap-2 border-l border-white/5 pl-4 md:pl-0 md:border-l-0 md:border-t-0">
+                                            <button className="p-2 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"><ThumbsUp size={18} /></button>
+                                            <button className="p-2 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"><ThumbsDown size={18} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </main>
-
             {/* Context Selection Modal */}
             {isContextModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
