@@ -160,6 +160,11 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showPdfContext, setShowPdfContext] = useState(false);
 
+    const triggerFeedback = (action: string, type: string) => {
+        console.log(`Feedback: ${action} [${type}]`);
+    };
+    const [showPdfContext, setShowPdfContext] = useState(false);
+
     const loan = useLiveQuery(() => loanId ? db.loans.get(loanId) : Promise.resolve(undefined), [loanId]);
 
     // Scroll handling for active section highlighting
