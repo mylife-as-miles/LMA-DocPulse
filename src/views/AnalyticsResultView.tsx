@@ -1,8 +1,11 @@
 import React from 'react';
 import { ViewState } from '../types';
 import { motion } from 'framer-motion';
-import { ChevronLeft, BarChart2, PieChart, TrendingUp, Download, Share2 } from 'lucide-react';
+import { ChevronLeft, BarChart2, PieChart, TrendingUp, Download, Share2, Check, Copy } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart as RePieChart, Pie, Cell } from 'recharts';
+import { db } from '../db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useActionFeedback } from '../components/ActionFeedback';
 
 interface AnalyticsResultViewProps {
     setView: (view: ViewState) => void;
@@ -10,20 +13,109 @@ interface AnalyticsResultViewProps {
 
 export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
 
-    const riskData = [
-        { name: 'Floating', value: 12 },
-        { name: 'Fixed', value: 8 },
-        { name: 'Hybrid', value: 4 },
-    ];
+    const { trigger: triggerShare, state: shareState } = useActionFeedback('Link Copied', { duration: 2000 });
+    const { trigger: triggerExport, state: exportState } = useActionFeedback('Report Exported', { duration: 2000 });
 
-    const maturityData = [
-        { name: 'Q1', loans: 4 },
-        { name: 'Q2', loans: 3 },
-        { name: 'Q3', loans: 8 },
-        { name: 'Q4', loans: 1 },
-    ];
+    const loans = useLiveQuery(() => db.loans.toArray()) || [];
+    const queries = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
 
-    const COLORS = ['#00FF94', '#0088FE', '#FFBB28', '#FF8042'];
+    // Get latest query or use default
+    const latestQuery = queries.length > 0 ? queries[0] : { text: "Show all loans", result: "Analysis pending..." };
+    const queryText = latestQuery.text;
+
+    // --- Dynamic Analysis Logic ---
+
+    // 1. Identify Filters from Query
+    const searchTerms = queryText.toLowerCase();
+    const isFloating = searchTerms.includes('floating');
+    const isFixed = searchTerms.includes('fixed');
+    const isHighRisk = searchTerms.includes('high') || searchTerms.includes('critical');
+    const isCompliance = searchTerms.includes('compliance') || searchTerms.includes('gap');
+
+    // 2. Filter Loans
+    const filteredLoans = loans.filter(loan => {
+        if (isFloating) return loan.type === 'Term Loan A' || loan.type === 'RCF'; // Approximate mapping
+        if (isFixed) return loan.type === 'Term Loan B';
+        if (isHighRisk) return loan.risk === 'Critical' || loan.risk === 'High';
+        if (isCompliance) return loan.status === 'In Review' || loan.risk !== 'Low';
+        return true; // Default to all if no specific filter detected
+    });
+
+    const activeLoans = filteredLoans.length > 0 ? filteredLoans : loans; // Fallback to all if filter returns empty (optional, or show 0)
+
+    // 3. Calculate Stats
+    const parseAmount = (amtStr: string) => {
+        if (!amtStr) return 0;
+        return parseFloat(amtStr.replace(/[^0-9.]/g, '')) || 0;
+    };
+
+    const totalExposure = activeLoans.reduce((sum, loan) => sum + parseAmount(loan.amount), 0);
+    const uniqueEntities = new Set(activeLoans.map(l => l.counterparty)).size;
+
+    // Mock spread calculation based on Risk
+    const calculateSpread = (risk: string) => {
+        switch (risk) {
+            case 'Critical': return 650;
+            case 'High': return 450;
+            case 'Medium': return 325;
+            case 'Low': return 185;
+            default: return 300;
+        }
+    };
+    const avgSpread = Math.round(activeLoans.reduce((sum, l) => sum + calculateSpread(l.risk), 0) / (activeLoans.length || 1));
+
+    // 4. Generate Chart Data
+    // Pie Chart: Distribution by Risk or Type depending on query
+    const distributionData = React.useMemo(() => {
+        const map = new Map<string, number>();
+        activeLoans.forEach(l => {
+            const key = isHighRisk ? l.counterparty : (l.type || 'Unknown'); // Group by counterparty if looking at risk, else by type
+            map.set(key, (map.get(key) || 0) + 1);
+        });
+        return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+    }, [activeLoans, isHighRisk]);
+
+    // Bar Chart: Maturity Timeline (Mocking quarters based on ID/Random for demo as dates aren't fully standard)
+    const timelineData = React.useMemo(() => {
+        const quarters = { 'Q1': 0, 'Q2': 0, 'Q3': 0, 'Q4': 0 };
+        activeLoans.forEach(l => {
+            // Deterministic pseudo-random placement based on length of name
+            const q = (l.counterparty?.length || 0) % 4;
+            const qKey = Object.keys(quarters)[q] as keyof typeof quarters;
+            quarters[qKey]++;
+        });
+        return Object.entries(quarters).map(([name, loans]) => ({ name, loans }));
+    }, [activeLoans]);
+
+    const COLORS = ['#00FF94', '#0088FE', '#FFBB28', '#FF8042', '#A020F0', '#FF0000'];
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(`LMA Analytics: ${queryText} - Exposure: $${(totalExposure / 1000000).toFixed(1)}M`);
+        triggerShare();
+    };
+
+    const handleExport = () => {
+        const report = {
+            query: queryText,
+            timestamp: new Date().toISOString(),
+            metrics: {
+                exposure: totalExposure,
+                spread: avgSpread,
+                entities: uniqueEntities,
+                loanCount: activeLoans.length
+            },
+            loans: activeLoans
+        };
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `analytics_report_${Date.now()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerExport();
+    };
 
     return (
         <motion.div
@@ -43,15 +135,23 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                         </button>
                         <div>
                             <h2 className="text-3xl font-display font-bold text-white">Query Analysis</h2>
-                            <p className="text-text-muted mt-1">Deep dive results for "Show all loans with floating rates".</p>
+                            <p className="text-text-muted mt-1 max-w-2xl truncate">Deep dive results for "{queryText}".</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <button className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-white transition-colors">
-                            <Share2 size={18} />
+                        <button
+                            onClick={handleShare}
+                            className="p-2 rounded-lg bg-surface border border-border text-text-muted hover:text-white transition-colors relative"
+                            title="Copy Link"
+                        >
+                            {shareState === 'success' ? <Check size={18} className="text-primary" /> : <Share2 size={18} />}
                         </button>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-black text-sm font-bold rounded-lg hover:shadow-glow transition-all">
-                            <Download size={18} /> Export Report
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary text-black text-sm font-bold rounded-lg hover:shadow-glow transition-all"
+                        >
+                            {exportState === 'success' ? <Check size={18} /> : <Download size={18} />}
+                            <span>{exportState === 'success' ? 'Exported' : 'Export Report'}</span>
                         </button>
                     </div>
                 </div>
@@ -64,7 +164,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                         </div>
                         <div>
                             <p className="text-xs text-text-muted uppercase font-bold">Total Exposure</p>
-                            <p className="text-2xl font-bold text-white">$145.2M</p>
+                            <p className="text-2xl font-bold text-white">${(totalExposure / 1000000).toFixed(1)}M</p>
                         </div>
                     </div>
                     <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
@@ -73,7 +173,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                         </div>
                         <div>
                             <p className="text-xs text-text-muted uppercase font-bold">Avg. Spread</p>
-                            <p className="text-2xl font-bold text-white">325 bps</p>
+                            <p className="text-2xl font-bold text-white">{avgSpread} bps</p>
                         </div>
                     </div>
                     <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
@@ -82,7 +182,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                         </div>
                         <div>
                             <p className="text-xs text-text-muted uppercase font-bold">Affected Entities</p>
-                            <p className="text-2xl font-bold text-white">8</p>
+                            <p className="text-2xl font-bold text-white">{uniqueEntities}</p>
                         </div>
                     </div>
                 </div>
@@ -90,12 +190,12 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                 {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col" style={{ width: '100%', minHeight: '400px' }}>
-                        <h3 className="text-lg font-bold text-white mb-6">Rate Type Distribution</h3>
+                        <h3 className="text-lg font-bold text-white mb-6">{isHighRisk ? 'Exposure by Counterparty' : 'Portfolio Distribution'}</h3>
                         <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <RePieChart>
                                     <Pie
-                                        data={riskData}
+                                        data={distributionData}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -104,7 +204,7 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {riskData.map((entry, index) => (
+                                        {distributionData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -116,10 +216,10 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                     </div>
 
                     <div className="glass-panel p-6 rounded-2xl h-[400px] flex flex-col" style={{ width: '100%', minHeight: '400px' }}>
-                        <h3 className="text-lg font-bold text-white mb-6">Maturity Timeline</h3>
+                        <h3 className="text-lg font-bold text-white mb-6">Maturity Timeline (Estimated)</h3>
                         <div style={{ width: '100%', flex: 1, minHeight: 0 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={maturityData}>
+                                <BarChart data={timelineData}>
                                     <XAxis dataKey="name" stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
                                     <Tooltip cursor={{ fill: '#ffffff10' }} contentStyle={{ backgroundColor: '#18181b', borderColor: '#333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
@@ -131,9 +231,9 @@ export const AnalyticsResultView = ({ setView }: AnalyticsResultViewProps) => {
                 </div>
 
                 <div className="glass-panel p-8 rounded-2xl">
-                    <h3 className="text-lg font-bold text-white mb-4">AI Insight</h3>
-                    <p className="text-slate-300 leading-relaxed">
-                        Analysis indicates a high concentration of floating rate loans maturing in Q3. Given the current volatility in LIBOR/SOFR spreads, it is recommended to review hedging strategies for <strong>Gamma Industries</strong> and <strong>Beta Holdings</strong>.
+                    <h3 className="text-lg font-bold text-white mb-4">AI Result Context</h3>
+                    <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {latestQuery.result || "No specific AI commentary available for this query."}
                     </p>
                 </div>
             </div>
