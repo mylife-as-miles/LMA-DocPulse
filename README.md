@@ -53,6 +53,32 @@
 
 ---
 
+## 📸 Visual Verification
+
+### Landing Page & Simulation
+<div align="center">
+  <img src="./verification/landing_hero.png" width="45%" alt="Landing Page Hero" />
+  <img src="./verification/landing_features.png" width="45%" alt="Simulation Features" />
+</div>
+
+### Dashboard & Analytics
+<div align="center">
+  <img src="./verification/dashboard_realtime.png" width="90%" alt="Real-time Dashboard" />
+</div>
+
+### Loan Review & Compliance
+<div align="center">
+  <img src="./verification/loan_review_summary.png" width="45%" alt="Loan Summary" />
+  <img src="./verification/loan_review_covenants.png" width="45%" alt="Covenant Monitoring" />
+</div>
+
+### User Profile
+<div align="center">
+  <img src="./verification/edit_profile_fixed.png" width="45%" alt="Edit Profile" />
+</div>
+
+---
+
 ## ✨ Key Features
 
 ### 📄 Document Intelligence
