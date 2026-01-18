@@ -20,7 +20,7 @@ const CustomTooltip = ({
     size
 }: TooltipRenderProps) => {
     return (
-        <div {...tooltipProps} className="bg-[#0F172A]/90 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 max-w-sm shadow-[0_0_50px_rgba(0,255,148,0.15)] relative overflow-hidden">
+        <div {...tooltipProps} className="bg-[#141416]/95 backdrop-blur-xl border border-primary/20 rounded-2xl p-6 max-w-sm shadow-[0_0_50px_rgba(0,255,157,0.15)] relative overflow-hidden">
             {/* Ambient Background Glow */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
 
@@ -72,7 +72,7 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
 
     useEffect(() => {
         // Reset and check if we should run for this view - simplified persistence check for demonstration
-        const tutorialKey = `tutorial_seen_v2_${currentView}`; // effective reset with v2 key
+        const tutorialKey = `tutorial_seen_v3_${currentView}`; // effective reset with v3 key
         const hasSeen = localStorage.getItem(tutorialKey);
 
         const commonSteps = [
@@ -173,7 +173,7 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
-            localStorage.setItem(`tutorial_seen_v2_${currentView}`, 'true');
+            localStorage.setItem(`tutorial_seen_v3_${currentView}`, 'true');
         }
     };
 
@@ -190,11 +190,18 @@ export const AppTutorial = ({ currentView }: AppTutorialProps) => {
             styles={{
                 options: {
                     zIndex: 10000,
-                    arrowColor: '#0F172A',
-                    overlayColor: 'rgba(0, 0, 0, 0.65)',
+                    arrowColor: '#141416', // Matches surface
+                    overlayColor: 'rgba(5, 5, 5, 0.85)', // Matches background #050505
+                    primaryColor: '#00ff9d',
+                    textColor: '#ffffff',
+                    backgroundColor: '#141416'
                 },
                 spotlight: {
                     borderRadius: '12px',
+                },
+                beacon: {
+                    inner: '#00ff9d',
+                    outer: '#00ff9d'
                 }
             }}
             disableOverlayClose={true}
