@@ -744,20 +744,106 @@ export const LoanReviewView = ({ loanId, setView }: LoanReviewViewProps) => {
                         </div>
                     </section>
 
-                    {/* Placeholder for Events of Default if data exists */}
-                    {reviewData?.eventsOfDefault && (
-                        <section id="events-of-default" className="scroll-mt-32">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center text-red-500">
-                                    <AlertTriangle size={14} />
+                    {/* Events of Default Section */}
+                    <section id="events-of-default" className="scroll-mt-32">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center text-red-500">
+                                <AlertTriangle size={14} />
+                            </div>
+                            <h3 className="text-white text-lg font-display font-bold">Events of Default</h3>
+                        </div>
+
+                        <div className="glass-panel border border-border rounded-xl overflow-hidden">
+                            {/* Table Header */}
+                            <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/5 bg-surface-highlight/50 text-text-muted text-[10px] font-bold uppercase tracking-wider">
+                                <div className="col-span-4">Event Type</div>
+                                <div className="col-span-2">Risk Level</div>
+                                <div className="col-span-2">Status</div>
+                                <div className="col-span-2">Critical Date</div>
+                                <div className="col-span-2 text-right">Actions</div>
+                            </div>
+
+                            {/* Table Rows */}
+                            {reviewData?.eventsOfDefault && Array.isArray(reviewData.eventsOfDefault) && reviewData.eventsOfDefault.length > 0 ? (
+                                reviewData.eventsOfDefault.map((eod: any, idx: number) => (
+                                    <div key={idx} className="grid grid-cols-12 gap-4 p-5 items-center border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+                                        <div className="col-span-4">
+                                            <div className="text-white font-bold mb-1">{typeof eod === 'string' ? eod : eod.type}</div>
+                                            <div className="text-text-muted text-xs font-mono">
+                                                {typeof eod !== 'string' && eod.clauseRef ? eod.clauseRef : 'Clause 24.1'}
+                                            </div>
+                                            {typeof eod !== 'string' && eod.summary && (
+                                                <div className="text-text-muted text-xs mt-1">{eod.summary}</div>
+                                            )}
+                                        </div>
+                                        <div className="col-span-2">
+                                            {typeof eod !== 'string' && eod.riskLevel ? (
+                                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border ${eod.riskLevel === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                                        eod.riskLevel === 'High' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                                                            eod.riskLevel === 'Medium' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' :
+                                                                'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                                    }`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${eod.riskLevel === 'Critical' ? 'bg-red-500 animate-pulse' :
+                                                            eod.riskLevel === 'High' ? 'bg-orange-500' : 'bg-blue-500'
+                                                        }`}></div>
+                                                    {eod.riskLevel}
+                                                </span>
+                                            ) : (
+                                                <span className="text-text-muted text-xs">-</span>
+                                            )}
+                                        </div>
+                                        <div className="col-span-2">
+                                            {typeof eod !== 'string' && eod.status ? (
+                                                <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold ${eod.status === 'Active' ? 'bg-red-500/10 text-red-400' :
+                                                        eod.status === 'Potential' ? 'bg-yellow-500/10 text-yellow-400' :
+                                                            'bg-green-500/10 text-green-400'
+                                                    }`}>
+                                                    {eod.status}
+                                                </span>
+                                            ) : (
+                                                <span className="text-text-muted text-xs">Pending</span>
+                                            )}
+                                        </div>
+                                        <div className="col-span-2">
+                                            {typeof eod !== 'string' && eod.nextCriticalDate ? (
+                                                <div className="flex items-center gap-2 text-xs text-accent-orange bg-accent-orange/10 px-2 py-1 rounded w-fit">
+                                                    <Calendar size={12} />
+                                                    {eod.nextCriticalDate}
+                                                </div>
+                                            ) : (
+                                                <span className="text-text-muted text-xs">-</span>
+                                            )}
+                                        </div>
+                                        <div className="col-span-2 flex justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    if (setView) setView('document_detail');
+                                                    toast.info('Opening clause reference');
+                                                }}
+                                                className="p-2 rounded hover:bg-white/5 text-text-muted hover:text-primary transition-colors"
+                                                title="View in PDF"
+                                            >
+                                                <FileText size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => toast.warning('Issue flagged for review')}
+                                                className="p-2 rounded hover:bg-white/5 text-text-muted hover:text-red-500 transition-colors"
+                                                title="Flag Issue"
+                                            >
+                                                <Flag size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-8 text-center text-text-muted">
+                                    <AlertTriangle size={32} className="mx-auto mb-3 opacity-50" />
+                                    <p className="font-medium">No Events of Default detected</p>
+                                    <p className="text-xs mt-1">Document analysis complete - no default triggers found</p>
                                 </div>
-                                <h3 className="text-white text-lg font-display font-bold">Events of Default</h3>
-                            </div>
-                            <div className="glass-panel border border-border rounded-xl p-6">
-                                <pre className="text-white text-sm whitespace-pre-wrap font-sans">{JSON.stringify(reviewData.eventsOfDefault, null, 2)}</pre>
-                            </div>
-                        </section>
-                    )}
+                            )}
+                        </div>
+                    </section>
 
                     {/* Placeholder for Signatures */}
                     <section id="signatures" className="scroll-mt-32">

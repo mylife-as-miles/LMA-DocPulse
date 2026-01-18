@@ -34,12 +34,73 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ setView }: DashboardViewProps) => {
     const { trigger: triggerExport } = useActionFeedback('Export Data');
-    const { trigger: triggerDiagnostics } = useActionFeedback('System Diagnostics');
 
     const chartData = useLiveQuery(() => db.chartData.toArray()) || [];
     const loansData = useLiveQuery(() => db.loans.toArray()) || [];
     const docs = useLiveQuery(() => db.docs.toArray()) || [];
-    const alerts = useLiveQuery(() => db.alerts.toArray()) || [];
+    const dbAlerts = useLiveQuery(() => db.alerts.toArray()) || [];
+
+    // Generate dynamic alerts from loan data
+    const dynamicAlerts = React.useMemo(() => {
+        const generated: Array<{ title: string; time: string; subtitle: string; type: 'critical' | 'warning' | 'info' }> = [];
+
+        // Check for critical risk loans
+        loansData.filter(l => l.risk === 'Critical').forEach((loan, idx) => {
+            generated.push({
+                title: 'Critical Risk Detected',
+                time: `${idx + 1}m`,
+                subtitle: `${loan.id} • ${loan.counterparty}`,
+                type: 'critical'
+            });
+        });
+
+        // Check for pending review documents
+        docs.filter(d => d.status === 'Review' || d.status === 'Pending').slice(0, 2).forEach((doc, idx) => {
+            generated.push({
+                title: 'Doc Needs Review',
+                time: `${(idx + 1) * 15}m`,
+                subtitle: `${doc.name}`,
+                type: 'warning'
+            });
+        });
+
+        // Check for high risk loans
+        loansData.filter(l => l.risk === 'High').slice(0, 1).forEach(loan => {
+            generated.push({
+                title: 'High Risk Alert',
+                time: '1h',
+                subtitle: `${loan.id} • ${loan.type}`,
+                type: 'warning'
+            });
+        });
+
+        return generated;
+    }, [loansData, docs]);
+
+    // Combine DB alerts with dynamic alerts
+    const alerts = [...dbAlerts, ...dynamicAlerts].slice(0, 5);
+
+    // Run diagnostics - creates new alert based on analysis
+    const runDiagnostics = async () => {
+        const criticalCount = loansData.filter(l => l.risk === 'Critical').length;
+        const pendingDocs = docs.filter(d => d.status !== 'Analyzed').length;
+
+        if (criticalCount > 0 || pendingDocs > 0) {
+            await db.alerts.add({
+                title: 'Diagnostic Complete',
+                time: 'now',
+                subtitle: `${criticalCount} critical risks, ${pendingDocs} pending docs`,
+                type: criticalCount > 0 ? 'critical' : 'warning'
+            });
+        } else {
+            await db.alerts.add({
+                title: 'System Healthy',
+                time: 'now',
+                subtitle: 'All systems operating normally',
+                type: 'info'
+            });
+        }
+    };
 
     // Calculate real stats
     const activeLoansCount = loansData.length;
@@ -232,7 +293,7 @@ export const DashboardView = ({ setView }: DashboardViewProps) => {
                         </div>
 
                         <button
-                            onClick={() => triggerDiagnostics()}
+                            onClick={() => runDiagnostics()}
                             className="mt-4 w-full rounded-lg bg-surface-highlight/50 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-black transition-all border border-transparent hover:border-white"
                         >
                             Run Diagnostics
