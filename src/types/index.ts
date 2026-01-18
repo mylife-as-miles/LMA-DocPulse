@@ -54,6 +54,7 @@ export interface Query {
     timestamp: number;
     model: string;
     result?: string;
+    bookmarked?: boolean;
 }
 
 export interface BorrowerDetails {

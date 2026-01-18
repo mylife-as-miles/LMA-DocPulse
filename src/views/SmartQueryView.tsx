@@ -62,6 +62,10 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
     const [contextTab, setContextTab] = useState<'loans' | 'docs'>('loans');
     const [selectedContextIds, setSelectedContextIds] = useState<string[]>([]);
 
+    // Result State
+    const [currentQueryId, setCurrentQueryId] = useState<number | undefined>(undefined);
+    const { trigger: triggerSave, state: saveState } = useActionFeedback('Saved', { duration: 2000 });
+
     const loans = useLiveQuery(() => db.loans.toArray()) || [];
     const docs = useLiveQuery(() => db.docs.toArray()) || [];
     const history = useLiveQuery(() => db.queries.orderBy('timestamp').reverse().toArray()) || [];
@@ -106,8 +110,11 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
             text: textToAnalyze,
             timestamp: Date.now(),
             model: selectedModel.name,
-            result: '' // Initial empty result
+            result: '', // Initial empty result
+            bookmarked: false
         });
+
+        setCurrentQueryId(queryId as number);
 
         triggerAnalyze(async () => {
             try {
@@ -166,6 +173,31 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
 
     const handleClearHistory = async () => {
         await db.queries.clear();
+        setCurrentQueryId(undefined);
+        setResult(null);
+        setQuery('');
+    };
+
+    const handleExportResult = () => {
+        if (!result || !query) return;
+
+        const content = `Query: ${query}\n\nDate: ${new Date().toLocaleString()}\nModel: ${selectedModel.name}\n\n=== RESULT ===\n\n${result}`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `analysis_result_${Date.now()}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleSaveQuery = async () => {
+        if (currentQueryId) {
+            await db.queries.update(currentQueryId, { bookmarked: true });
+            triggerSave();
+        }
     };
 
     return (
@@ -202,6 +234,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         onClick={() => {
                                             setQuery(item.text);
                                             setResult(item.result || null);
+                                            setCurrentQueryId(item.id);
                                             // Optional: Close sidebar on mobile if needed, or keep open
                                         }}
                                         className="group flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-highlight border border-transparent hover:border-border cursor-pointer transition-all"
@@ -236,6 +269,7 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                     onClick={() => {
                                         setQuery(item.text);
                                         setResult(item.result || null);
+                                        setCurrentQueryId(item.id);
                                     }}
                                     className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center cursor-pointer hover:text-primary transition-colors"
                                     title={item.text}
@@ -388,13 +422,21 @@ export const SmartQueryView = ({ setView }: SmartQueryViewProps) => {
                                         <span>Result</span>
                                     </h3>
                                     <div className="flex gap-2">
-                                        <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Export CSV">
+                                        <button
+                                            onClick={handleExportResult}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono"
+                                            title="Export Result"
+                                        >
                                             <Download size={16} />
                                             <span className="hidden sm:inline">Export</span>
                                         </button>
-                                        <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-text-muted hover:text-white hover:bg-surface-highlight border border-transparent hover:border-border transition-all text-xs font-mono" title="Save Query">
-                                            <BookmarkPlus size={16} />
-                                            <span className="hidden sm:inline">Save</span>
+                                        <button
+                                            onClick={handleSaveQuery}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-xs font-mono border border-transparent ${saveState === 'success' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white hover:bg-surface-highlight hover:border-border'}`}
+                                            title="Save Query"
+                                        >
+                                            {saveState === 'success' ? <Check size={16} /> : <BookmarkPlus size={16} />}
+                                            <span className="hidden sm:inline">{saveState === 'success' ? 'Saved' : 'Save'}</span>
                                         </button>
                                     </div>
                                 </div>
