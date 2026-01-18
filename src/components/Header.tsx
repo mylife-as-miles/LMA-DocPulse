@@ -3,15 +3,19 @@ import { Menu, Search, Bell, Sparkles } from 'lucide-react';
 import { ViewState } from '../types';
 import { Breadcrumbs } from './Breadcrumbs';
 
+import { GlobalSearch } from './GlobalSearch';
+
 interface HeaderProps {
     onMenuClick: () => void;
     onNotificationClick?: () => void;
     currentView: ViewState;
     setView: (view: ViewState) => void;
     selectedLoanId?: string;
+    onSelectLoan?: (id: string) => void;
+    onSelectDoc?: (id: number) => void;
 }
 
-export const Header = ({ onMenuClick, onNotificationClick, currentView, setView, selectedLoanId }: HeaderProps) => {
+export const Header = ({ onMenuClick, onNotificationClick, currentView, setView, selectedLoanId, onSelectLoan, onSelectDoc }: HeaderProps) => {
     return (
         <header className="flex h-20 items-center justify-between px-6 lg:px-8 z-20 border-b border-border/30 lg:border-none shrink-0">
             <div className="flex items-center gap-4 lg:hidden">
@@ -33,14 +37,12 @@ export const Header = ({ onMenuClick, onNotificationClick, currentView, setView,
             </div>
 
             <div className="flex items-center gap-6">
-                <div id="global-search" className="relative hidden w-80 lg:block group">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors" size={18} />
-                    <input
-                        type="text"
-                        className="h-10 w-full rounded-full border border-border bg-surface/50 pl-10 pr-4 text-sm text-white placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-inner"
-                        placeholder="Search loans, documents..."
-                    />
-                </div>
+
+                <GlobalSearch
+                    setView={setView}
+                    onSelectLoan={onSelectLoan}
+                    onSelectDoc={onSelectDoc}
+                />
 
                 <div className="flex items-center gap-3 border-l border-border/50 pl-6">
                     <button

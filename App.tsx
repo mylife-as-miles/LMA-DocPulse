@@ -142,6 +142,8 @@ export default function App() {
           currentView={currentView}
           setView={setCurrentView}
           selectedLoanId={selectedLoanId}
+          onSelectLoan={(id) => setSelectedLoanId(id)}
+          onSelectDoc={(id) => setSelectedDocId(id)}
         />
 
         {/* Global Components */}
